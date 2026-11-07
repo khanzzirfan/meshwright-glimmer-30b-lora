@@ -1,0 +1,17 @@
+Initializing Ralph TUI...
+Env filter:
+  Blocked:     BASETEN_API_KEY, META_API_KEY
+  Passthrough: NVIDIA_NIM_API_KEY
+
+Session: 70dc26b6-ce57-426a-8500-a561d0085a79
+Agent: opencode
+Tracker: json
+PRD: ./ralph/glb-1.prd.json
+Max iterations: 8
+
+[18:00:05] [INFO] [session] Session 70dc26b6-ce57-426a-8500-a561d0085a79 created. Agent: opencode, Tracker: json
+[18:00:05] [INFO] [engine] Ralph started. Total tasks: 2
+[18:00:05] [INFO] [progress] Iteration 1/8: Working on US-006 - glb_sheet.mjs: render exported GLBs to contact sheets and a blind rating file
+[18:00:21] [INFO] [system] Received SIGTERM, stopping gracefully...
+[18:00:21] [INFO] [system] Resetting 1 in_progress task(s) to open...
+[18:00:21] [INFO] [engine] Ralph stopped. Reason: interrupted. Iterations: 1, Tasks completed: 0

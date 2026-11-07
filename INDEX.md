@@ -23,6 +23,7 @@ Map of everything in muse-threejs. Status and the to-do list live in [NEXT-STEPS
 | 7 | [docs/07-local-glimmer.md](docs/07-local-glimmer.md) | Running the free local teacher (measured speed) |
 | 8 | [docs/08-mesh-track.md](docs/08-mesh-track.md) | The mesh track: CC0 assets as text meshes, format, quality metrics, first baseline |
 | 11 | [docs/11-mesh-lora-e2e.md](docs/11-mesh-lora-e2e.md) | The mesh LoRA proof: data, train on the Mac or a GPU box, generate, score; where to run it |
+| 13 | [docs/13-glb-code-track.md](docs/13-glb-code-track.md) | The GLB code track: benchmark untuned Muse Glimmer against ccore's 4B by the GLB each exports, then decide on phase 2 |
 | - | [docs/baseten-spark-open.md](docs/baseten-spark-open.md) | Using Spark Open on Baseten (setup, gotchas, measured 30-brief results) |
 
 Planned by Ralph (do not exist yet): `docs/08-train-mlx.md`, `docs/09-train-gpu.md`, `docs/10-results.md`.
@@ -33,13 +34,25 @@ Planned by Ralph (do not exist yet): `docs/08-train-mlx.md`, `docs/09-train-gpu.
 | `scripts/gen_briefs.py` | 1. briefs | `--base-url` for Ollama; writes train and eval split |
 | `scripts/teacher_generate.py` | 2. teacher answers | OpenAI route (Baseten) or `--ollama-native [--think]`; resumable; `--token-budget` |
 | `scripts/baseten_smoke.py` | 2. key check | paid, needs `--yes` |
-| `scripts/validate_scenes.mjs` | 3. render check | headless Chromium, local Three.js 0.160.0, import maps resolved |
+| `scripts/validate_scenes.mjs` | 3. render check | headless Chromium, local Three.js 0.160.0, import maps resolved; `--mode glb` clicks Export and checks the downloaded file |
+| `scripts/glb_check.mjs` | 3. GLB check | dependency-free GLB parser; counts meshes, triangles, animations and bounds |
+| `scripts/glb_bench.py` | GLB benchmark | resumable run of every enabled model in `bench/glb/models.json`, then validate |
+| `scripts/glb_report.py` | GLB report | docs/13 section 5.3 metrics, Wilson intervals, head-to-head, blind ratings |
+| `scripts/glb_sheet.mjs` | GLB rating | renders exported GLBs to contact sheets and a blind `rating.csv` |
 | `scripts/build_dataset.py` | 4. SFT files | prompt/completion JSONL, `--no-reasoning` |
 | `scripts/train_sft.py` | 5. training | TRL, LoRA or full; GPU box |
 | `scripts/export_gguf.sh` | 6. export | merge, GGUF, quantise, Modelfile |
 | `scripts/check.sh` | gate | syntax checks + tests; every Ralph story must pass it |
 | `scripts/common.py` | shared | `.env` loading, OpenAI client, system prompt |
 | `prompts/system.txt` | all | the scene rules; do not change (all data was generated against it) |
+
+## Bench: GLB code track
+| File | What it is |
+|---|---|
+| [bench/glb/briefs.jsonl](bench/glb/briefs.jsonl) | 48 asset briefs (12 domains x 4) for the phase 1 benchmark; eval only, never train on them |
+| [bench/glb/models.json](bench/glb/models.json) | the six model rows of docs/13 section 4.3 with prompt, sampling and enabled flags |
+| [prompts/system_glb.txt](prompts/system_glb.txt) | our pinned Three.js 0.160.0 system prompt for Glimmer and other non-ccore models |
+| [prompts/ccore_glb_system.txt](prompts/ccore_glb_system.txt) | the owner pastes ccore's verbatim system prompt here before running the bench |
 
 ## Data (gitignored, owner's)
 | Folder / file | Contents |

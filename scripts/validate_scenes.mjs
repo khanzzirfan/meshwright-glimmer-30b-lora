@@ -44,7 +44,10 @@ function extractHtml(text) {
   const fence = text.match(/```html\s*\n([\s\S]*?)```/i);
   if (fence) return fence[1].trim();
   const doc = text.match(/<!doctype html[\s\S]*<\/html>/i);
-  return doc ? doc[0] : null;
+  if (doc) return doc[0];
+  // GLB mode only: a reply that starts straight with <html> is still a page (scene mode keeps its old rule)
+  if (mode === "glb") { const bare = text.match(/<html[\s\S]*<\/html>/i); if (bare) return bare[0]; }
+  return null;
 }
 
 function staticChecks(html) {

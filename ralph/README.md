@@ -15,10 +15,21 @@ opencode only when Command Code credit runs out.
 | 4 | `prd-04-eval-export.json` | 5 | eval harness with pass@k, comparison report, export helpers, rejection sampling, docs test | evaluate baselines and the student |
 | 5 | `prd-05-mesh.json` | 6 | **mesh track:** augmentation, text-to-GLB, four-angle renders, caption script, leak-free dataset builder, eval report | read the baseline quality report |
 | 6 | `prd-06-captions-corpus.json` | 9 | **mesh track:** category tags, fact-grounded caption styles, caption quality filter, model bake-off, consensus corpus with provenance, prompt variants, CC0 kit intake with licence ledger, corpus report | run the bake-off and the real caption run yourself |
+| 7 | `glb-1.prd.json` | 7 | **GLB code track:** GLB parser, validator `--mode glb`, per-model prompt and sampling, resumable benchmark runner, report with Wilson intervals and head-to-head, blind contact sheet, docs-consistency test | paste ccore's verbatim system prompt, run the benchmark overnight, rate `rating.csv` blind and record the outcome in docs/13 section 10 |
 
 PRDs 5 and 6 are the mesh track (docs/08-mesh-track.md). PRD 6 needs PRD 5 finished first because it edits
 `caption_meshes.py` and `build_mesh_dataset.py`. PRDs 1 to 4 are the Three.js-code track and can wait.
 Run the mesh track with `ralph/run-all.sh --only 5` and then `--only 6`; plain `run-all.sh` starts at PRD 1.
+
+The GLB benchmark is docs/13-glb-code-track.md and is built from `ralph/glb-1.prd.json` (not one of the numbered
+`prd-*` files, so `run-all.sh` does not pick it up). Run it on its own:
+
+```bash
+ralph/run-models.sh ralph/glb-1.prd.json
+```
+
+Ralph builds the tools and never runs the benchmark, so docs/13 section 10 stays `not run` until the owner records
+a result.
 
 Ralph builds and tests tools. It never calls Baseten or Hugging Face, never trains, never rents a GPU, never
 touches `data/`, `out/` or `eval/`, and never commits (`autoCommit = false`).
@@ -41,6 +52,7 @@ Optional: `git init` here so you can review each PRD with `git diff` (the folder
 ralph/run-all.sh                   # all four PRDs, one after another, headless; stops at the first unfinished one
 ralph/run-all.sh --only 1 --tui    # one PRD with the TUI
 ralph/run-all.sh --from 3          # start at PRD 3
+ralph/run-models.sh ralph/glb-1.prd.json   # the GLB benchmark PRD, several models in turn
 python3 ralph/build_prds.py --status   # stories passing per PRD and the next story's notes
 ```
 

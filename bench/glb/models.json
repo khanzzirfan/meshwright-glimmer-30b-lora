@@ -67,7 +67,7 @@
   {
     "name": "spark-open",
     "provider": "baseten",
-    "model": "spark-open",
+    "model": "meta-models/muse-spark-open-1026",
     "system": "prompts/system_glb.txt",
     "temperature": 0.7,
     "top_p": null,

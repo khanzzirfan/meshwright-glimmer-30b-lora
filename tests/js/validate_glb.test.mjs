@@ -69,7 +69,7 @@ test('glb mode exports and checks the downloaded file', { timeout: 180000 }, () 
     runResult = run(rawDir, ['--mode', 'glb', '--glb-dir', glbDir]);
     const rows = new Map(runResult.rows.map((row) => [row.id, row]));
 
-    for (const id of ['g_ok', 'g_unpkg', 'g_anim']) {
+    for (const id of ['g_ok', 'g_unpkg', 'g_anim', 'g_bare']) {
       const row = rows.get(id);
       assert.ok(row, `missing report row for ${id}`);
       assert.equal(row.ok, true, `${id} should pass: ${JSON.stringify(row.reasons)}`);
@@ -107,5 +107,24 @@ test('scene mode is unchanged on the old fixtures', { timeout: 180000 }, () => {
     assert.deepEqual(runResult.requests, [], 'a scene-mode page reached the network');
   } finally {
     fs.rmSync(runResult.tmp, { recursive: true, force: true });
+  }
+});
+
+test('a reply that starts with <html> counts as a page in glb mode only', { timeout: 180000 }, () => {
+  const rawDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bare-raw-'));
+  const glbDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bare-glb-'));
+  fs.copyFileSync(path.join(GLB_FIXTURES, 'g_bare.json'), path.join(rawDir, 'g_bare.json'));
+  const results = [];
+  try {
+    const glb = run(rawDir, ['--mode', 'glb', '--glb-dir', glbDir]);
+    results.push(glb);
+    assert.equal(glb.rows[0].ok, true, JSON.stringify(glb.rows[0].reasons));
+    const scene = run(rawDir);
+    results.push(scene);
+    assert.ok(scene.rows[0].reasons.includes('no_html'), 'scene mode must keep its old no_html rule');
+  } finally {
+    fs.rmSync(rawDir, { recursive: true, force: true });
+    fs.rmSync(glbDir, { recursive: true, force: true });
+    for (const r of results) fs.rmSync(r.tmp, { recursive: true, force: true });
   }
 });

@@ -102,6 +102,24 @@ with the reason `missing`.
 - It writes `<root>/report.json` and `<root>/report.md`; the markdown has one row per model plus failures, domain and
   head-to-head tables.
 
+`scripts/glb_sheet.mjs` renders every exported GLB to a contact sheet so the owner can rate the assets blind: each
+model is shuffled into shared keys, so the sheet never shows which model produced an asset.
+
+```bash
+node scripts/glb_sheet.mjs --root eval/glb_bench --out eval/glb_bench/sheet
+node scripts/glb_sheet.mjs --root eval/glb_bench --out eval/glb_bench/sheet --seed 3 --size 512
+```
+
+- `--root DIR` (required) is the benchmark output; every `<root>/<model>/glb/<id>.glb` is rendered locally with the
+  pinned Three.js 0.160.0 `GLTFLoader`, a 3/4 view and a top view side by side on light grey.
+- `--out DIR` (required) receives `<out>/<model>/<id>.png` and a `<out>/<model>/sheet.png` grid. `--size N`
+  (default 256) is the per-view pixel size and `--seed N` (default 1) seeds the shuffle.
+- `--briefs FILE` (default `bench/glb/briefs.jsonl`) is the brief list. `rating.csv` gets one row per model x brief
+  (`key, brief, image, rating`, rating left empty) in seeded-shuffled order; a brief with no GLB keeps an empty
+  `image` so the miss is visible. Images are copied to key-named files under `<out>/images/`.
+- `key_map.json` maps every key to `{model, id}`; join it after rating to unblind. A GLB that fails to load is listed
+  in `<out>/skipped.json` and never stops the run, and a rerun skips PNGs that already exist.
+
 ## Tests
 
 ```bash

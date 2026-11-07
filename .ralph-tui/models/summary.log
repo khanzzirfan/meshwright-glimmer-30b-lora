@@ -22,3 +22,8 @@
 2026-11-06T03:39:51Z local-1.prd model=nvidia/minimaxai/minimax-m3.1-flash passing 2->2/8
 2026-11-06T03:40:01Z local-1.prd model=nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b passing 2->2/8
 2026-11-06T03:40:12Z local-1.prd model=ollama/qwen3.8:27b-64k passing 2->2/8
+2026-11-07T06:58:53Z glb-1.prd model=opencode/deepseek-v4.1-flash-free passing 0->5/7
+2026-11-07T06:59:03Z glb-1.prd model=nvidia/z-ai/glm-5.3-flash passing 5->5/7
+2026-11-07T06:59:36Z glb-1.prd model=nvidia/deepseek-ai/deepseek-v4.1-flash passing 5->5/7
+2026-11-07T06:59:46Z glb-1.prd model=opencode/deepseek-v4.1-flash-free passing 5->5/7
+2026-11-07T06:59:56Z glb-1.prd model=ollama/qwen3.8:27b-64k passing 5->5/7

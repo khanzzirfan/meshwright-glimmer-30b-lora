@@ -17,3 +17,6 @@ __pycache__/
 *.pt
 .DS_Store
 .ralph-tui/ralph.lock
+
+# Command Code agent state
+.commandcode/

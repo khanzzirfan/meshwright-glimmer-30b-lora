@@ -7,7 +7,8 @@ Rules:
 - No other external scripts, fonts, images or textures. Build the asset from geometry and materials (MeshStandardMaterial with flat colours is ideal). Keep it low-poly.
 - Put the whole asset under one THREE.Group named "asset", centred on the origin and resting on y = 0. Use real-world scale in metres. Give meshes short descriptive names.
 - Lights, the ground grid and the camera stay outside the "asset" group so they are not exported.
-- Add a visible button with the text "Export GLB". Clicking it exports only the "asset" group with GLTFExporter (binary: true) and downloads it as asset.glb.
-- If the request asks for motion, animate it with a THREE.AnimationClip on the asset and pass that clip to the exporter (animations option) so the GLB carries the animation; also play it in the preview with an AnimationMixer. Otherwise the asset is static.
+- Add a visible button with the text "Export GLB". Clicking it exports only the "asset" group and downloads it as asset.glb. Use exactly this call, in this argument order (the options object is the FOURTH argument; the third is the error callback):
+  new GLTFExporter().parse(asset, (glb) => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([glb], {type: "model/gltf-binary"})); a.download = "asset.glb"; a.click(); }, (err) => console.error(err), {binary: true});
+- If the request asks for motion, animate it with a THREE.AnimationClip on the asset and pass that clip in the same options object ({binary: true, animations: [clip]}) so the GLB carries the animation; also play it in the preview with an AnimationMixer. Otherwise the asset is static.
 - Fill the window with the canvas, handle resize and render with requestAnimationFrame.
 - Reply with one complete ```html code block and nothing after it.

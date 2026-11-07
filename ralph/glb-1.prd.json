@@ -156,11 +156,12 @@
         "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-005"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-007",
@@ -180,11 +181,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-006"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     }
   ],
   "metadata": {
@@ -251,6 +253,6 @@
       "Owner pastes ccore's verbatim system prompt into prompts/ccore_glb_system.txt and runs `ollama pull hf.co/ccore/Qwen3.5-4B-GLB-3D-Coder:Q8_0`",
       "Owner runs `.venv/bin/python scripts/glb_bench.py --out-root eval/glb_bench` overnight, then glb_report.py and glb_sheet.mjs, rates rating.csv blind, and records the outcome (A, B or C) in docs/13 section 10"
     ],
-    "updatedAt": "2026-11-07T06:45:26.311Z"
+    "updatedAt": "2026-11-07T07:11:13.518Z"
   }
 }
