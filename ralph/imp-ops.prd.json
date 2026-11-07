@@ -1,0 +1,217 @@
+{
+  "name": "GLB improvement ops: assembly backfill, repair, best of 3, phase 2 data (local only)",
+  "branchName": "ralph/imp-ops",
+  "description": "Operator PRD for docs/14-glb-improvement.md, run after ralph/imp-1 passes. Backfill the assembly metric on the existing v2, v3 and ccore runs, try the one-shot repair on v3's failures, generate two more v3 seeds and pick the best of 3, then build the phase 2 dataset from ccore's downloaded parquet files. Everything runs on this Mac against the local Ollama. Training is not part of this PRD.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Preflight: imp-1 done, gate green, Ollama up, nothing running, v3 hash matches",
+      "description": "As the operator, I check that the tools exist and the machine is ready before starting any job.",
+      "steps": [
+        "Run `python3 ralph/build_prds.py --status | grep imp-1` and confirm 8/8.",
+        "Run `bash scripts/check.sh` and record the last 3 lines.",
+        "Run `bash scripts/imp_ops.sh preflight` and record its output.",
+        "Run `mkdir -p runs/imp`."
+      ],
+      "acceptanceCriteria": [
+        "imp-1 shows 8/8 passing and scripts/check.sh exits 0 (output copied into notes)",
+        "preflight reports Ollama up, no running job and a matching v3 prompt hash; otherwise notes say which check failed and the story stops",
+        "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "",
+      "dependsOn": []
+    },
+    {
+      "id": "US-002",
+      "title": "Backfill assembly on v2, v3 and ccore and report it",
+      "description": "As the owner, I want the assembly metric on the runs we already have, and checked against the unblinded ratings, before trusting it for best-of-N.",
+      "steps": [
+        "For each RUN in runs/glb_v2/glimmer runs/glb_v2/glimmer-think runs/glb_v2/ccore-q8 runs/glb_v3/glimmer-v3 run `node scripts/glb_assembly.mjs --run RUN --briefs bench/glb/briefs.jsonl` and copy the summary line.",
+        "Run `.venv/bin/python scripts/glb_report.py --root runs/glb_v2 --briefs bench/glb/briefs.jsonl > runs/imp/report_v2_assembly.md` and the same for --root runs/glb_v3 into runs/imp/report_v3_assembly.md.",
+        "Write runs/imp/assembly_vs_ratings.md: a table per model of rating (from runs/glb_v3/claude_ratings_unblinded.csv, columns glimmer_v2, glimmer_v3, ccore_q8) against assembled true/false, counted with a short inline python3 command whose output you paste. This is the only place the ratings file is read."
+      ],
+      "acceptanceCriteria": [
+        "runs/<model>/assembly.jsonl exists for all 4 runs and each summary line is copied into notes",
+        "runs/imp/assembly_vs_ratings.md shows counts of rated-2 assets that are assembled vs not, per model, copied from command output",
+        "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Repair retry on v3's failures",
+      "description": "As the owner, I want to know how many of v3's 5 failures one repair turn recovers.",
+      "steps": [
+        "Run `git status --short` and copy it into notes.",
+        "Run `bash scripts/imp_ops.sh start repair-v3`.",
+        "Run `bash scripts/imp_ops.sh wait repair-v3` (repeat in later iterations while it is running).",
+        "When done, copy runs/glb_v3/glimmer-v3/repair/summary.json into notes and add the row 'repair on v3 failures | repaired X of Y' to docs/14 section 10."
+      ],
+      "acceptanceCriteria": [
+        "summary.json exists and its repaired/selected numbers are copied into notes and docs/14 section 10",
+        "No tracked file other than docs/14-glb-improvement.md changed during this story: `git status --short` taken before and after is copied into notes",
+        "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-002"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "Start v3 seed 2 on the 48 eval briefs",
+      "description": "As the operator, I start the second v3 sample for best-of-3 (about 50 minutes on this Mac).",
+      "steps": [
+        "Run `bash scripts/imp_ops.sh preflight`.",
+        "Run `bash scripts/imp_ops.sh start v3s2` and copy its output."
+      ],
+      "acceptanceCriteria": [
+        "imp_ops.sh status shows v3s2 running (copied into notes)",
+        "No other job was running when it started (preflight output copied)",
+        "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-003"
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Wait for v3 seed 2, then start seed 3",
+      "description": "As the operator, I wait for seed 2 to finish and start seed 3.",
+      "steps": [
+        "Run `bash scripts/imp_ops.sh wait v3s2`. If still running, end the iteration without finishing.",
+        "When v3s2 has exited 0, run `wc -l runs/glb_v3/glimmer-v3-s2/validation.jsonl` and `tail -1` of runs/imp/jobs/v3s2.log.",
+        "Run `bash scripts/imp_ops.sh start v3s3`."
+      ],
+      "acceptanceCriteria": [
+        "runs/glb_v3/glimmer-v3-s2/validation.jsonl has 48 lines and the pass-rate line is copied into notes",
+        "imp_ops.sh status shows v3s3 running",
+        "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-004"
+      ]
+    },
+    {
+      "id": "US-006",
+      "title": "Wait for v3 seed 3",
+      "description": "As the operator, I wait for the third sample to finish.",
+      "steps": [
+        "Run `bash scripts/imp_ops.sh wait v3s3`. If still running, end the iteration without finishing.",
+        "When v3s3 has exited 0, run `wc -l runs/glb_v3/glimmer-v3-s3/validation.jsonl` and `tail -1` of runs/imp/jobs/v3s3.log."
+      ],
+      "acceptanceCriteria": [
+        "runs/glb_v3/glimmer-v3-s3/validation.jsonl has 48 lines and the pass-rate line is copied into notes",
+        "imp_ops.sh status shows no job running",
+        "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-005"
+      ]
+    },
+    {
+      "id": "US-007",
+      "title": "Best of 3: pick, report and blind sheet",
+      "description": "As the owner, I want the best-of-3 result beside single-shot v3, plus a blind sheet to rate.",
+      "steps": [
+        "Run `node scripts/glb_assembly.mjs --run runs/glb_v3/glimmer-v3-s2 --briefs bench/glb/briefs.jsonl` and the same for -s3.",
+        "Run `.venv/bin/python scripts/glb_best_of.py --runs runs/glb_v3/glimmer-v3 runs/glb_v3/glimmer-v3-s2 runs/glb_v3/glimmer-v3-s3 --briefs bench/glb/briefs.jsonl --out runs/imp/best3/glimmer-v3-best3`.",
+        "Run `.venv/bin/python scripts/glb_report.py --root runs/glb_v3 --briefs bench/glb/briefs.jsonl --extra-runs best-of-3=runs/imp/best3/glimmer-v3-best3 > runs/imp/report_best3.md`.",
+        "Run `node scripts/glb_sheet.mjs --root runs/imp/best3 --out runs/imp/best3/sheet --briefs bench/glb/briefs.jsonl`.",
+        "Add the row 'best of 3 (v3) | valid X/48, assembled Y' to docs/14 section 10 from report_best3.md."
+      ],
+      "acceptanceCriteria": [
+        "runs/imp/report_best3.md has a best-of-3 row and its valid and assembled numbers are copied into notes and docs/14 section 10",
+        "runs/imp/best3/sheet/rating.csv exists with 48 rows plus header",
+        "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated",
+        "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-006"
+      ]
+    },
+    {
+      "id": "US-008",
+      "title": "Build the phase 2 dataset and summarise",
+      "description": "As the trainer, I want the phase 2 dataset built from the downloaded ccore parquet files, and a one-page summary for the owner.",
+      "steps": [
+        "Run `.venv/bin/python scripts/ccore_prep.py --parquet-dir runs/ccore_data/raw --out runs/imp/phase2_data --max-chars 22000 --system ccore --leak-file bench/glb/eval_subjects.json`.",
+        "Run `.venv/bin/python scripts/mesh_lora_hf.py --data runs/imp/phase2_data --dry-run` and copy its output.",
+        "Run `.venv/bin/python scripts/glb_phase2_estimate.py --data runs/imp/phase2_data` (no sec-per-step: it must print 'not measured').",
+        "Write runs/imp/RESULTS.md: assembly vs ratings, repair, best of 3 vs single shot, phase 2 data counts by drop reason, and the open owner decisions from docs/14 section 9. Add the row 'phase 2 data build | train N, val M' to docs/14 section 10."
+      ],
+      "acceptanceCriteria": [
+        "runs/imp/phase2_data/train.jsonl, val.jsonl and stats.json exist and the kept/dropped counts are copied from stats.json into notes and RESULTS.md",
+        "mesh_lora_hf.py --dry-run passes on the data (output copied) and RESULTS.md says training has not run and needs owner approval",
+        "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-007"
+      ]
+    }
+  ],
+  "metadata": {
+    "specs": [
+      "docs/14-glb-improvement.md"
+    ],
+    "readFirst": [
+      "docs/14-glb-improvement.md (sections 3-7 and the section 10 results table)",
+      "scripts/imp_ops.sh (preflight, start, wait, status)",
+      "ralph/imp-1.prd.json notes (what was built)"
+    ],
+    "owns": [
+      "runs/imp/",
+      "docs/14-glb-improvement.md section 10"
+    ],
+    "requires": [
+      "ralph/imp-1.prd.json: all 8 stories passing"
+    ],
+    "standingRule": "Operator PRD, to be approved by the owner before it runs: starting local jobs through scripts/imp_ops.sh and waiting for them is allowed here, and it overrides the 'no long jobs' line in AGENTS.md for this PRD only. Run exactly the commands in the story. One story per iteration. A wait story that finds the job still running ends without finishing and is run again later. If a result is missing or a command fails, write the exact output in notes and stop. Never edit prompts/ or the PRDs.",
+    "guardrails": [
+      "You are an operator, not a developer. Run only the commands named in the story. Do not edit any file in scripts/, prompts/, bench/, tests/, ralph/ or .ralph-tui/config.toml, and nothing under data/, out/, eval/, .env or .venv. The only files you may write are under runs/imp/ and the section 10 table of docs/14-glb-improvement.md.",
+      "Never commit, push, tag or publish.",
+      "No network and no cloud: never run runpodctl, never train, never call Baseten, Hugging Face or any remote model. The scripts talk only to the local Ollama at localhost:11434.",
+      "Never kill processes or delete files under runs/. Long jobs start and stop only through scripts/imp_ops.sh.",
+      "One story per iteration. Never run two jobs at once; scripts/imp_ops.sh refuses and you must not work around it.",
+      "A foreground command may run for at most about 9 minutes (scripts/imp_ops.sh wait caps itself at 540 seconds). Do not poll in a loop or call sleep yourself.",
+      "Never read or use runs/glb_v3/claude_ratings_unblinded.csv or any rating.csv to choose, filter or pick outputs; ratings are only compared after the fact in US-002.",
+      "Do not output the completion promise unless every acceptance criterion holds. If a criterion cannot hold yet, say why in notes and stop.",
+      "Record only real results: copy numbers from command output; where unknown write 'not measured'."
+    ],
+    "qualityGates": {
+      "universal": [
+        "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
+      ],
+      "chromium": [
+        "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
+      ]
+    },
+    "manualGates": [
+      "Owner rates runs/imp/best3 sheet (or a sample) and decides on the phase 2 LoRA spend (docs/14 sections 8 and 9)"
+    ]
+  }
+}

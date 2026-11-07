@@ -1,0 +1,15 @@
+{
+  "_comment": "Subject phrases of the 48 eval briefs (bench/glb/briefs.jsonl). scripts/ccore_prep.py drops any training example whose title matches one of these phrases as a whole-word, case-insensitive match, so phase 2 is not trained on the eval subjects. Match on the example title only, never on the free-text prompt. Edit only with an owner decision recorded in docs/14 section 9.",
+  "g001": ["crate"], "g002": ["lantern"], "g003": ["toolbox", "tool box"], "g004": ["treasure chest"],
+  "g005": ["chair"], "g006": ["bookshelf", "bookcase"], "g007": ["desk"], "g008": ["bed", "bedroom"],
+  "g009": ["apple"], "g010": ["burger", "hamburger"], "g011": ["cake"], "g012": ["market stall", "fruit stall"],
+  "g013": ["toy car"], "g014": ["pickup truck", "pickup"], "g015": ["propeller plane", "biplane"], "g016": ["rowing boat", "rowboat"],
+  "g017": ["pine tree"], "g018": ["rock", "rocks", "boulder"], "g019": ["flower pot", "flowerpot"], "g020": ["palm tree", "palm"],
+  "g021": ["cottage", "small house"], "g022": ["windmill"], "g023": ["lighthouse"], "g024": ["gas station", "fuel pump", "petrol station"],
+  "g025": ["snowman"], "g026": ["knight"], "g027": ["robot"], "g028": ["chef"],
+  "g029": ["rubber duck"], "g030": ["fox"], "g031": ["clownfish", "fish"], "g032": ["slime"],
+  "g033": ["short sword", "sword"], "g034": ["shield"], "g035": ["bow", "quiver"], "g036": ["staff"],
+  "g037": ["energy cell", "power cell"], "g038": ["drone", "quadcopter"], "g039": ["space fighter", "starfighter"], "g040": ["console"],
+  "g041": ["barrel"], "g042": ["well"], "g043": ["campfire"], "g044": ["tavern sign", "hanging sign"],
+  "g045": ["fence"], "g046": ["road tile"], "g047": ["dungeon wall", "wall module", "doorway arch"], "g048": ["spike trap", "spring pad", "platform block"]
+}

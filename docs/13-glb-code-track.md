@@ -202,3 +202,6 @@ Fix: `prompts/system_glb.txt` now shows the exact call. g001 and g002 are two of
 **Phase 2 note (owner decision, 7 Nov 2026).** The owner is comfortable training on ccore's MIT dataset. Open items before publishing: the dataset card does not name the generating model, so that model's output terms are unchecked; keep ccore's validation split and our 48 briefs out of training; train on answer-only rows (no reasoning) and a shorter subset, estimated 1,000 rows of about 6 to 7K tokens, about 3 to 4 hours on an A100 (estimate from v3's speed, not measured).
 
 **Dev set.** `bench/glb/dev_briefs.jsonl` holds 12 new briefs (ids d001 to d012, no overlap with the 48 eval briefs) for prompt tuning and smoke tests. Never rate or report them as results, and never train on the 48 eval briefs.
+
+### Prompt v3 (8 Nov 2026)
+`prompts/system_glb_v3.txt` is v2 plus one rule asking for 15 to 40 named parts with real features and accent colours. It was tuned on the dev briefs only (d001-d012): median meshes 10 to 19.5, median triangles 668 to 1,269, 11 of 12 valid for both. The 48 eval briefs were not used to write it. The v3 full run is in `runs/glb_v3` (model row `glimmer-v3`, disabled by default, select with `--only`); the v2 run in `runs/glb_v2` stays as the baseline. Hash is in `runs/glb_v3/PROMPT_FROZEN.json`.
