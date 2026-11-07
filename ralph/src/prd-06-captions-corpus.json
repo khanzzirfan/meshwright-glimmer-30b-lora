@@ -1,0 +1,170 @@
+{
+  "name": "Muse Mesh 6: caption and corpus uplift",
+  "branchName": "ralph/06-captions-corpus",
+  "description": "Turns the 120 name-captioned meshes into a grounded, varied, license-tracked training corpus: category tags, caption styles grounded in facts read from the mesh, a caption quality filter, a multi-model caption bake-off, a consensus corpus builder, natural-language prompt variants, an intake tool for new CC0 kits, and a corpus report. Everything is verified offline with fixture meshes and mocked model backends.",
+  "standingRule": "Offline-only PRD. Tests use the fixtures in tests/fixtures/mesh and fake backends injected as objects; nothing calls Ollama, NVIDIA, Baseten or any remote model. Live caption runs are owner manual gates. Runs after prd-05-mesh.json: it reuses and may edit scripts/caption_meshes.py, scripts/build_mesh_dataset.py and scripts/mesh_views.mjs, so those stories must already pass.",
+  "specs": ["docs/08-mesh-track.md"],
+  "requires": ["ralph/prd-05-mesh.json: US-001 to US-005 passing (augment, GLB export, views, caption_meshes, build_mesh_dataset)"],
+  "readFirst": [
+    "docs/08-mesh-track.md (text mesh format, quality metrics, the known gaps: captions, variety, licences)",
+    "scripts/glb_to_text.py (parse_text), scripts/mesh_filter.py (caption() derives a name-based caption), scripts/mesh_validate.py, scripts/mesh_quality.py",
+    "scripts/caption_meshes.py, scripts/build_mesh_dataset.py, scripts/mesh_prompt.py, scripts/mesh_augment.py (from PRD 5; read them before editing)",
+    "tests/fixtures/mesh/objects.jsonl and tests/py/conftest.py"
+  ],
+  "owns": [
+    "scripts/mesh_tags.py", "scripts/mesh_facts.py", "scripts/caption_quality.py", "scripts/caption_bakeoff.py",
+    "scripts/build_caption_corpus.py", "scripts/prompt_variants.py", "scripts/ingest_kit.py", "scripts/corpus_report.py",
+    "scripts/caption_meshes.py", "scripts/build_mesh_dataset.py",
+    "tests/py/", "tests/fixtures/mesh/", "docs/09-caption-corpus.md", "docs/08-mesh-track.md", "README.md", "INDEX.md"
+  ],
+  "manualGates": [
+    "Owner runs scripts/caption_bakeoff.py against Glimmer, DeepSeek and MiniMax on 10 real meshes and picks the captioner from the HTML sheet",
+    "Owner runs scripts/caption_meshes.py on all of data/mesh/objects.jsonl with the chosen model, then scripts/build_caption_corpus.py",
+    "Owner checks the licence line of every new kit before running scripts/ingest_kit.py on it, and reads the corpus report"
+  ],
+  "stories": [
+    {
+      "title": "mesh_tags: category and size class for every object",
+      "description": "As the corpus owner, I want each mesh tagged with a category and size class so captions, balancing and reports can work per category instead of per file name.",
+      "steps": [
+        "Create scripts/mesh_tags.py with a pure `tag(row) -> dict` returning `category` (furniture, vehicle, plant, food, building, prop, light, sign, nature, tool, other), `size_class` (small, medium, large by the mesh's triangle count: <=60, <=300, more) and `shape_class` (tall, wide, flat-ish, compact) from the vertex extents in the text mesh (longest vs shortest side and height share).",
+        "Drive `category` from a keyword table over `name` and `pack` (for example chair, table, bed, couch, shelf -> furniture; sedan, truck, van, taxi, tractor -> vehicle; tree, bush, fern, grass, flower -> plant or nature; pizza, cake, cupcake -> food). Unknown names get `other`. Keep the table in the file as a dict so the owner can extend it, and expose `--report` listing every `other` name.",
+        "Add a CLI: `--in data/mesh/objects.jsonl --out data/mesh/objects.tagged.jsonl` that writes the rows with the three tags added and prints a count per category.",
+        "Write tests/py/test_mesh_tags.py using the fixtures plus small inline rows: keyword matches, case and separator tolerance (q-chair-1, Chair_Wood), unknown name gives other, shape_class from known extents (a tall thin post, a flat slab), the CLI is deterministic and keeps all original keys."
+      ],
+      "criteria": [
+        "tag() returns category, size_class and shape_class for every fixture row and is covered by at least 6 tests",
+        "Unknown names fall into `other` and `--report` lists them, so nothing is silently misfiled",
+        "The CLI keeps every original key of each row and writes the same bytes on a second run",
+        "The keyword table is a plain dict in scripts/mesh_tags.py with a comment saying how to extend it"
+      ]
+    },
+    {
+      "title": "mesh_facts: ground captions in what the mesh actually is",
+      "description": "As the caption pipeline, I want machine-read facts (dominant colours, proportions, part count) given to the captioning model so captions cannot contradict the mesh.",
+      "steps": [
+        "Create scripts/mesh_facts.py with `facts(text) -> dict` reading the `c #rrggbb` groups and vertex extents: `colours` (up to 3 named colours ordered by triangle share, using a small fixed table of about 16 colour names matched by nearest RGB distance), `proportion` (tall, wide, flat, compact, with the extent ratios), `parts` (number of connected components over shared vertex indices, capped at 9+), and `symmetry` (true when mirroring on x maps the vertex set onto itself within 1 bin).",
+        "Add `facts_sentence(facts) -> str` producing one short plain sentence used in prompts, for example 'Mostly dark brown and grey, tall and narrow, 3 separate parts.' Never mention bins, vertices or the file format.",
+        "Write tests/py/test_mesh_facts.py with inline meshes: a pure red cube, a two-colour box, a tall post, a flat slab, two disjoint cubes (parts=2), a symmetric and an asymmetric mesh. Colour naming of #ff0000, #202020, #f5f5f5 and a brown (#5a3b2e) is asserted.",
+        "Add a section 'Facts' to docs/08-mesh-track.md listing the fields and stating they are heuristics, not ground truth."
+      ],
+      "criteria": [
+        "facts() returns colours, proportion, parts and symmetry for every fixture and is covered by at least 6 tests",
+        "Connected-component counting is correct on a two-cube mesh (2) and a single cube (1)",
+        "facts_sentence never contains the words bins, vertex, vertices, mesh, obj or hex digits",
+        "The doc states the facts are heuristics"
+      ]
+    },
+    {
+      "title": "caption styles: prompts that produce terse, plain, detailed and casual captions",
+      "description": "As the dataset builder, I want one captioning prompt that yields four styles per object, grounded in the facts, so the trained model sees how real users phrase requests.",
+      "steps": [
+        "Create scripts/caption_prompts.py (new file) with `build_prompt(row, facts_sentence, with_views)` returning the instruction text. It asks for exactly four captions as JSON lines `{\"style\": ..., \"text\": ...}` with styles `terse` (2-4 words), `plain` (one sentence), `detailed` (up to 30 words: material, colours, key parts, but no vertex or mesh language), `casual` (how a person would ask, for example 'can you make me a ...'). The prompt includes the name-derived caption as a hint, the category, and the facts sentence, and says the facts are hints, to trust the images when they disagree.",
+        "Update scripts/caption_meshes.py to use build_prompt and parse the new four-style format (keep reading the old format so existing caption files stay valid). Output files keep `captions` as a list of `{style, text}`; `merge_captions` returns that list, falling back to the name caption as style `terse`.",
+        "Write tests/py/test_caption_prompts.py: the prompt names all four styles, includes the facts sentence and category, never includes a file name with an extension or the pack name, parse accepts fenced and chatty replies, old-format files still load, missing styles are reported by a `missing_styles(captions)` helper instead of crashing.",
+        "Keep all earlier tests for caption_meshes passing."
+      ],
+      "criteria": [
+        "build_prompt asks for the four named styles and carries the facts sentence and category (asserted)",
+        "Parsing handles the new format, fenced replies, chatter and the old format, covered by at least 6 tests",
+        "missing_styles reports absent styles and never raises",
+        "All tests written for scripts/caption_meshes.py in PRD 5 still pass"
+      ]
+    },
+    {
+      "title": "caption_quality: filter and score captions before they reach training",
+      "description": "As the trainer, I want weak, leaky or contradictory captions dropped automatically so the model is not taught wrong prompts.",
+      "steps": [
+        "Create scripts/caption_quality.py with `check(caption, style, facts, row) -> list[str]` returning problem codes: length_out_of_range per style (terse 1-5 words, plain 4-20, detailed 12-40, casual 4-25), banned_word (mesh, obj, vertex, vertices, triangle, polygon, glb, file extension, pack names such as kenney or quaternius), name_leak (the raw file name or an id like b00012), colour_contradiction (names a colour absent from facts.colours and not a neutral), proportion_contradiction (says tall or flat when facts disagree strongly), not_english_text (non-ascii ratio over 20 percent), duplicate_of_other_style (Jaccard over 0.8 with another style of the same object).",
+        "Add `score(captions, facts, row) -> {kept: [...], dropped: [{text, style, problems}], coverage: [...]}` that keeps a caption only when it has no problems, and reports which styles survived. Add `near_duplicates(all_rows, threshold=0.85)` listing pairs of different objects with near-identical kept captions (a sign the captions are too generic).",
+        "Add a CLI: `--captions-dir data/mesh/captions --objects data/mesh/objects.jsonl --out data/mesh/captions.checked.jsonl --report data/mesh/captions.report.md`. The report gives kept and dropped counts per problem code, objects with fewer than 2 surviving styles, and the generic-caption pairs. It says 'not run on real data' when there are no caption files.",
+        "Write tests/py/test_caption_quality.py with hand-written captions that trigger each problem code at least once and a clean caption set that survives untouched; test the CLI against a temp captions dir and an empty dir."
+      ],
+      "criteria": [
+        "Every problem code has at least one test that triggers it and one clean caption that does not",
+        "A caption naming a pack, a file extension or mesh vocabulary is always dropped",
+        "The report lists objects with fewer than 2 surviving styles and generic near-duplicate pairs",
+        "An empty captions dir yields a report that says it was not run on real data, not zeros presented as a result"
+      ]
+    },
+    {
+      "title": "caption_bakeoff: compare captioning models side by side",
+      "description": "As the owner choosing the captioner, I want one command that runs the same meshes through several models and shows their captions with the renders, so the choice is made from evidence.",
+      "steps": [
+        "Create scripts/caption_bakeoff.py taking `--objects`, `--views-dir`, `--n 10`, `--seed 1` and a repeatable `--backend name=KIND:model[@url]` where KIND is `ollama` (native /api/chat) or `openai` (OpenAI-compatible, key from the environment variable named by `--key-env`, never printed or stored). It picks the same N objects for every backend (stratified by category from mesh_tags), calls caption_meshes' prompt builder and parser through an injected backend object, and writes `data/mesh/bakeoff/<backend>/<id>.json`, resumable.",
+        "After the runs compute per backend: share of captions passing caption_quality (per problem code), mean surviving styles per object, diversity (distinct words per caption), median seconds per object and tokens when reported. Write `data/mesh/bakeoff/summary.json` and `report.md` with one row per backend. Never invent a number; a backend with no results is listed as 'no results'.",
+        "Write `data/mesh/bakeoff/sheet.html` showing, per object, the four view PNGs and each backend's captions side by side, as a static file with inline CSS and relative image paths and no scripts or remote URLs.",
+        "Write tests/py/test_caption_bakeoff.py with two fake backends (one clean, one that leaks file names and returns bad JSON for some objects): the same objects go to both, resume makes zero calls, the summary ranks the clean backend higher, a backend that raises is recorded as failed for that object and the run continues, the HTML contains every caption and no `<script` or `http` text, and no environment value is written to any output file."
+      ],
+      "criteria": [
+        "Both fake backends receive exactly the same object ids and a rerun makes zero backend calls (asserted)",
+        "The summary reports quality pass rate, surviving styles, diversity and timing per backend, and ranks the clean fake above the leaky one",
+        "sheet.html contains every caption and view path and no script tags or remote URLs (asserted)",
+        "An API key read from the environment never appears in any file written under data/mesh/bakeoff (asserted with a sentinel value)"
+      ]
+    },
+    {
+      "title": "build_caption_corpus: pick the best captions per object with provenance",
+      "description": "As the dataset builder, I want one final caption file per object that combines several models' captions, keeps the best of each style, and records which model wrote each one so licence questions can be answered later.",
+      "steps": [
+        "Create scripts/build_caption_corpus.py reading caption files from one or more `--captions-dir name=path` folders (the layout caption_meshes and caption_bakeoff write), the objects file, and applying scripts/caption_quality.check. For each object and each style keep the surviving caption from the highest-priority model (`--prefer glimmer,minimax,deepseek`), falling back to the next model, then to the name-derived caption as style `terse` only.",
+        "Write `data/mesh/captions.final.jsonl` rows `{id, name, category, captions: [{style, text, model, source}]}` and `data/mesh/captions.provenance.json` giving, per model, how many captions it contributed and a `licence_note` field copied from an optional `--licences licences.json` (model name to note) or the string 'unverified' when none is given. Never drop the model field.",
+        "Update scripts/build_mesh_dataset.py so `--captions captions.final.jsonl` replaces the name-derived caption: one example per kept caption, with a `--max-captions` cap and a `--styles terse,plain,detailed,casual` selector; objects without a final captions entry keep working through the old path. Keep the split-by-source-object guarantee and the earlier tests.",
+        "Write tests/py/test_build_caption_corpus.py: priority order is honoured, a bad caption from the preferred model falls back to the next, an object with no usable captions gets the name caption only, provenance counts are right, unverified licence notes are written when no licences file is given, and build_mesh_dataset produces one example per kept caption without leaking an object across train and validation."
+      ],
+      "criteria": [
+        "Every kept caption carries the model that wrote it, and provenance.json counts contributions per model (asserted)",
+        "Priority and fallback behave as described, covered by at least 6 tests",
+        "build_mesh_dataset with --captions emits one example per kept caption and still never shares a source object between train and validation",
+        "Without a licences file every model is reported with licence_note 'unverified'"
+      ]
+    },
+    {
+      "title": "prompt_variants: turn captions into the ways people actually ask",
+      "description": "As the trainer, I want deterministic, label-preserving variations of each caption (request wrappers, casing, small typos) so the model is not tied to one phrasing.",
+      "steps": [
+        "Create scripts/prompt_variants.py with `variants(caption, rng, n)` returning up to n distinct strings from a fixed table of wrappers (for example 'make me {a}', 'generate {a} in low poly', '3D model of {a}', 'I need {a} for my game', bare caption) with article handling (a/an), plus optional light noise: lowercase only, trailing period removed, one adjacent-letter swap in a word of 6+ letters with probability 0.15. Never alter colour or object words enough to change the meaning, and never touch the first or last letter of a word.",
+        "Add `--prompt-variants N` and `--seed` to scripts/build_mesh_dataset.py: each kept caption fans out to at most N prompts, all sharing the same completion. Default is 0 (off), so existing behaviour and tests are unchanged. The total fan-out is capped by `--max-examples-per-object` (default 24).",
+        "Write tests/py/test_prompt_variants.py: determinism for a fixed seed, no variant equals another, articles are right (an apple, a chair), noise never changes first or last letters, n=0 returns an empty list, and the dataset builder with --prompt-variants 3 produces more rows than without while keeping the leak-free split and the per-object cap."
+      ],
+      "criteria": [
+        "variants() is deterministic for a fixed seed, returns distinct strings, and keeps article grammar right (asserted)",
+        "Typo noise never alters the first or last letter of a word and affects at most one word per prompt (asserted over many seeds)",
+        "build_mesh_dataset behaves exactly as before when --prompt-variants is 0",
+        "With --prompt-variants set, no source object appears in both train and validation and no object exceeds --max-examples-per-object"
+      ]
+    },
+    {
+      "title": "ingest_kit: bring in new CC0 kits with a licence ledger",
+      "description": "As the corpus owner, I want to add a new asset pack in one command that checks its licence, converts and filters its models, removes geometry duplicates and records where every mesh came from.",
+      "steps": [
+        "Create scripts/ingest_kit.py taking `--kit PATH` (a folder laid out like the existing special-kits packs: <pack>/<version>/models/*.glb with LICENSE.txt) and `--objects data/mesh/objects.jsonl`. Refuse to continue, with a clear message and non-zero exit, unless a LICENSE file in the kit contains 'CC0' or 'Creative Commons Zero' (case-insensitive) or the user passes `--licence-override 'text'` which is recorded in the ledger. Skip `clay/` and `original/` folders as glb_to_text does.",
+        "Convert with glb_to_text's functions, apply mesh_filter's reject_reason and mesh_tags.tag, and drop meshes whose normalised text hash (after rotating to a canonical orientation by trying the four quarter turns and mirror and taking the smallest hash) equals one already in the objects file. Append the new rows to the objects file (never rewrite existing rows) with fresh ids that continue the numbering.",
+        "Maintain `data/mesh/sources.json`, a ledger of `{pack, licence, licence_text_first_line, kit_path, added_at, count_converted, count_kept, count_duplicate}` per ingested kit; re-running on the same kit adds nothing and says so.",
+        "Write tests/py/test_ingest_kit.py using tiny GLB files produced by scripts/mesh_to_glb.py from the fixtures inside a temp kit folder: a CC0 kit is ingested, a kit without a licence is refused, a kit with --licence-override is accepted and the override is recorded, duplicates (including a rotated copy) are dropped, ids continue after the existing maximum, existing rows are untouched, a rerun is a no-op."
+      ],
+      "criteria": [
+        "A kit without a CC0 licence file is refused with a non-zero exit unless --licence-override is given, and the override text is stored in the ledger (asserted)",
+        "A rotated or mirrored copy of an existing mesh is detected as a duplicate and not appended (asserted)",
+        "Existing rows in the objects file are byte-identical after ingesting a new kit and new ids continue the numbering",
+        "Re-running on the same kit appends nothing and the ledger has one entry for it"
+      ]
+    },
+    {
+      "title": "corpus_report and an offline end-to-end test of the caption pipeline",
+      "description": "As the person presenting the dataset, I want one report that shows what is in the corpus and where it is thin, plus a single offline test that runs the whole caption pipeline on fixtures.",
+      "steps": [
+        "Create scripts/corpus_report.py reading objects (tagged), captions.final.jsonl, captions.provenance.json, sources.json and the sft train and val files when present. Write a Markdown report with: counts by category, pack, size class and licence; triangle and text-length summaries (median, p90, max; characters divided by 3 as a rough token estimate); caption coverage (objects with 4, 3, 2, 1 surviving styles); examples per object in train; thin categories (fewer than 8 objects) listed as 'needs more kits'; the source licence ledger; and the models that wrote captions with their licence notes.",
+        "Anything missing is printed as 'not available', never as zero. Add `--out data/mesh/corpus_report.md` and `--json` for a machine-readable twin.",
+        "Write tests/py/test_corpus_pipeline.py: starting from tests/fixtures/mesh/objects.jsonl, run mesh_tags, a fake caption backend through caption_meshes, caption_quality, build_caption_corpus, build_mesh_dataset with --prompt-variants 2 and corpus_report, all in a temp dir, and assert: every sft completion validates with mesh_validate, no source object is in both splits, every caption has a model field, the report mentions each category present and lists 'not available' for a missing ledger.",
+        "Write docs/09-caption-corpus.md describing the order of commands, the four caption styles, the quality rules, how to add a kit, which steps are manual gates, and what is not measured yet. Link it from README.md and INDEX.md. State clearly that no real caption run or real corpus report exists until the owner runs them."
+      ],
+      "criteria": [
+        "The end-to-end fixture test runs the full chain in a temp dir and asserts valid completions, a leak-free split, and a model field on every caption",
+        "The report prints 'not available' for any missing input instead of a zero",
+        "Thin categories (fewer than 8 objects) are listed as needing more kits",
+        "docs/09-caption-corpus.md is linked from README.md and INDEX.md and says no real caption run has happened yet"
+      ]
+    }
+  ]
+}

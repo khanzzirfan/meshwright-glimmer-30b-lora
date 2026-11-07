@@ -1,0 +1,48 @@
+{"id": "g001", "title": "Wooden crate", "brief": "A wooden crate with darker plank edges, about one metre on each side.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "g002", "title": "Oil lantern", "brief": "An old oil lantern: metal base, glass body with a warm glowing flame inside, a wire handle on top.", "domain": "props_and_tools", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "g003", "title": "Toolbox", "brief": "A red metal toolbox with the lid open, a hammer and a wrench lying in the top tray.", "domain": "props_and_tools", "level": 3, "style": "low-poly", "kind": "static"}
+{"id": "g004", "title": "Treasure chest opening", "brief": "A treasure chest with iron bands whose lid opens and closes in a loop, gold coins visible inside.", "domain": "props_and_tools", "level": 4, "style": "stylised", "kind": "animated"}
+{"id": "g005", "title": "Simple chair", "brief": "A plain wooden chair with four legs and a slatted back.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "g006", "title": "Bookshelf", "brief": "A tall bookshelf with three shelves holding books of different colours and heights, one leaning over.", "domain": "furniture", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "g007", "title": "Desk with lamp", "brief": "A small office desk with one drawer, a laptop and a bendy desk lamp on top.", "domain": "furniture", "level": 3, "style": "low-poly", "kind": "static"}
+{"id": "g008", "title": "Bedroom set", "brief": "A bedroom furniture set laid out side by side: a single bed with pillow and blanket, a nightstand and a wardrobe.", "domain": "furniture", "level": 4, "style": "low-poly", "kind": "set"}
+{"id": "g009", "title": "Red apple", "brief": "A red apple with a short brown stem and one green leaf.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "g010", "title": "Burger", "brief": "A burger with a sesame bun, patty, cheese slice, lettuce and tomato, stacked in clear layers.", "domain": "food", "level": 2, "style": "stylised", "kind": "static"}
+{"id": "g011", "title": "Birthday cake", "brief": "A two-tier birthday cake with pink icing and five candles with small flames on top.", "domain": "food", "level": 3, "style": "toon", "kind": "static"}
+{"id": "g012", "title": "Market fruit stall", "brief": "A market stall with a striped awning and crates of oranges, bananas and watermelons.", "domain": "food", "level": 5, "style": "low-poly", "kind": "set"}
+{"id": "g013", "title": "Toy car", "brief": "A small blue toy car with four black wheels and windows.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "g014", "title": "Pickup truck", "brief": "A rusty orange pickup truck with an open cargo bed, headlights and a bumper.", "domain": "vehicles", "level": 3, "style": "low-poly", "kind": "static"}
+{"id": "g015", "title": "Propeller plane", "brief": "A small yellow propeller plane whose propeller spins.", "domain": "vehicles", "level": 3, "style": "low-poly", "kind": "animated"}
+{"id": "g016", "title": "Wooden rowing boat", "brief": "A wooden rowing boat with two oars resting inside and a bench seat.", "domain": "vehicles", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "g017", "title": "Pine tree", "brief": "A pine tree with a brown trunk and three stacked green cone layers.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "g018", "title": "Mossy rock cluster", "brief": "A cluster of three grey rocks of different sizes with patches of green moss.", "domain": "nature", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "g019", "title": "Flower pot", "brief": "A terracotta flower pot with three tulips: red, yellow and purple.", "domain": "nature", "level": 2, "style": "stylised", "kind": "static"}
+{"id": "g020", "title": "Swaying palm", "brief": "A palm tree on a small sand island; the leaves sway gently in a loop.", "domain": "nature", "level": 4, "style": "low-poly", "kind": "animated"}
+{"id": "g021", "title": "Small house", "brief": "A small cottage with white walls, a red pitched roof, a door, two windows and a chimney.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "g022", "title": "Windmill", "brief": "A stone windmill with four wooden sails that turn slowly.", "domain": "buildings", "level": 4, "style": "low-poly", "kind": "animated"}
+{"id": "g023", "title": "Lighthouse", "brief": "A red and white striped lighthouse on a rocky base with a lamp room on top.", "domain": "buildings", "level": 3, "style": "low-poly", "kind": "static"}
+{"id": "g024", "title": "Gas station", "brief": "A small roadside gas station: a canopy on pillars, two fuel pumps and a little shop building.", "domain": "buildings", "level": 5, "style": "low-poly", "kind": "set"}
+{"id": "g025", "title": "Snowman", "brief": "A snowman with three snowballs, a carrot nose, coal eyes, a scarf and stick arms.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "g026", "title": "Knight", "brief": "A chunky knight character in grey armour holding a sword and a round shield.", "domain": "characters", "level": 4, "style": "low-poly", "kind": "static"}
+{"id": "g027", "title": "Waving robot", "brief": "A boxy friendly robot with antenna and screen face that waves one arm.", "domain": "characters", "level": 4, "style": "toon", "kind": "animated"}
+{"id": "g028", "title": "Chef", "brief": "A cartoon chef character with a white hat and apron holding a frying pan.", "domain": "characters", "level": 4, "style": "toon", "kind": "static"}
+{"id": "g029", "title": "Rubber duck", "brief": "A yellow rubber duck with an orange beak.", "domain": "creatures", "level": 1, "style": "toon", "kind": "static"}
+{"id": "g030", "title": "Fox", "brief": "A sitting orange fox with a white-tipped tail and pointed ears.", "domain": "creatures", "level": 3, "style": "low-poly", "kind": "static"}
+{"id": "g031", "title": "Fish swimming", "brief": "A clownfish whose tail and fins wiggle in a swimming loop.", "domain": "creatures", "level": 4, "style": "low-poly", "kind": "animated"}
+{"id": "g032", "title": "Slime monster", "brief": "A green slime enemy with big eyes that squashes and stretches as it bounces.", "domain": "creatures", "level": 3, "style": "toon", "kind": "animated"}
+{"id": "g033", "title": "Short sword", "brief": "A short sword with a steel blade, gold crossguard and leather-wrapped grip.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "g034", "title": "Wooden shield", "brief": "A round wooden shield with an iron rim and a central boss.", "domain": "weapons_and_armour", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "g035", "title": "Bow and quiver", "brief": "A wooden bow and a leather quiver with five arrows, side by side.", "domain": "weapons_and_armour", "level": 3, "style": "low-poly", "kind": "set"}
+{"id": "g036", "title": "Magic staff", "brief": "A wizard's staff of twisted wood with a glowing blue crystal floating and rotating at the top.", "domain": "weapons_and_armour", "level": 3, "style": "stylised", "kind": "animated"}
+{"id": "g037", "title": "Energy cell", "brief": "A sci-fi energy cell: a glowing green cylinder held in a metal frame with caps.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "g038", "title": "Hover drone", "brief": "A small quadcopter drone with four rotors that spin and a body that bobs up and down.", "domain": "sci_fi", "level": 4, "style": "low-poly", "kind": "animated"}
+{"id": "g039", "title": "Space fighter", "brief": "A sleek space fighter with swept wings, a cockpit canopy and two glowing engines.", "domain": "sci_fi", "level": 4, "style": "low-poly", "kind": "static"}
+{"id": "g040", "title": "Sci-fi console", "brief": "A computer console with a slanted screen, buttons and a small chair in front of it.", "domain": "sci_fi", "level": 3, "style": "low-poly", "kind": "static"}
+{"id": "g041", "title": "Wooden barrel", "brief": "A wooden barrel with two metal hoops.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "g042", "title": "Well", "brief": "A stone well with a small wooden roof, a crank and a bucket on a rope.", "domain": "fantasy_medieval", "level": 3, "style": "low-poly", "kind": "static"}
+{"id": "g043", "title": "Campfire", "brief": "A campfire with a ring of stones, crossed logs and flickering flames.", "domain": "fantasy_medieval", "level": 3, "style": "stylised", "kind": "animated"}
+{"id": "g044", "title": "Tavern sign", "brief": "A hanging tavern sign on an iron bracket that swings gently.", "domain": "fantasy_medieval", "level": 3, "style": "low-poly", "kind": "animated"}
+{"id": "g045", "title": "Fence pieces", "brief": "A modular wooden fence kit: a straight section, a corner post and a gate, spaced apart.", "domain": "modular_kits", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "g046", "title": "Road tiles", "brief": "Three square road tiles side by side: straight, corner and crossroads, with lane markings.", "domain": "modular_kits", "level": 3, "style": "low-poly", "kind": "set"}
+{"id": "g047", "title": "Dungeon wall kit", "brief": "Dungeon pieces: a stone wall segment, a wall with a torch bracket and a doorway arch.", "domain": "modular_kits", "level": 4, "style": "low-poly", "kind": "set"}
+{"id": "g048", "title": "Platformer kit", "brief": "Platformer game pieces: a grass-topped platform block, a coin, a spring pad and a spike trap.", "domain": "modular_kits", "level": 4, "style": "toon", "kind": "set"}

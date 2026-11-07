@@ -1,0 +1,15 @@
+== [1] model nvidia/deepseek-ai/deepseek-v4.1-flash | stories passing 0/8 | log .ralph-tui/models/local-1.prd.1.nvidia_deepseek-ai_deepseek-v4.1-flash.log
+   time limit (60 min) reached, stopping this model
+   result: 0 -> 2 of 8 stories passing
+== [2] model nvidia/moonshotai/kimi-k2.6 | stories passing 2/8 | log .ralph-tui/models/local-1.prd.2.nvidia_moonshotai_kimi-k2.6.log
+   result: 2 -> 2 of 8 stories passing
+== [3] model nvidia/z-ai/glm-5.3-flash | stories passing 2/8 | log .ralph-tui/models/local-1.prd.3.nvidia_z-ai_glm-5.3-flash.log
+   result: 2 -> 2 of 8 stories passing
+== [4] model nvidia/minimaxai/minimax-m3.1-flash | stories passing 2/8 | log .ralph-tui/models/local-1.prd.4.nvidia_minimaxai_minimax-m3.1-flash.log
+   result: 2 -> 2 of 8 stories passing
+== [5] model nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b | stories passing 2/8 | log .ralph-tui/models/local-1.prd.5.nvidia_nvidia_nemotron-3.5-super-vl-120b-a12b.log
+   result: 2 -> 2 of 8 stories passing
+== [6] model ollama/qwen3.8:27b-64k | stories passing 2/8 | log .ralph-tui/models/local-1.prd.6.ollama_qwen3.8_27b-64k.log
+   result: 2 -> 2 of 8 stories passing
+local-1.prd.json: 2/8 | next US-003 rerank_samples.py: compare first, medoid, CLIP and oracle picks on existing samples
+== not finished after all models; read the story notes

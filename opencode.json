@@ -1,0 +1,98 @@
+{
+  "$schema": "https://opencode.ai",
+  "model": "ollama/qwen3.8:27b-64k",
+  "small_model": "ollama/qwen3.8:27b-64k",
+  "autoupdate": false,
+  "experimental": {
+    "openTelemetry": false
+  },
+  "provider": {
+    "cmdc": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Command Code",
+      "options": {
+        "baseURL": "https://api.commandcode.ai/provider/v1",
+        "apiKey": "{env:CMDC_KEY}"
+      },
+      "models": {
+        "minimax/minimax-m3.1-flash": {
+          "name": "minimax-m3.1-flash",
+          "tool_call": true,
+          "reasoning": true,
+          "limit": {
+            "context": 262144,
+            "output": 16384
+          }
+        }
+      }
+    },
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (local)",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      },
+      "models": {
+        "qwen3.8:27b": {
+          "name": "qwen3.8:27b"
+        },
+        "qwen3-coder:30b": {
+          "name": "qwen3-coder:30b"
+        },
+        "muse-glimmer:30b-mlx": {
+          "name": "muse-glimmer:30b-mlx"
+        },
+        "qwen3.8:27b-64k": {
+          "name": "qwen3.8:27b-64k",
+          "tool_call": true,
+          "limit": {
+            "context": 65536,
+            "output": 16384
+          }
+        }
+      }
+    },
+    "nvidia": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "NVIDIA build (free endpoint)",
+      "options": {
+        "baseURL": "https://integrate.api.nvidia.com/v1",
+        "apiKey": "{env:NVIDIA_NIM_API_KEY}"
+      },
+      "models": {
+        "deepseek-ai/deepseek-v4.1-flash": {
+          "name": "deepseek-ai/deepseek-v4.1-flash",
+          "tool_call": true
+        },
+        "moonshotai/kimi-k2.6": {
+          "name": "moonshotai/kimi-k2.6",
+          "tool_call": true
+        },
+        "z-ai/glm-5.3-flash": {
+          "name": "z-ai/glm-5.3-flash",
+          "tool_call": true
+        },
+        "z-ai/glm-5-3-flash": {
+          "name": "z-ai/glm-5-3-flash",
+          "tool_call": true
+        },
+        "nvidia/nemotron-3-ultra-550b-a55b": {
+          "name": "nvidia/nemotron-3-ultra-550b-a55b",
+          "tool_call": true
+        },
+        "nvidia/nemotron-3.5-super-vl-120b-a12b": {
+          "name": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+          "tool_call": true
+        },
+        "nvidia/nemotron-3.5-lightning-30b-a3b": {
+          "name": "nvidia/nemotron-3.5-lightning-30b-a3b",
+          "tool_call": true
+        },
+        "minimaxai/minimax-m3.1-flash": {
+          "name": "minimaxai/minimax-m3.1-flash",
+          "tool_call": true
+        }
+      }
+    }
+  }
+}

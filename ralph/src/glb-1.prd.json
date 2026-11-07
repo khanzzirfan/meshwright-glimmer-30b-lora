@@ -1,0 +1,164 @@
+{
+  "name": "GLB benchmark 1: score Three.js answers by the GLB they export",
+  "branchName": "ralph/glb-1",
+  "description": "Phase 1 tooling for docs/13-glb-code-track.md: a GLB parser, a GLB mode for the scene validator that clicks Export and checks the downloaded file, a configurable system prompt and sampling for teacher_generate, a resumable benchmark runner over bench/glb/models.json, a report with confidence intervals and head-to-head counts, and a blind contact sheet for human rating. The owner then runs untuned Muse Glimmer and ccore's Qwen3.5-4B-GLB-3D-Coder on the 48 briefs in bench/glb/briefs.jsonl and decides on phase 2 with the rules in docs/13 section 7.",
+  "standingRule": "Offline-only PRD. Ralph builds and tests tools with tiny fixtures, fake generators and GLB files built inside the tests. It never calls Ollama, never pulls a model, never runs the benchmark and never writes under data/, out/ or eval/. The default (scene) mode of validate_scenes.mjs and the default behaviour of teacher_generate.py must not change: existing pilots were scored with them. Do not edit bench/glb/briefs.jsonl, prompts/system.txt, prompts/system_glb.txt or prompts/ccore_glb_system.txt.",
+  "specs": [
+    "docs/13-glb-code-track.md"
+  ],
+  "readFirst": [
+    "docs/13-glb-code-track.md (the whole spec; sections 4-6 define every flag and metric used here)",
+    "scripts/validate_scenes.mjs (current scene validator: extractHtml, staticChecks, route-to-local-three trick, report rows {id, ok, reasons, stats})",
+    "scripts/teacher_generate.py (call_ollama, resumable per-id JSON in --out, raw row shape)",
+    "scripts/common.py (system_prompt reads prompts/system.txt)",
+    "tests/js/render_views.test.mjs and tests/js/index.js (JS test style: node:test, execFileSync, temp dirs; new test files must be imported from tests/js/index.js)",
+    "tests/py/conftest.py and tests/py/test_build_dataset.py (Python test style; scripts/ is on sys.path)",
+    "bench/glb/briefs.jsonl (48 briefs: id, title, brief, domain, level, style, kind)"
+  ],
+  "owns": [
+    "scripts/glb_check.mjs",
+    "scripts/validate_scenes.mjs",
+    "scripts/teacher_generate.py",
+    "scripts/glb_bench.py",
+    "scripts/glb_report.py",
+    "scripts/glb_sheet.mjs",
+    "bench/glb/models.json",
+    "tests/js/glb_util.mjs",
+    "tests/js/glb_check.test.mjs",
+    "tests/js/validate_glb.test.mjs",
+    "tests/js/glb_sheet.test.mjs",
+    "tests/js/index.js",
+    "tests/py/test_teacher_generate.py",
+    "tests/py/test_glb_bench.py",
+    "tests/py/test_glb_report.py",
+    "tests/py/test_docs_glb.py",
+    "tests/fixtures/glb_raw/",
+    "tests/fixtures/glb_bench/",
+    "docs/13-glb-code-track.md",
+    "INDEX.md",
+    "ralph/README.md"
+  ],
+  "manualGates": [
+    "Owner pastes ccore's verbatim system prompt into prompts/ccore_glb_system.txt and runs `ollama pull hf.co/ccore/Qwen3.5-4B-GLB-3D-Coder:Q8_0`",
+    "Owner runs `.venv/bin/python scripts/glb_bench.py --out-root eval/glb_bench` overnight, then glb_report.py and glb_sheet.mjs, rates rating.csv blind, and records the outcome (A, B or C) in docs/13 section 10"
+  ],
+  "stories": [
+    {
+      "title": "glb_check.mjs: parse a GLB and count meshes, triangles, animations and bounds",
+      "description": "As the evaluator, I want a dependency-free GLB parser so that every exported asset can be checked and measured. Use the exact file and function names given in the steps: other names fail review.",
+      "steps": [
+        "Create tests/js/glb_util.mjs exporting `makeGlb({triangles = 1, indexed = true, animations = 0, meshes = 1, version = 2, badMagic = false, truncate = false})` that writes a minimal valid GLB Buffer by hand (12-byte header, JSON chunk padded with spaces to 4 bytes, BIN chunk padded with zeros): one node per mesh, one primitive per mesh, a FLOAT VEC3 POSITION accessor with min and max, an optional UNSIGNED_SHORT index accessor, and `animations` dummy animation entries with valid sampler and channel objects. The flags produce the broken variants used in tests.",
+        "Create scripts/glb_check.mjs exporting `parseGlb(buf)` per docs/13 section 5.2: returns {ok, reason, bytes, version, meshes, primitives, triangles, vertices, materials, nodes, animations, bbox:{min, max, size}}. Triangle rules: mode 4 or absent counts indices.count/3 (POSITION.count/3 when not indexed), modes 5 and 6 count count-2, modes 0-3 count 0. bbox is the union of POSITION min/max with node transforms ignored. reason is 'bad_glb' for wrong magic, version other than 2, declared length different from the buffer, missing or unparsable JSON chunk; 'empty_glb' for zero meshes or zero triangles; null when ok. It must never throw.",
+        "Add a CLI to the same file: `node scripts/glb_check.mjs FILE.glb` prints the result as one JSON line and exits 0 when ok, 1 otherwise. Guard the CLI so importing the module does not run it.",
+        "Create tests/js/glb_check.test.mjs and import it from tests/js/index.js. Cover: one indexed triangle, 12 non-indexed triangles, 3 meshes, 2 animations, bbox values equal the accessor min/max, wrong magic, version 1, truncated buffer, zero triangles, random bytes, and the CLI exit codes on a temp file."
+      ],
+      "criteria": [
+        "Files are named exactly scripts/glb_check.mjs, tests/js/glb_util.mjs and tests/js/glb_check.test.mjs, and tests/js/index.js imports the new test file",
+        "parseGlb returns reason 'bad_glb' for wrong magic, version 1, truncation and random bytes, and 'empty_glb' for zero triangles, without throwing (each asserted)",
+        "Triangle counts are asserted for indexed and non-indexed input, and animations and bbox are asserted against the values makeGlb wrote",
+        "Importing scripts/glb_check.mjs prints nothing and does not exit the process (asserted)",
+        "glb_check.mjs imports only node: built-ins (asserted by reading its import lines in the test)"
+      ]
+    },
+    {
+      "title": "validate_scenes.mjs --mode glb: allow GLTFExporter, click Export, check the downloaded GLB",
+      "description": "As the evaluator, I want the existing validator to score asset pages by the GLB they export, so that every model is judged on the same file a game engine would import, while the scene mode stays exactly as it is. Use the exact file and function names given in the steps: other names fail review.",
+      "chromium": true,
+      "steps": [
+        "Add flags `--mode scene|glb` (default scene) and `--glb-dir DIR` (default data/glb, used only in glb mode) to scripts/validate_scenes.mjs. Keep every scene-mode code path and result unchanged.",
+        "In glb mode: (a) static checks allow Three.js core and examples/jsm/exporters/GLTFExporter.js from cdnjs.cloudflare.com, cdn.jsdelivr.net or unpkg.com, directly or via an import map, at any version; any other addon is 'bad_import' and any other host 'external_dep'. (b) Route every allowed core URL to node_modules/three/build/three.module.js and every GLTFExporter URL to node_modules/three/examples/jsm/exporters/GLTFExporter.js; when the requested version is not 0.160.0 record stats.three_requested and stats.version_rewritten = true (not a failure). (c) 'static' and 'no_loop' are not reasons. (d) After the screenshot, click the first button, a or [role=button] element whose visible text matches /export|download|glb/i, wait up to 20 s for a Playwright download, save it to <glb-dir>/<id>.glb and record stats.export_ms. Reasons: 'no_export_button', 'no_download', 'export_error' (a page error raised after the click). (e) Run parseGlb from scripts/glb_check.mjs on the file and store its result in stats.glb; add its reason ('bad_glb' or 'empty_glb') when not ok.",
+        "Create fixtures in tests/fixtures/glb_raw/, each a raw answer JSON like tests/fixtures/raw/b000.json whose content is an html code block: g_ok (import map to jsDelivr three@0.160.0 plus three/addons/, a cube in a Group named asset, an Export GLB button using GLTFExporter binary:true and an anchor download), g_unpkg (same but unpkg three@0.165.0, expected ok with version_rewritten), g_anim (exports one AnimationClip, expected stats.glb.animations = 1), g_nobutton, g_throws (button handler throws), g_orbit (imports OrbitControls), g_trunc (finish_reason length).",
+        "Create tests/js/validate_glb.test.mjs (imported from tests/js/index.js) that runs the validator in glb mode on a temp copy of the fixtures with temp scenes, shots, glb and report paths, and asserts each fixture's ok and reasons; it also runs scene mode on tests/fixtures/raw and asserts the report equals what scene mode produced before this story (capture the expected rows once into tests/fixtures/glb_raw/scene_mode_expected.jsonl, compare id, ok and reasons only)."
+      ],
+      "criteria": [
+        "g_ok, g_unpkg and g_anim pass in glb mode with a .glb file written to the temp glb dir; g_unpkg has stats.version_rewritten true and g_anim has stats.glb.animations equal to 1 (asserted)",
+        "g_nobutton gives 'no_export_button', g_throws gives 'export_error' or 'no_download', g_orbit gives 'bad_import', g_trunc gives 'truncated' (asserted)",
+        "Scene mode on tests/fixtures/raw gives the same id, ok and reasons as scene_mode_expected.jsonl (asserted)",
+        "No network request leaves the page in either mode: the test counts requests that are not served locally and asserts zero",
+        "docs/13-glb-code-track.md section 5.1 matches the implemented flags and reasons"
+      ]
+    },
+    {
+      "title": "teacher_generate.py: --system file and full Ollama sampling options",
+      "description": "As the benchmark runner, I want to give each model its own system prompt and sampling settings, so that ccore's model gets the prompt and sampling its card recommends. Use the exact file and function names given in the steps: other names fail review.",
+      "steps": [
+        "Add `--system FILE` (default: prompts/system.txt through common.system_prompt, unchanged) and `--top-k`, `--min-p`, `--repeat-penalty` (default None: not sent) to scripts/teacher_generate.py. In call_ollama put top_k, min_p and repeat_penalty into options only when given.",
+        "Each saved raw row gains `system_file` (the path used) and `system_sha256` (hex of the exact text sent). Nothing else in the row changes.",
+        "Create tests/py/test_teacher_generate.py that monkeypatches urllib.request.urlopen with a fake returning an Ollama /api/chat body, runs main() with sys.argv set to a tmp briefs file and tmp --out, and asserts: default run sends prompts/system.txt text and no top_k/min_p/repeat_penalty keys; --system tmp file sends that text; --top-k 40 --min-p 0 --repeat-penalty 1.0 appear in options with those values (min_p 0 is sent, not dropped); the row has system_file and system_sha256; a rerun skips briefs already saved."
+      ],
+      "criteria": [
+        "With no new flags, the request body equals what the script sent before this story (asserted key by key on options and messages)",
+        "--system, --top-k, --min-p and --repeat-penalty reach the request exactly as given, and min_p 0.0 is present in options (asserted)",
+        "Saved rows contain system_file and a system_sha256 that matches hashlib.sha256 of the sent system text (asserted)",
+        "No test opens a real network connection (urlopen is patched in every test)"
+      ]
+    },
+    {
+      "title": "glb_bench.py and models.json: one resumable command per model, generate then validate",
+      "description": "As the owner, I want one command that runs every enabled model on the 48 briefs and validates the answers, refuses unsafe runs, and shows the exact commands first. Use the exact file and function names given in the steps: other names fail review.",
+      "steps": [
+        "Create bench/glb/models.json with the six rows of docs/13 section 4.3 (fields: name, provider 'ollama' or 'baseten', model, system (a path under prompts/), temperature, top_p, top_k, min_p, think, enabled, paid). ccore-q8 and glimmer are enabled; the rest are not; spark-open has paid true.",
+        "Create scripts/glb_bench.py with argparse: `--out-root DIR` (required), `--models bench/glb/models.json`, `--briefs bench/glb/briefs.jsonl`, `--only NAME` (repeatable; selects rows even if disabled), `--limit N`, `--num-ctx 49152`, `--max-tokens 40000`, `--allow-paid`, `--dry-run`. Pure function `plan(models, args) -> list[list[str]]` builds, per model, the teacher_generate command (--ollama-native for ollama rows, --system, sampling flags only when set, --think when true, --concurrency 1, --out <root>/<name>/raw) and the validator command (node scripts/validate_scenes.mjs --mode glb with --raw, --scenes, --shots, --glb-dir, --report <root>/<name>/validation.jsonl under <root>/<name>/).",
+        "Refusals (non-zero exit, clear message, nothing run): --out-root inside data/ or out/; a selected row whose system file is missing or still contains 'PASTE_CCORE_SYSTEM_PROMPT_HERE'; a paid row without --allow-paid; an unknown --only name. In a real run (not --dry-run) check `ollama list` once and stop with the pull command if a selected ollama model is absent. Each command is printed before it runs; --dry-run prints them all and runs nothing.",
+        "Create tests/py/test_glb_bench.py: plan() output for the two enabled rows (flags and order), --only selecting a disabled row, every refusal above, placeholder detection on a tmp copy of prompts/ccore_glb_system.txt, and a --dry-run subprocess run that creates no files under the tmp out root. No test calls ollama or node."
+      ],
+      "criteria": [
+        "Files are named exactly bench/glb/models.json, scripts/glb_bench.py and tests/py/test_glb_bench.py, and models.json has the six rows with only ccore-q8 and glimmer enabled",
+        "plan() emits generate then validate per model with the per-model sampling from models.json (asserted for ccore-q8: temperature 0.8, top-k 40, top-p 0.95, min-p 0, --think)",
+        "Every refusal in the steps exits non-zero without running a command (asserted)",
+        "--dry-run writes nothing (asserted by listing the tmp out root afterwards)",
+        "docs/13-glb-code-track.md section 6 uses the same flag names as the script"
+      ]
+    },
+    {
+      "title": "glb_report.py: pass rate with intervals, failures, cost, domains and head to head",
+      "description": "As the owner, I want one report that compares the models on the metrics in docs/13 section 5.3, with honest uncertainty, so the phase 2 decision rests on numbers. Use the exact file and function names given in the steps: other names fail review.",
+      "steps": [
+        "Create tests/fixtures/glb_bench/ with two model folders (m_a, m_b), each with validation.jsonl rows for 6 briefs and raw/<id>.json rows with usage {completion_tokens, seconds}, plus a briefs.jsonl of those 6 briefs (mixing static, animated and set kinds) and a ratings fixture rating.csv with key_map.json in the format glb_sheet.mjs will write (key, brief, rating; key -> {model, id}).",
+        "Create scripts/glb_report.py with pure functions: `wilson(k, n, z=1.96)`, `load_model(dir)`, `metrics(rows, raws, briefs)` returning the section 5.3 metrics (pass rate, export rate, animated pass requiring stats.glb.animations > 0, median and max triangles of passes, share of passes at or under 5,000 triangles, reason counts, median completion tokens, median seconds, total seconds, pass by domain), `head_to_head(a, b)` returning both/only_a/only_b/neither counts, and `recognisable(ratings, key_map, ids)` where a missing or failed item counts as 0 and the rate is the share rated 1 or 2 over all briefs.",
+        "CLI: `--root DIR --briefs FILE [--ratings rating.csv [--key-map key_map.json]]` (key-map defaults to the file beside rating.csv). Every subfolder of root with a validation.jsonl is a model. Writes <root>/report.json and <root>/report.md (one table row per model with pass rate and its 95% interval, then failures, by domain and head-to-head tables). Briefs absent from a model's validation count as failures with reason 'missing'.",
+        "Create tests/py/test_glb_report.py: wilson values against known numbers (k=0, k=n, k=24 of 48), each metric on the fixtures, head-to-head counts, the missing-brief rule, recognisable with and without a rating for every item, and that the markdown names both models and contains the interval."
+      ],
+      "criteria": [
+        "Files are named exactly scripts/glb_report.py, tests/py/test_glb_report.py and tests/fixtures/glb_bench/",
+        "wilson(24, 48) is asserted to round to (0.364, 0.636) at 3 decimals, and wilson(0, 48) has a lower bound of 0",
+        "Animated pass counts an animated brief only when it passes and stats.glb.animations > 0 (asserted with one fixture that passes with 0 animations)",
+        "A brief missing from a model's validation.jsonl counts as a failure with reason 'missing' (asserted)",
+        "The report contains only numbers computed from the input files; with no --ratings the recognisable column says 'not rated'"
+      ]
+    },
+    {
+      "title": "glb_sheet.mjs: render exported GLBs to contact sheets and a blind rating file",
+      "description": "As the owner, I want to look at every exported asset next to its brief without knowing which model made it, because the mesh track showed that valid is not the same as right. Use the exact file and function names given in the steps: other names fail review.",
+      "chromium": true,
+      "steps": [
+        "Create scripts/glb_sheet.mjs: `--root DIR --out DIR [--briefs bench/glb/briefs.jsonl] [--size 256] [--seed 1]`. For every <root>/<model>/glb/<id>.glb, load it in headless Chromium with the local node_modules/three 0.160.0 and examples/jsm/loaders/GLTFLoader.js (route the URLs locally as validate_scenes.mjs does, no network), frame its bounding box, and render a 3/4 view and a top view on a light grey background with one hemisphere and one directional light. Write <out>/<model>/<id>.png (both views side by side) and <out>/<model>/sheet.png (a grid with the id under each tile).",
+        "Write <out>/rating.csv with columns key, brief, image, rating (rating empty) in an order shuffled by a seeded PRNG, one row per model x brief (briefs with no GLB still get a row whose image is empty, so the rater sees the miss), with keys like r001 that do not reveal the model, and <out>/key_map.json mapping key -> {model, id}. Briefs come from --briefs.",
+        "A GLB that fails to load is listed in <out>/skipped.json and does not stop the run. A rerun skips PNGs that already exist.",
+        "Create tests/js/glb_sheet.test.mjs (imported from tests/js/index.js): build two tiny GLBs with tests/js/glb_util.mjs plus one corrupt file under a temp root for two models, run the script, and assert PNG files exist with the expected width, sheet.png exists per model, rating.csv has one row per model x brief with no model name in it, key_map.json maps every key, the corrupt file is in skipped.json, and the same seed gives the same order."
+      ],
+      "criteria": [
+        "Files are named exactly scripts/glb_sheet.mjs and tests/js/glb_sheet.test.mjs, and tests/js/index.js imports the test",
+        "rating.csv contains no model name and key_map.json covers every row (asserted)",
+        "Briefs without a GLB appear in rating.csv with an empty image (asserted)",
+        "A corrupt GLB is listed in skipped.json and the other files still render (asserted)",
+        "No network request leaves the page (asserted by counting non-local requests)"
+      ]
+    },
+    {
+      "title": "Docs consistency: INDEX, Ralph README and a test that the runbook matches the scripts",
+      "description": "As the next agent, I want the docs to point to the new tools and a test that fails if the runbook in docs/13 names a flag a script does not have. Use the exact file and function names given in the steps: other names fail review.",
+      "steps": [
+        "Add the new files (bench/glb/, prompts/system_glb.txt, prompts/ccore_glb_system.txt, scripts/glb_check.mjs, glb_bench.py, glb_report.py, glb_sheet.mjs, docs/13-glb-code-track.md) to INDEX.md in its existing style.",
+        "Add glb-1 to the PRD table in ralph/README.md with its manual gate and the run line `ralph/run-models.sh ralph/glb-1.prd.json` (the same form ralph/run-models.sh documents for proof-1).",
+        "Create tests/py/test_docs_glb.py: parse the fenced bash block in docs/13-glb-code-track.md section 6, and for each command that runs scripts/<name>.py or scripts/<name>.mjs assert the script exists and every --flag in that command appears in the script's source text."
+      ],
+      "criteria": [
+        "tests/py/test_docs_glb.py exists and passes, and fails when a flag in section 6 is renamed (shown by a test that runs the checker on a modified copy of the section)",
+        "INDEX.md lists every new file named in the steps",
+        "ralph/README.md lists glb-1 with its manual gate",
+        "docs/13-glb-code-track.md section 10 still says 'not run' (Ralph records no results)"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{"id": "b1", "title": "Crate", "brief": "A wooden crate.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "b2", "title": "Chair", "brief": "A simple chair.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "b3", "title": "Windmill", "brief": "A windmill with turning blades.", "domain": "nature", "level": 2, "style": "low-poly", "kind": "animated"}
+{"id": "b4", "title": "Bird", "brief": "A bird flapping its wings.", "domain": "creatures", "level": 2, "style": "low-poly", "kind": "animated"}
+{"id": "b5", "title": "Market stall", "brief": "A market stall set.", "domain": "buildings", "level": 3, "style": "low-poly", "kind": "set"}
+{"id": "b6", "title": "Wall kit", "brief": "A modular wall kit.", "domain": "modular_kits", "level": 3, "style": "low-poly", "kind": "set"}

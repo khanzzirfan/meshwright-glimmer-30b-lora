@@ -1,0 +1,5 @@
+{"id": "b1", "ok": true, "reasons": [], "stats": {"export_ms": 11, "glb": {"ok": true, "animations": 0, "triangles": 6000}}}
+{"id": "b2", "ok": true, "reasons": [], "stats": {"export_ms": 21, "glb": {"ok": true, "animations": 0, "triangles": 10}}}
+{"id": "b3", "ok": true, "reasons": [], "stats": {"export_ms": 31, "glb": {"ok": true, "animations": 0, "triangles": 50}}}
+{"id": "b4", "ok": false, "reasons": ["no_download"], "stats": {}}
+{"id": "b6", "ok": true, "reasons": [], "stats": {"export_ms": 41, "glb": {"ok": true, "animations": 0, "triangles": 70}}}

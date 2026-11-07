@@ -1,0 +1,1 @@
+{"id": "m00510", "caption": "a large flat plant rosette, many broad oval grey leaves spreading wide and low around the centre", "ref_tris": 112, "answer": "v 2 57 32\nv 2 57 30\nv 2 57 28\nv 2 57 26\nv 2 57 24\nv 2 57 22\nv 2 57 20\nv 2 57", "ok": false, "reason": "bad_line", "stats": {}, "tokens": 64, "done": "stop", "secs": 1490.5}

@@ -1,0 +1,205 @@
+{
+  "name": "Muse Three.js 1: harden the pilot pipeline",
+  "branchName": "ralph/01-hardening",
+  "description": "Puts tests around the pilot scripts (briefs, teacher generation, validator, dataset builder), fixes the lopsided domain sampling seen in the 51-brief pilot, makes the validator reusable and resumable, and adds a pilot report with a screenshot contact sheet. No new pipeline stages yet.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Test harness and build_dataset tests",
+      "description": "As the pipeline owner, I want a test harness and tests for the dataset builder so that changes to how training data is joined and split cannot silently corrupt it.",
+      "steps": [
+        "Add requirements-dev.txt with pytest and install it into .venv (`.venv/bin/pip install -r requirements-dev.txt`).",
+        "Create tests/py/conftest.py that puts scripts/ on sys.path, and tests/fixtures/ with a tiny set of briefs, raw answers and a validation report (6 briefs across 3 levels, 2 failing, 1 with reasoning).",
+        "Refactor scripts/build_dataset.py so the work is done by `build(briefs, raw_dir, report, out_dir, no_reasoning, val_fraction, seed)` returning counts; main() only parses args and calls it.",
+        "Write tests/py/test_build_dataset.py: only ok rows are kept; reasoning is wrapped in <think> tags unless no_reasoning; the split is stratified by level and deterministic for a seed; prompt/completion roles are system,user / assistant."
+      ],
+      "acceptanceCriteria": [
+        "`.venv/bin/python -m pytest -q tests/py` runs and passes with at least 4 tests for build_dataset",
+        "build_dataset.build is importable without side effects and main() output for the fixtures is unchanged from before the refactor (same kept count and same train/val ids)",
+        "requirements-dev.txt exists and README quickstart mentions how to run the tests",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "",
+      "dependsOn": []
+    },
+    {
+      "id": "US-002",
+      "title": "teacher_generate: pure parsing and retry tests",
+      "description": "As the pipeline owner, I want the answer parsing and retry rules tested so that reasoning traces and failed calls are handled the same way for every backend.",
+      "steps": [
+        "Extract pure functions from scripts/teacher_generate.py: `split_reasoning(content, reasoning_field)` (separate field, inline <think>...</think>, or none) and `is_retryable(status)` (429 and 5xx retry, other 4xx do not).",
+        "Make `call()` use them. Keep behaviour identical for the OpenAI route and the --ollama-native route.",
+        "Write tests/py/test_teacher_generate.py with a fake client object: reasoning field wins, inline think is split and stripped, no reasoning gives None, a 404 is not retried, a 429 is retried then succeeds (patch time.sleep), finish_reason 'length' is recorded.",
+        "Add a test that main() skips briefs whose raw file already exists and does not save failed calls (drive it with a fake client via monkeypatch).",
+        "Keep the `--token-budget` flag (added after the Spark Open runs) and test it: with a budget of 1 token the second brief is skipped and reported as skipped, and in-flight calls still save."
+      ],
+      "acceptanceCriteria": [
+        "split_reasoning and is_retryable exist and are covered by at least 6 tests",
+        "A rerun with all raw files present makes zero model calls (asserted in a test)",
+        "No test touches the network or sleeps for real (time.sleep is patched)",
+        "A test shows `--token-budget` stops starting new calls once the budget is used and the summary line reports skipped briefs",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "gen_briefs: balanced domains and parsing tests",
+      "description": "As the pipeline owner, I want briefs spread evenly across domains and levels so that the student is not trained mostly on nature scenes (the 51-brief pilot had 16 nature briefs and no sci-fi, historical, data-viz or voxel ones).",
+      "steps": [
+        "Replace the shuffled itertools.cycle in scripts/gen_briefs.py with a balanced schedule: round-robin over domains, and within each domain rotate level and style, so after N briefs every domain has N/12 within plus or minus 1. Keep --seed deterministic.",
+        "Extract `parse_brief_lines(text, domain, level, style)` as a pure function; it must accept lines wrapped in code fences, trailing commas and a leading list marker, and ignore prose lines.",
+        "Write tests/py/test_gen_briefs.py: near_dup catches reordered words and ignores unrelated briefs; parse_brief_lines cases; the schedule for 120 briefs gives each of the 12 domains exactly 10 and covers levels 1 to 10 in every domain; the empty-answer abort fires after 10 empty answers (fake client)."
+      ],
+      "acceptanceCriteria": [
+        "For a schedule of 120 briefs every one of the 12 domains appears exactly 10 times (asserted in a test)",
+        "parse_brief_lines accepts fenced and comma-terminated JSON lines and skips malformed ones",
+        "gen_briefs.py still writes data/briefs.jsonl and data/briefs.eval.jsonl with the same field names (id, title, brief, domain, level, style)",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-002"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "Validator as a testable module",
+      "description": "As the pipeline owner, I want the validator's checks in an importable module with tests so that threshold tuning is safe.",
+      "steps": [
+        "Move extractHtml, staticChecks, the pixel statistics and the frame diff from scripts/validate_scenes.mjs into scripts/lib/validate.mjs as named exports; validate_scenes.mjs imports them and behaves exactly as before.",
+        "Make thresholds (BLANK_MIN_COLORS, STATIC_MIN_DIFF, WAIT_MS) exports of the module so tests and the CLI share them.",
+        "Write tests/js/validate.unit.test.mjs with node:test: extractHtml (fenced, bare doctype, none); staticChecks (examples/jsm import, OrbitControls, a second external import, a script src, eval, missing animation loop, a clean scene); pixel stats and diff on PNGs built in the test with pngjs (flat colour, two-colour, identical frames, shifted frames).",
+        "Check that `node scripts/validate_scenes.mjs --raw tests/fixtures/raw --scenes <tmp> --shots <tmp> --report <tmp>/r.jsonl` still runs on the fixture raw files from US-001.",
+        "Cover import maps in staticChecks tests: a bare `three` mapped to the pinned CDN URL passes (Spark Open writes scenes this way), a map to any other URL is external_dep, and invalid import-map JSON is bad_importmap."
+      ],
+      "acceptanceCriteria": [
+        "scripts/lib/validate.mjs exports extractHtml, staticChecks and the pixel helpers; `npm test` runs at least 10 unit tests and passes",
+        "validate_scenes.mjs imports from the module and no logic is duplicated between the two files",
+        "The unit tests need no browser",
+        "The import-map cases (pinned CDN passes, other URL fails, bad JSON fails) are tested",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-003"
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Validator: resume, filters, summary and real-browser tests",
+      "description": "As the pipeline owner, I want to revalidate only what changed and trust the validator against real pages so that a thousand-scene run can be resumed and tuned.",
+      "steps": [
+        "Tune the static check: the Glimmer pilot rejected scenes with gentle motion (frame diff 0.0006 to 0.0018, e.g. a swaying lamp). Take 4 screenshots 500 ms apart instead of 2 and use the largest diff; keep a scene whose largest diff is at least STATIC_MIN_DIFF. Record before/after counts on the fixture scenes in notes (do not touch data/).",
+        "Add flags to scripts/validate_scenes.mjs: `--skip-done` (keep rows already in the report whose raw file is unchanged by mtime, validate only the rest), `--only id1,id2`, and `--concurrency N` (default 4).",
+        "Write `<report>.summary.json` next to the report: total, passed, pass rate, counts per reason, and counts per level and domain when the raw file carries them in `brief`.",
+        "Add tests/js/validate.e2e.test.mjs that writes small raw answers into a temp dir and runs the validator CLI: a rotating cube (ok), an empty scene with a background only (blank), a scene that throws at load (js_error), a scene with no animation (static), a truncated answer (truncated). Skip with a clear message if Chromium cannot launch.",
+        "Add a test that `--skip-done` on a finished run revalidates zero scenes."
+      ],
+      "acceptanceCriteria": [
+        "The e2e test asserts the exact reason set for each of the 5 fixture scenes",
+        "`--skip-done` revalidates nothing when every raw file is unchanged (asserted)",
+        "The summary file has total, passed, passRate and a reasons map and is valid JSON",
+        "docs/03-pipeline-walkthrough.md lists the new flags",
+        "A fixture scene with a slow sway (a small object rotating 0.2 rad per second) passes and a truly still scene is still static (asserted)",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names",
+        "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-004"
+      ]
+    },
+    {
+      "id": "US-006",
+      "title": "Pilot report and contact sheet",
+      "description": "As the pipeline owner, I want one command that turns a validated run into numbers and a screenshot grid so that I can judge a batch in a minute.",
+      "steps": [
+        "Create scripts/pilot_report.py: reads data/raw, data/validation.jsonl and data/shots (paths overridable) and writes data/pilot-report.md and data/contact-sheet.html.",
+        "The report lists: kept and total, pass rate overall and by level and domain, failure reasons, median and p90 output tokens and seconds per scene (from raw usage; 'not measured' when absent), total generation time, and a projection of hours for 1,000 and 6,000 scenes at the measured median.",
+        "The contact sheet is one self-contained HTML file: a grid of screenshots (relative paths) each captioned with id, title, level and pass or fail reasons; failed ones have a red border.",
+        "Write tests/py/test_pilot_report.py with the fixtures from US-001: assert the markdown contains the pass rate, the reason counts and 'not measured' when usage is missing, and the HTML references every shot."
+      ],
+      "acceptanceCriteria": [
+        "`python scripts/pilot_report.py --help` documents every path flag and the report is deterministic for the same input",
+        "Projections are computed from measured medians only and say 'not measured' otherwise (asserted)",
+        "README.md pipeline section links the report as the step after validation",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-005"
+      ]
+    }
+  ],
+  "metadata": {
+    "specs": [
+      "README.md",
+      "docs/03-pipeline-walkthrough.md",
+      "docs/07-local-glimmer.md"
+    ],
+    "readFirst": [
+      "README.md (pipeline table) and docs/03-pipeline-walkthrough.md (each stage's contract)",
+      "scripts/gen_briefs.py, scripts/teacher_generate.py, scripts/validate_scenes.mjs, scripts/build_dataset.py (the code under test)",
+      "docs/07-local-glimmer.md (what the pilot measured)"
+    ],
+    "owns": [
+      "tests/",
+      "scripts/lib/",
+      "scripts/pilot_report.py",
+      "requirements-dev.txt",
+      "scripts/gen_briefs.py",
+      "scripts/teacher_generate.py",
+      "scripts/validate_scenes.mjs",
+      "scripts/build_dataset.py"
+    ],
+    "requires": [],
+    "standingRule": "Offline-only PRD. Every story is verified with unit tests, mocked HTTP and, for the validator, local headless Chromium. Nothing calls Ollama or any remote model.",
+    "guardrails": [
+      "Work offline. Tests use fixtures under tests/fixtures and mocked HTTP. Never call Baseten, Meta, Hugging Face or any remote service from a story, a test or a script you run. The only network use allowed is `npm install` and `.venv/bin/pip install` of packages the story names.",
+      "Never commit, push, tag or publish. autoCommit is off and the owner commits.",
+      "Never delete, overwrite or reformat anything under data/, out/, eval/, .env or .venv. They are the owner's data (a long Glimmer generation run may be writing data/raw right now). Tests write only to temporary directories.",
+      "Do not start long jobs. Any command that would run more than about 5 minutes (corpus generation, training, GGUF conversion, evals) is written as a script plus docs and left for the owner. A live smoke call to the local Ollama is allowed only if the story says so, with at most 2 briefs, and must skip cleanly when Ollama is down. Never rent GPUs or run `runpodctl` with anything that creates a pod.",
+      "Edit only the files named in the story's steps, plus their tests and the doc the story names. Do not change prompts/system.txt: every existing raw answer was generated against it.",
+      "Match the surrounding code: short comments that explain why, argparse CLIs, resumable file-per-item outputs, no new dependency the story does not name. Python runs with `.venv/bin/python`; Node scripts are ESM `.mjs` (Node 22).",
+      "Three.js stays pinned at 0.160.0 and the validator keeps serving the local copy in place of the CDN URL.",
+      "Python scripts must stay importable without heavy deps: import torch, transformers, trl or peft only inside functions or under `if __name__ == '__main__'` so pytest can import them.",
+      "Record only real results. Never invent pass rates, token counts, timings or costs; where a number is unknown write 'not measured'.",
+      "Debug output goes to data/ or a temp dir, never into scripts/ or docs/.",
+      "If the spec is wrong or impossible, do the closest thing that works and explain the difference in `notes`. If you cannot finish a story, set `notes` to why and stop; do not mark it passing."
+    ],
+    "qualityGates": {
+      "universal": [
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "chromium": [
+        "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
+      ]
+    },
+    "manualGates": [
+      "Owner runs `python scripts/pilot_report.py` on the real data/ after the 51-brief pilot and reads data/contact-sheet.html"
+    ]
+  }
+}

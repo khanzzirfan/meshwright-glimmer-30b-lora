@@ -1,0 +1,6 @@
+{"id":"b000","ok":true,"reasons":[],"stats":{"colors":40,"diff":0.01}}
+{"id":"b001","ok":true,"reasons":[],"stats":{"colors":30,"diff":0.009}}
+{"id":"b002","ok":true,"reasons":[],"stats":{"colors":35,"diff":0.008}}
+{"id":"b003","ok":false,"reasons":["static"],"stats":{"colors":10,"diff":0.0001}}
+{"id":"b004","ok":true,"reasons":[],"stats":{"colors":25,"diff":0.011}}
+{"id":"b005","ok":false,"reasons":["blank"],"stats":{"colors":2,"diff":0.00001}}

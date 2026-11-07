@@ -1,0 +1,5 @@
+{"id": "b1", "ok": true, "reasons": [], "stats": {"export_ms": 12, "glb": {"ok": true, "animations": 0, "triangles": 100}}}
+{"id": "b2", "ok": false, "reasons": ["no_export_button"], "stats": {}}
+{"id": "b3", "ok": true, "reasons": [], "stats": {"export_ms": 20, "glb": {"ok": true, "animations": 1, "triangles": 200}}}
+{"id": "b4", "ok": true, "reasons": [], "stats": {"export_ms": 30, "glb": {"ok": true, "animations": 0, "triangles": 300}}}
+{"id": "b5", "ok": false, "reasons": ["bad_glb"], "stats": {"glb": {"ok": false, "reason": "bad_glb", "animations": 0, "triangles": 0}}}

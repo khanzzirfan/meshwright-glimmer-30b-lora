@@ -1,0 +1,12 @@
+{
+ "n": 18,
+ "pass": 3,
+ "pass_rate": 0.167,
+ "reasons": {
+  "ok": 3,
+  "bad_line": 11,
+  "unused_verts": 2,
+  "bad_face": 2
+ },
+ "hit_token_cap": 13
+}

@@ -1,0 +1,2 @@
+== [1] model nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b | stories passing 0/4 | log .ralph-tui/models/proof-1.prd.1.nvidia_nvidia_nemotron-3.5-super-vl-120b-a12b.log
+ralph/run-models.sh: line 50: 34830 Terminated: 15          sleep 10

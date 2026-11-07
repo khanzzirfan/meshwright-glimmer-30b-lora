@@ -1,0 +1,5 @@
+# LoRA settings for the mesh proof, read by `mlx_lm lora -c` (flags on the command line override these)
+lora_parameters:
+  rank: 16
+  scale: 16.0
+  dropout: 0.0

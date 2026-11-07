@@ -1,0 +1,92 @@
+{
+  "name": "Muse Three.js 4: evaluation, export and the improvement loop",
+  "branchName": "ralph/04-eval-export",
+  "description": "Adds the measurement side: an eval harness with pass@k, a model comparison report with a screenshot grid, hardened GGUF export and Ollama helpers, a rejection-sampling round that feeds passing student scenes back into training, and a docs consistency test. Numbers in the docs stay 'not measured' until the owner runs the models.",
+  "standingRule": "Offline-only PRD. Evaluating real models, converting GGUF and sampling from a trained student are manual gates; Ralph builds and tests the tools with mocks and fixtures.",
+  "requires": ["prd-03-training"],
+  "specs": ["docs/05-export-serve-eval.md", "docs/04-training.md"],
+  "readFirst": ["docs/05-export-serve-eval.md", "scripts/teacher_generate.py", "scripts/lib/validate.mjs", "scripts/export_gguf.sh", "scripts/build_dataset.py"],
+  "owns": ["scripts/eval_model.py", "scripts/compare_evals.py", "scripts/export_gguf.sh", "scripts/ollama_create.sh", "scripts/rejection_sample.py", "scripts/build_dataset.py", "docs/05-export-serve-eval.md", "docs/10-results.md", "README.md", "tests/"],
+  "manualGates": [
+    "Owner evaluates the baselines (untouched Qwen3.5-4B, local Glimmer, the trained student) on data/briefs.eval.jsonl and fills docs/10-results.md from eval/eval-report.md",
+    "Owner runs scripts/export_gguf.sh on the trained model and checks llama.cpp recognises the Qwen3.5 architecture"
+  ],
+  "stories": [
+    {
+      "title": "eval_model.py: one command per model",
+      "description": "As the pipeline owner, I want a single command that evaluates any model on the held-out briefs so that every model is measured the same way.",
+      "steps": [
+        "Create scripts/eval_model.py `--name NAME --briefs data/briefs.eval.jsonl [--k 1] [--ollama-native|--base-url URL] --model M`: for each brief generate k samples (ids `<id>__s1` to `__sk`, temperature 0.7 for k>1), via teacher_generate's call path, into eval/<name>/raw; then run the validator into eval/<name>/validation.jsonl and shots into eval/<name>/shots.",
+        "Write eval/<name>/summary.json: first-attempt pass rate (sample 1 only), pass@k when k>1 (a brief passes if any sample passes), pass rate by level, reason counts, median output tokens, median seconds per scene and tokens per second (from usage; 'not measured' when absent), and the model and settings used.",
+        "Resumable: existing raw files are skipped; `--skip-generate` only revalidates.",
+        "Tests with a fake generator and a fake validator runner: pass@k arithmetic, first-attempt rate ignores later samples, by-level grouping, resume skips existing raw files."
+      ],
+      "criteria": [
+        "For fixtures where sample 2 passes and sample 1 fails, first-attempt is 0 and pass@2 is 1 for that brief (asserted)",
+        "summary.json records the model name, base URL or Ollama flag, k, temperature and the brief file used",
+        "`--skip-generate` makes zero model calls (asserted)",
+        "docs/05-export-serve-eval.md shows the three baseline commands"
+      ]
+    },
+    {
+      "title": "compare_evals.py: report and screenshot grid",
+      "description": "As the pipeline owner, I want the models compared in one table and one visual grid so that the result is clear at a glance and quotable.",
+      "steps": [
+        "Create scripts/compare_evals.py: reads eval/*/summary.json and writes eval/eval-report.md (a table: model, first-attempt pass rate, pass@k, median seconds per scene, tokens per second, top failure reason) plus the pass rate by level for each model.",
+        "Write eval/compare.html: one row per eval brief, one column per model, each cell the sample-1 screenshot (relative path) with a green or red border; missing screenshots show the failure reason text.",
+        "Never print a number that is not in a summary file; models without a field show 'not measured'.",
+        "Tests on fixture summaries: table content, missing field handling, HTML has a cell for every brief and model."
+      ],
+      "criteria": [
+        "A model with no timing data shows 'not measured' in the table (asserted)",
+        "compare.html has exactly briefs x models cells for the fixture (asserted)",
+        "README.md lists compare_evals.py as the last pipeline step"
+      ]
+    },
+    {
+      "title": "Export and Ollama helpers, hardened",
+      "description": "As the pipeline owner, I want export failures to be clear and checkable before I spend an hour converting so that a wrong path or missing tool is caught in seconds.",
+      "steps": [
+        "Harden scripts/export_gguf.sh: verify LLAMA_CPP_DIR, convert_hf_to_gguf.py and llama-quantize exist before any work; add `--dry-run` printing the plan; fail with a one-line message naming the missing item.",
+        "Create scripts/ollama_create.sh `<gguf-dir> <name>`: builds the Modelfile (system prompt from prompts/system.txt with any triple quote escaped, temperature 0.7, top_p 0.95, top_k 30, repeat_penalty 1.0, num_ctx 16384), runs `ollama create`, supports `--dry-run`.",
+        "Move Modelfile generation into one place used by both scripts so settings cannot drift.",
+        "Tests (subprocess, fake PATH): missing llama.cpp reports the right missing file, dry-run prints every step and runs nothing, the Modelfile contains the system prompt exactly once and the five parameters."
+      ],
+      "criteria": [
+        "export_gguf.sh --dry-run with a missing LLAMA_CPP_DIR exits non-zero naming the directory (asserted)",
+        "The generated Modelfile contains the pinned sampling parameters and the unmodified system prompt (asserted)",
+        "docs/05-export-serve-eval.md notes the llama.cpp Qwen3.5 support is unverified until the owner runs it"
+      ]
+    },
+    {
+      "title": "rejection_sampling.py: the improvement round",
+      "description": "As the pipeline owner, I want passing scenes from the trained student added to the training data so that a second training round learns from verified outputs.",
+      "steps": [
+        "Create scripts/rejection_sample.py `--briefs data/briefs.jsonl --name NAME --k 4 --model M [--ollama-native|--base-url URL]`: samples k scenes per training brief (never eval briefs) via the eval path, validates, and keeps passing samples that are not near-duplicates of existing training rows or each other (reuse build_dataset's dedupe).",
+        "Write kept rows in the same prompt/completion format with `source: rs` to data/rs/train.jsonl, and a run summary with kept, dropped and per-level counts.",
+        "Add `--extra data/rs` to build_dataset.py to append those rows to the training split (never to the validation split).",
+        "Tests with fakes: eval briefs excluded, duplicates dropped, rs rows only reach train, source tag present."
+      ],
+      "criteria": [
+        "A brief whose id appears in briefs.eval.jsonl is never sampled (asserted)",
+        "rs rows appear in train.jsonl and never in val.jsonl (asserted)",
+        "docs/04-training.md describes the second round and says it is optional and unmeasured"
+      ]
+    },
+    {
+      "title": "Docs consistency test and results template",
+      "description": "As the pipeline owner, I want a test that keeps the docs and scripts in sync and an honest results page so that nothing is described that does not exist and no number appears before it is measured.",
+      "steps": [
+        "Write tests/py/test_docs.py: every `scripts/...` or `docs/...` path mentioned in README.md and docs/*.md exists; every file in scripts/ with a main (py, mjs, sh) is mentioned in README.md; relative links in docs resolve.",
+        "Create docs/10-results.md: a table template for the three baselines with every metric cell 'not measured', the exact commands that produce each number, and a rule that numbers are copied only from eval/eval-report.md.",
+        "Update README.md: the final pipeline table covering every stage and script, the Ralph section pointing to ralph/README.md, and the order of the docs.",
+        "Fix any broken reference the new test finds in the existing docs."
+      ],
+      "criteria": [
+        "The docs consistency test passes and fails when a mentioned script is renamed (verified once by hand and recorded in notes)",
+        "docs/10-results.md contains no digits in the metric cells",
+        "README.md pipeline table lists every script in scripts/ that has a command line entry point"
+      ]
+    }
+  ]
+}

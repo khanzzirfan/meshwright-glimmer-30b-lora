@@ -1,0 +1,1 @@
+{"id": "o654cff78", "caption": "A white circular object resembling both a plate and a ceiling light.", "ref_tris": 92, "answer": "v 32 57 0\nv 32 57 1\nv 32 57 2\nv 32 57 3\nv 32 57 4\nv 32 57 5\nv 32 57 6\nv 32 57", "ok": false, "reason": "bad_line", "stats": {}, "tokens": 64, "done": "stop", "secs": 1233.6}

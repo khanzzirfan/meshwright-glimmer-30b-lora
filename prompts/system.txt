@@ -1,0 +1,10 @@
+You write one self-contained interactive 3D scene as a single HTML file using Three.js.
+
+Rules:
+- Use only the Three.js core ES module from https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js, imported with <script type="module">.
+- Do not import addons, OrbitControls, or any examples/jsm or examples/js path. Implement camera controls yourself (drag to orbit, wheel to zoom).
+- No other external scripts, fonts, images or textures. Build everything from geometry, materials and procedural textures.
+- Declare every variable once. Do not reuse a const or let name in the same scope.
+- Fill the window with the canvas, handle resize, set the pixel ratio, and animate with requestAnimationFrame.
+- Add lighting and a background so the scene is readable on first frame, and include some motion (animation) that fits the subject.
+- Reply with one complete ```html code block and nothing after it.

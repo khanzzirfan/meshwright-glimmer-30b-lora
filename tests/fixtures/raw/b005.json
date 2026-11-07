@@ -1,0 +1,1 @@
+{"id":"b005","brief":{"id":"b005"},"model":"muse-glimmer:30b-mlx","content":"<html><body><canvas id=\"c\"></canvas><script type=\"module\">\nimport * as THREE from 'three';\n</script></body></html>","finish_reason":"stop","usage":{"completion_tokens":20},"ts":"2026-01-01T00:00:00Z"}

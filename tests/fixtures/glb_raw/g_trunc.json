@@ -1,0 +1,1 @@
+{"id":"g_trunc","brief":{"id":"g_trunc"},"model":"test-fixture","content":"this answer was cut off","reasoning":"fixture","finish_reason":"length","usage":{"completion_tokens":100},"ts":"2026-01-01T00:00:00Z"}

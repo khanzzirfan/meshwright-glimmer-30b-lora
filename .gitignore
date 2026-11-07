@@ -1,0 +1,19 @@
+.env
+.venv/
+node_modules/
+data/
+out/
+eval/
+__pycache__/
+*.gguf
+.ralph-tui/iterations/
+.ralph-tui/reports/
+.ralph-tui/session*.json
+.ralph-tui/*.tmp
+
+# weights go to Hugging Face, not git (GitHub 100 MB file limit)
+*.safetensors
+*.bin
+*.pt
+.DS_Store
+.ralph-tui/ralph.lock

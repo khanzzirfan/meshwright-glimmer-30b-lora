@@ -1,0 +1,121 @@
+{
+  "name": "Muse Mesh 5: tooling for the text-mesh track",
+  "branchName": "ralph/05-mesh",
+  "description": "Builds the tools around the text-mesh pipeline described in docs/08-mesh-track.md: augmentation, a text-to-GLB exporter, multi-view renders, a caption script, a training-set builder with leak-free splits, and an eval report. Every tool is verified offline with tiny fixture meshes.",
+  "standingRule": "Offline-only PRD. Tests use tiny hand-written meshes under tests/fixtures/mesh and mocked HTTP. Nothing calls Ollama, Baseten or any remote model. New files only except where a story says otherwise; do not edit the Three.js-code-track scripts.",
+  "specs": ["docs/08-mesh-track.md"],
+  "readFirst": [
+    "docs/08-mesh-track.md (the text format: `v x y z` integers 0-63, `c #rrggbb` colour groups, `f a b c` 1-based triangles)",
+    "scripts/glb_to_text.py (to_text, parse_text, BINS), scripts/mesh_validate.py (validate), scripts/mesh_filter.py, scripts/mesh_baseline.py, scripts/preview_mesh.mjs",
+    "tests/py/test_glb_to_text.py (style of the existing mesh tests)"
+  ],
+  "owns": [
+    "scripts/mesh_augment.py", "scripts/mesh_to_glb.py", "scripts/mesh_views.mjs", "scripts/caption_meshes.py",
+    "scripts/build_mesh_dataset.py", "scripts/mesh_prompt.py", "scripts/eval_mesh.py", "scripts/mesh_baseline.py",
+    "tests/py/", "tests/fixtures/mesh/", "docs/08-mesh-track.md"
+  ],
+  "manualGates": [
+    "Owner runs scripts/caption_meshes.py against Glimmer or Spark Open on the real data/mesh/objects.jsonl",
+    "Owner reads the eval report from scripts/eval_mesh.py on the real baseline and, later, the trained model"
+  ],
+  "stories": [
+    {
+      "title": "mesh_augment: rotate, mirror and recolour text meshes",
+      "description": "As the dataset builder, I want label-preserving augmentations of a text mesh so that 120 real objects become several hundred distinct training examples.",
+      "steps": [
+        "Create tests/fixtures/mesh/ with 3 tiny valid meshes as JSONL lines (id, name, caption, text) in tests/fixtures/mesh/objects.jsonl: a cube, a pyramid and an L-shape, each with one `c` colour group, longest side spanning 0..63, standing on y=0.",
+        "Create scripts/mesh_augment.py importing parse_text from glb_to_text and validate from mesh_validate. Provide pure functions `rotate_y(text, quarter_turns)`, `mirror_x(text)`, `recolour(text, mapping_or_hue_shift)` that return new mesh text. After a rotation or mirror re-centre on x and z and keep y=0 and the longest side at 63, using the same integer rounding as glb_to_text.to_text.",
+        "Add `augment(row, rng, n)` returning up to n variants (dedup by text, never equal to the original) and a CLI: `--in data/mesh/objects.jsonl --out data/mesh/augmented.jsonl --per-object 4 --seed 1`. Each output row keeps `source_id`, gets a new `id`, and records which transforms were applied.",
+        "Write tests/py/test_mesh_augment.py: every variant of every fixture passes validate(); four quarter turns return the original vertex set; mirror twice returns the original; recolour changes only `c` lines; the CLI is deterministic for a fixed seed."
+      ],
+      "criteria": [
+        "rotate_y, mirror_x, recolour and augment exist and are covered by at least 6 tests",
+        "Every augmented fixture mesh passes mesh_validate.validate",
+        "Running the CLI twice with the same --seed writes byte-identical files",
+        "Augmented rows carry source_id so a later split can keep copies of one object together"
+      ]
+    },
+    {
+      "title": "mesh_to_glb: write a text mesh as a GLB file",
+      "description": "As a user of the trained model, I want its text output saved as a GLB so it opens in Blender, Unity and the PixiTween model3d layer.",
+      "steps": [
+        "Create scripts/mesh_to_glb.py using only numpy and the standard library (no new dependency). `text_to_glb(text) -> bytes` builds a binary glTF 2.0 file: one mesh, one primitive per `c` colour group, shared POSITION accessor with float32 positions mapped from 0..63 to a 1-unit cube (x,z centred, y from 0), uint16 or uint32 indices, one PBR material per colour with baseColorFactor in linear space, correct accessor min/max, 4-byte aligned buffer views, JSON and BIN chunks padded per the GLB spec.",
+        "Add a CLI: `--in mesh.txt --out model.glb`, and `--jsonl data/mesh/objects.jsonl --out-dir data/mesh/glb --limit N` for batches.",
+        "Write tests/py/test_mesh_to_glb.py: for each fixture the output starts with the glTF magic, the header length equals the file length, the JSON chunk parses, accessor counts match the text; then read the file back with scripts/glb_to_text.read_glb and collect, run to_text, and assert the vertex count and triangle count match the original (round trip).",
+        "Add a Chromium check in tests/py (skipped with a clear message if Chromium cannot launch) or a node test under tests/js that loads one produced GLB with the local three@0.160.0 GLTFLoader and asserts it has at least one mesh."
+      ],
+      "criteria": [
+        "text_to_glb output round-trips through glb_to_text.collect and to_text with equal triangle counts for all fixtures",
+        "The GLB header, chunk lengths and 4-byte alignment follow the glTF 2.0 spec (asserted in tests)",
+        "Colour groups become separate primitives with their own materials",
+        "No dependency beyond numpy is added to requirements.txt"
+      ],
+      "chromium": true
+    },
+    {
+      "title": "mesh_views: render each mesh from four angles",
+      "description": "As the caption pipeline, I want four PNG views of every mesh so a vision-capable model can describe what the object is.",
+      "steps": [
+        "Create scripts/mesh_views.mjs by reusing the parsing and lighting approach in scripts/preview_mesh.mjs (do not edit that file). For each row of a JSONL, render 4 views (front, right, back, three-quarter above) at 256x256 on a plain background with the local three@0.160.0 and SwiftShader flags, and write data/mesh/views/<id>_<0..3>.png.",
+        "Flags: `--in`, `--out-dir`, `--limit`, `--size`, `--concurrency` (default 2). Skip rows whose four files already exist, so a rerun is resumable.",
+        "Write tests/js/mesh_views.test.mjs using node:test: render the three fixture meshes into a temp dir, assert 12 PNGs exist, are 256x256, are not a single flat colour, and that the four views of the L-shape differ from each other.",
+        "Document usage in docs/08-mesh-track.md under a short 'Views' heading."
+      ],
+      "criteria": [
+        "Rendering the fixtures produces 4 PNGs per mesh, each 256x256 and not blank",
+        "Views of an asymmetric mesh differ pairwise (compared by pixel difference in the test)",
+        "A second run renders nothing and exits 0 because all files exist",
+        "scripts/preview_mesh.mjs is unchanged"
+      ],
+      "chromium": true
+    },
+    {
+      "title": "caption_meshes: write captions with a model, mocked in tests",
+      "description": "As the dataset builder, I want a resumable script that asks a model to describe each mesh from its views so captions are richer than file names.",
+      "steps": [
+        "Create scripts/caption_meshes.py. For each row of data/mesh/objects.jsonl it builds a prompt from the model name and, when `--views-dir` has the four PNGs, attaches them (base64) in the OpenAI-compatible image message format. Backends: `--ollama-native` (like teacher_generate.py) or an OpenAI-compatible `--base-url` with `--api-key` and `--model`.",
+        "Ask for 3 short captions of different lengths (terse, plain, detailed) as JSON lines; parse tolerant of fences and chatter; reject captions that mention a file name, a pack name, or contain the words 'mesh', 'obj', 'vertex'. Write one JSON per object to data/mesh/captions/<id>.json with `id, name, captions, model, ts`, resumable and never saving failed calls.",
+        "Provide `merge_captions(objects_path, captions_dir) -> rows` that attaches `captions` to each object, falling back to the name-derived `caption` when no file exists.",
+        "Write tests/py/test_caption_meshes.py with a fake backend object (no network): parsing happy path, fenced JSON, chatter around JSON, rejected captions, resume skips existing files, failed call not saved, merge fallback. Text-only mode is the default when no views exist."
+      ],
+      "criteria": [
+        "Caption parsing and the banned-word filter are covered by at least 6 tests",
+        "A rerun with every caption file present makes zero backend calls (asserted)",
+        "No test touches the network; the backend is injected",
+        "The script prints how many objects were captioned, skipped and failed, and states 'not run on real data' in the docs rather than inventing results"
+      ]
+    },
+    {
+      "title": "build_mesh_dataset: leak-free prompt/completion JSONL",
+      "description": "As the trainer, I want train and validation files where all augmented copies of one object stay on the same side of the split, in the prompt/completion format train_sft.py reads.",
+      "steps": [
+        "Move the SYSTEM string out of scripts/mesh_baseline.py into scripts/mesh_prompt.py (`SYSTEM`) and import it in both places; behaviour of mesh_baseline.py must not change.",
+        "Create scripts/build_mesh_dataset.py: inputs `--objects`, optional `--augmented`, optional `--captions-dir`; output `data/mesh/sft/train.jsonl` and `val.jsonl` with `{\"prompt\": ..., \"completion\": ...}` where prompt is the SYSTEM text plus the caption and completion is the mesh text. When an object has several captions, emit one example per caption (cap with `--max-captions`).",
+        "Split by source object, not by row: `--val-fraction 0.1`, seeded, stratified loosely by pack. Write `data/mesh/sft/split.json` listing which source ids are in val. Re-validate every completion with mesh_validate.validate and drop failures, reporting counts by reason.",
+        "Write tests/py/test_build_mesh_dataset.py on the fixtures: no source id appears in both files, every completion validates, the split is deterministic for a seed, captions fan out to several examples, and the prompt contains the SYSTEM text exactly once."
+      ],
+      "criteria": [
+        "No source object id appears in both train.jsonl and val.jsonl (asserted, including augmented copies)",
+        "Every completion in both files passes mesh_validate.validate",
+        "mesh_baseline.py still imports and its SYSTEM text is unchanged (asserted by comparing to a stored hash or literal in a test)",
+        "split.json is written and deterministic for a fixed seed"
+      ]
+    },
+    {
+      "title": "eval_mesh: pass rate, failure breakdown and comparison report",
+      "description": "As the person presenting the result, I want one command that turns baseline and trained-model runs into a before/after table and a screenshot-ready report.",
+      "steps": [
+        "Create scripts/eval_mesh.py. Input: one or more run folders in the format scripts/mesh_baseline.py writes (one JSON per caption with ok, reason, stats, tokens, secs, plus summary.json). Compute pass rate, failure reasons, median faces of passing meshes, tokens per answer and seconds per mesh.",
+        "Support pass@k: when a folder holds several samples per id (files named `<id>__<k>.json`) report the share of ids with at least one passing sample for k=1..max. Single-sample folders report pass@1 only.",
+        "Write `--compare a b ...` Markdown output with one row per run and the delta in pass rate against the first run, plus the per-reason table; write it to a file given by `--out` (default stdout). Never invent numbers: an empty folder reports 'no results'.",
+        "Write tests/py/test_eval_mesh.py with hand-made run folders under a temp dir: pass rate, reason counts, pass@k with 2 samples per id, comparison deltas, empty folder, a folder with a malformed JSON file (skipped and counted)."
+      ],
+      "criteria": [
+        "Pass rate, reason counts and pass@k are covered by at least 6 tests using hand-made folders",
+        "--compare prints the pass-rate delta against the first run",
+        "An empty or missing folder prints 'no results' and exits non-zero without a traceback",
+        "docs/08-mesh-track.md gains a short 'Eval' section listing the commands, with 'not measured' wherever real numbers are not yet known"
+      ]
+    }
+  ]
+}

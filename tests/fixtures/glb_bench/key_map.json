@@ -1,0 +1,14 @@
+{
+  "r001": {"model": "m_a", "id": "b1"},
+  "r002": {"model": "m_b", "id": "b3"},
+  "r003": {"model": "m_a", "id": "b5"},
+  "r004": {"model": "m_b", "id": "b1"},
+  "r005": {"model": "m_a", "id": "b2"},
+  "r006": {"model": "m_b", "id": "b5"},
+  "r007": {"model": "m_a", "id": "b4"},
+  "r008": {"model": "m_b", "id": "b2"},
+  "r009": {"model": "m_a", "id": "b3"},
+  "r010": {"model": "m_b", "id": "b6"},
+  "r011": {"model": "m_a", "id": "b6"},
+  "r012": {"model": "m_b", "id": "b4"}
+}

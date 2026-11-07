@@ -1,0 +1,6 @@
+{"title": "Spinning Cube", "brief": "Make a slowly spinning cube with soft lighting.", "domain": "abstract", "level": 1, "style": "low-poly", "id": "b000"}
+{"title": "Orbiting Sphere", "brief": "Make a sphere orbiting a point with ambient light.", "domain": "abstract", "level": 1, "style": "toon", "id": "b001"}
+{"title": "Swaying Tree", "brief": "Make a low-poly tree that sways gently in the wind.", "domain": "nature", "level": 2, "style": "low-poly", "id": "b002"}
+{"title": "Broken Pond", "brief": "Make a pond with no animation.", "domain": "nature", "level": 2, "style": "toon", "id": "b003"}
+{"title": "Drifting Particles", "brief": "Make drifting particles in a dark scene.", "domain": "abstract", "level": 3, "style": "toon", "id": "b004"}
+{"title": "Static Hill", "brief": "Make a still hill with no motion.", "domain": "nature", "level": 3, "style": "low-poly", "id": "b005"}

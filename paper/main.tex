@@ -1,0 +1,75 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs,graphicx,hyperref,amsmath}
+\title{Fine-tuning a 30B Language Model to Write Low-Poly 3D Meshes as Text:\\ What Scale and Canonical Ordering Buy on a Small Budget}
+\author{Irfan Khan}
+\date{DRAFT \today}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We fine-tune Muse Glimmer 30B (Apache 2.0) with LoRA to generate small coloured triangle meshes as plain text
+(\texttt{v x y z} on a $64^3$ grid, \texttt{c \#rrggbb} colour groups, \texttt{f a b c} faces), in the style of LLaMA-Mesh.
+Across four training runs on a single rented A100 (total GPU spend in the tens of dollars), the share of held-out captions that yield a
+syntactically valid mesh rises from 17\% (73 training objects) to 80\% (1,298 objects with canonical vertex ordering);
+the share of valid meshes that a human judges recognisably correct rises from about 1 in 6 to about 1 in 3.
+\textbf{[FINAL RUN: N objects, valid X\%, recognisable Y\% --- to fill in.]}
+We report the failure modes (runaway coordinate ``counting'' loops, right colour and size but wrong detail), a decoding
+guard that removes the loops, and a licensing-aware data pipeline (CC0 and CC-BY only, with an attribution manifest).
+All numbers are on small held-out sets (30 captions) and the data-scale and ordering changes are confounded.
+\end{abstract}
+
+\section{Introduction}
+Language models can emit meshes as text, which makes 3D generation a fine-tuning problem rather than an architecture
+problem \cite{llamamesh}. We ask how far a modest LoRA run gets with a large general model, little compute and openly licensed data.
+
+\section{Method}
+\paragraph{Mesh format.} Meshes are normalised to a unit cube, quantised to 0--63, deduplicated and written as text.
+Optionally (``sorted'') vertices are ordered by $(z,y,x)$ and each colour group's faces by lowest vertex index, with each face rotated
+so the lowest index comes first, following \cite{llamamesh}. Sorting is re-applied after every rotation or mirror augmentation.
+\paragraph{Training.} Muse Glimmer 30B, BF16 LoRA (rank 16, attention and MLP projections of the language model), lr $10^{-4}$, 2 epochs,
+one A100 80GB, loss on the mesh completion only. Prompts are a short system message plus a caption.
+\paragraph{Decoding.} Four samples per caption at temperature 0.6. A loop guard stops a sample when its last six vertex lines step by the same nonzero amount
+(a runaway ``counting'' loop). The returned sample is the first valid one, or (final run) the medoid of valid samples in size, triangle count and colour count.
+\paragraph{Validity.} A mesh is valid if it parses, indices are in range, there are enough vertices and faces, it is not flat, spans enough of the grid and has no unused vertices.
+
+\section{Data}
+\begin{itemize}
+\item \textbf{Hand-captioned CC0 set (166 $\to$ 126 after removing unverifiable sources):} Quaternius and Kenney-style kits converted from GLB, 69 of them Blender-decimated to 90--150 triangles, captions written from renders.
+\item \textbf{Objaverse CC-BY subset:} from the 798k Objaverse annotations, licence \texttt{by}, 40--300 faces, no animation, useful categories. Captions from Cap3D \cite{cap3d}.
+Filtered to $\le$250 lines and to drop captions naming a colour when the mesh is grey (Objaverse colours live in textures we do not read).
+All Objaverse CC0 objects were high-detail scans and unusable. 887 distinct authors in the first 1,278 objects; attribution manifest released.
+\item Excluded on licence grounds: Kenney (site declares an AI-training opt-out), Quaternius Asset License v1.0 kits, NC and SA Objaverse objects.
+\end{itemize}
+
+\section{Results}
+\begin{table}[h]\centering
+\begin{tabular}{lrrrr}
+\toprule
+Run & Train objects & Held-out loss (before$\to$after) & Valid / captions & Recognisable (of valid) \\
+\midrule
+A & 73 & 0.607$\to$0.431 & 3/18 (17\%) & -- \\
+A + guard, 4 samples & 73 & -- & 6/18 (33\%) & 1 of 6 \\
+B & 130 & 0.696$\to$0.508 & 11/30 (37\%) & about 1 in 6 \\
+C (sorted) & 1{,}298 & 0.514$\to$0.217 & 24/30 (80\%) & about 1 in 3 \\
+D (final, 3,497 sorted, 45 prompts) & 0.216 held-out loss & 34/45 (76\%); 21/30 on the run-C prompts (C: 24/30) & about 15--20\% recognisable (visual) & no gain over C \\
+\bottomrule
+\end{tabular}
+\caption{Held-out sets differ between runs, so losses are not directly comparable. ``Recognisable'' is the author's visual judgement of rendered output against the target.}
+\end{table}
+\paragraph{Failure modes.} (i) Runaway arithmetic loops (\texttt{v 31 63 32, v 31 63 31, \dots}) until the token cap; 13 of 18 captions in run A, 9 of 30 in run B, 3 of 30 in run C.
+(ii) Valid meshes with the right colour and bounding box but wrong detail (apple $\to$ flat disc, houseplant $\to$ cone, wireframe prism $\to$ solid box).
+(iii) Qwen 0.5B (earlier rung): held-out loss rose (0.73$\to$1.95) with 17 training objects, i.e.\ memorisation.
+
+\section{Limitations}
+Thirty held-out captions per run; recognisability is one rater's judgement; run C changed object count, mesh length and ordering together, so we cannot attribute the gain; meshes are small (up to about 250 lines); Objaverse colours from textures are lost, so many objects are grey; per-sample validity is lower than per-caption validity because we keep the best of four.
+
+\section{Release}
+LoRA adapter, evaluation outputs, scripts, and \texttt{objaverse\_attribution.csv} (uid, author, licence, URL for every CC-BY object). The base model is Apache 2.0; CC-BY authors are credited in the manifest. \textbf{[Licence of the adapter: to decide.]}
+
+\begin{thebibliography}{9}
+\bibitem{llamamesh} Z.~Wang et al. LLaMA-Mesh: Unifying 3D Mesh Generation with Language Models. arXiv:2411.09595, 2024.
+\bibitem{cap3d} T.~Luo et al. Scalable 3D Captioning with Pretrained Models (Cap3D). \textbf{[verify authors and venue before submission]}
+\bibitem{objaverse} M.~Deitke et al. Objaverse: A Universe of Annotated 3D Objects. \textbf{[verify]}
+\end{thebibliography}
+\end{document}

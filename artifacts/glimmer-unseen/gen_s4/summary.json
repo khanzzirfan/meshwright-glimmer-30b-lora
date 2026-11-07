@@ -1,0 +1,12 @@
+{
+ "n": 18,
+ "pass": 6,
+ "pass_rate": 0.333,
+ "reasons": {
+  "ok": 6,
+  "bad_face": 4,
+  "flat": 2,
+  "bad_line": 6
+ },
+ "hit_token_cap": 5
+}

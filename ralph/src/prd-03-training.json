@@ -1,0 +1,90 @@
+{
+  "name": "Muse Three.js 3: training tooling (local MLX and rented GPU)",
+  "branchName": "ralph/03-training",
+  "description": "Adds the tooling and docs to train the Qwen3.5-4B student: token statistics to pick the sequence length, a training-data validator, an MLX path for this Mac (with an honest probe of whether mlx-lm supports Qwen3.5), a guarded RunPod runbook, and safer train_sft.py options. Ralph never trains and never rents a GPU.",
+  "standingRule": "Offline-only PRD. Training runs and pod creation are manual gates. The MLX probe may `pip install mlx-lm` into .venv and read its source but must not download model weights.",
+  "requires": ["prd-02-corpus"],
+  "specs": ["docs/04-training.md", "docs/07-local-glimmer.md"],
+  "readFirst": ["docs/04-training.md", "scripts/train_sft.py", "scripts/build_dataset.py (output format: prompt/completion JSONL)"],
+  "owns": ["scripts/token_stats.py", "scripts/sft_data.py", "scripts/train_sft.py", "scripts/probe_mlx.py", "scripts/to_mlx.py", "scripts/train_mlx.sh", "scripts/runpod_train.sh", "docs/04-training.md", "docs/08-train-mlx.md", "docs/09-train-gpu.md", "tests/"],
+  "manualGates": [
+    "Owner runs scripts/probe_mlx.py output review, then a 200-iteration MLX smoke train before any long run",
+    "Owner approves GPU spend and runs scripts/runpod_train.sh with --yes themselves"
+  ],
+  "stories": [
+    {
+      "title": "SFT data validator",
+      "description": "As the pipeline owner, I want training data checked before a run starts so that a malformed row does not crash hour three of training.",
+      "steps": [
+        "Create scripts/sft_data.py (no heavy imports) with `validate_rows(rows)` returning a list of problems: every row has `prompt` (system then user) and `completion` (one assistant message), non-empty strings, no unclosed <think> tag, completion contains a fenced html block, no row with the literal text '<|im_end|>' inside.",
+        "Add `check(path)` and a CLI `python scripts/sft_data.py data/sft/train.jsonl [val.jsonl]` that prints the problem count and the first 10 problems and exits 1 when there are any.",
+        "Call it from scripts/train_sft.py before loading the model (import inside main), aborting with the report on problems.",
+        "Tests with good and bad rows for each rule."
+      ],
+      "criteria": [
+        "Each of the 6 rules has a failing-row test and the clean fixture produces zero problems",
+        "train_sft.py aborts before importing torch when the data is invalid (asserted by importing the module and calling the pre-check with a bad file)",
+        "docs/04-training.md mentions the pre-check"
+      ]
+    },
+    {
+      "title": "token_stats.py: choose the sequence length",
+      "description": "As the pipeline owner, I want the token length distribution of the dataset so that max-len is chosen from data instead of guessed.",
+      "steps": [
+        "Create scripts/token_stats.py: reads train.jsonl, counts tokens per row (prompt plus completion) with the tokenizer named by `--tokenizer` only if it is already in the local Hugging Face cache (never download); otherwise fall back to characters divided by 3.5 and label the output 'estimate'.",
+        "Print median, p90, p99, max, and the share of rows over 8192, 12288 and 16384; recommend the smallest of those covering at least 97% of rows, or say none does.",
+        "Support `--json` for machine output. Tests use the estimate path on fixture rows with known lengths."
+      ],
+      "criteria": [
+        "Output states 'estimate' whenever the tokenizer was not used (asserted)",
+        "For a fixture with 100 rows of known length the recommendation matches the hand-computed value (asserted)",
+        "No test or default run touches the network"
+      ]
+    },
+    {
+      "title": "MLX path: probe, converter and wrapper",
+      "description": "As the pipeline owner, I want to know honestly whether I can train the 4B student on this Mac with MLX, and have the commands ready if I can.",
+      "steps": [
+        "Run `.venv/bin/pip install mlx-lm`. Create scripts/probe_mlx.py that imports mlx_lm, lists its model modules, and lists the model modules whose name contains 'qwen' and reports YES if one is named for Qwen3.5 (qwen3_5 or similar), NO if no qwen module newer than the installed Qwen3 family exists, otherwise UNKNOWN; it must not download weights or call the network, so it cannot read the model's config.json: say so and tell the owner to compare `model_type` in the Qwen3.5-4B config.json against the listed modules. Print the verdict with the evidence.",
+        "Create scripts/to_mlx.py converting data/sft/train.jsonl and val.jsonl into MLX's `{\"messages\": [...]}` chat format under data/mlx/ with files train.jsonl and valid.jsonl (mlx expects the name valid).",
+        "Create scripts/train_mlx.sh wrapping `mlx_lm.lora` with the args from docs/08-train-mlx.md (iterations, batch size 1, max sequence length from token_stats), refusing to run if the probe says NO.",
+        "Write docs/08-train-mlx.md with the probe result recorded as found (including 'not measured' for speed and memory) and the manual smoke command."
+      ],
+      "criteria": [
+        "probe_mlx.py prints YES, NO or UNKNOWN plus its evidence, and the same verdict is written in docs/08-train-mlx.md",
+        "to_mlx.py output has train.jsonl and valid.jsonl with the messages format (asserted on fixtures)",
+        "train_mlx.sh exits non-zero with a clear message when the probe verdict is NO (asserted with a stubbed probe)"
+      ]
+    },
+    {
+      "title": "Guarded RunPod runbook",
+      "description": "As the pipeline owner, I want the GPU run scripted and reviewable so that renting a pod is one deliberate command.",
+      "steps": [
+        "Create scripts/runpod_train.sh: default is dry-run; it prints the exact runpodctl commands for create pod, sync repo and data, install requirements-train.txt, run train_sft.py, copy out/ back, and stop the pod, with an estimated cost line computed from `--hours` and `--rate` flags (no built-in price).",
+        "Only with `--yes` does it execute; without it, it must never call runpodctl at all. It refuses to run if data/sft/train.jsonl fails scripts/sft_data.py.",
+        "Write docs/09-train-gpu.md: when to use LoRA versus full, the per-example token estimate from token_stats, how to compute cost, how to pick a checkpoint, and the unverified items (Qwen3.5 Transformers version, throughput).",
+        "A bash test (tests/py via subprocess) checks dry-run output contains each step and that runpodctl is never invoked (put a fake runpodctl first on PATH that fails the test if called)."
+      ],
+      "criteria": [
+        "Dry-run prints all 6 steps and the cost line, and the fake runpodctl is never called (asserted)",
+        "Without `--yes` the script exits 0; with invalid training data it exits non-zero before any runpodctl call",
+        "docs/09-train-gpu.md states every price or throughput figure as a formula or 'not measured', never a number presented as measured"
+      ]
+    },
+    {
+      "title": "train_sft.py: smoke mode, resume and run record",
+      "description": "As the pipeline owner, I want a cheap smoke run, resumable training and a record of what was run so that long runs are safe and reproducible.",
+      "steps": [
+        "Add `--max-steps` (smoke), `--resume-from` (checkpoint dir) and `--seed` to scripts/train_sft.py and pass them to SFTConfig.",
+        "Write <out>/train_args.json at start with all arguments, the dataset file sizes and row counts, library versions found at runtime (guarded by try/except) and a UTC timestamp.",
+        "Move argument parsing into `parse_args(argv)` and the config assembly into `make_config(args)` that import trl lazily, so tests can call parse_args without torch installed.",
+        "Tests: parse_args defaults and overrides, the learning-rate default for lora versus full, train_args.json is written for a dry call (add `--dry-run` that writes the record and exits before loading the model)."
+      ],
+      "criteria": [
+        "`.venv/bin/python scripts/train_sft.py --dry-run --out <tmp>` writes train_args.json and exits 0 without importing torch (asserted by checking sys.modules in a test)",
+        "Default learning rates are 1e-4 for lora and 1e-5 for full (asserted)",
+        "docs/04-training.md documents --max-steps, --resume-from and the run record"
+      ]
+    }
+  ]
+}

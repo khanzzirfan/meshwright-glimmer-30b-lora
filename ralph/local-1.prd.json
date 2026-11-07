@@ -1,0 +1,274 @@
+{
+  "name": "Local ladder 1: CLIP reranking, part plans and cleaner data, measured on the Mac",
+  "branchName": "ralph/local-1",
+  "description": "No more GPU rental. Glimmer v3/v4 produce valid meshes 76-80% of the time but only about 15-20% are recognisable, and more of the same data did not help (docs/12-proof-ladder.md, final result 4 Nov 2026). This PRD builds the tools to test three cheaper levers locally on the M3 Max (MLX, Qwen2.5-0.5B-Instruct, already cached): (1) pick among samples by CLIP image-text score instead of the medoid, which favours the average box; (2) a part plan before the mesh (connected components with bounding boxes, written inside reasoning tags); (3) cleaner data (drop near-boxes and near-duplicates). Every lever is measured by the same automatic metric (CLIP score and caption retrieval on rendered views), replacing eyeball judgement.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "render_views.mjs: render each text mesh from four angles to PNG files",
+      "description": "As the experimenter, I want every candidate mesh rendered to a few small images so that an image-text model can score how well it matches its caption. Use the exact file names given in the steps.",
+      "steps": [
+        "Create scripts/render_views.mjs (ESM, Node 22, Playwright Chromium, local node_modules/three exactly as scripts/preview_mesh.mjs loads it). CLI: `--in FILE.jsonl` (rows {name, text}), `--out-dir DIR`, `--views 4`, `--size 224`. For each row write DIR/<name>/view0.png .. view{N-1}.png.",
+        "Camera: frame each mesh by its own bounding box (centre it, fit the largest extent), elevation about 25 degrees, azimuths evenly spaced starting at 45 degrees; flat shading with the face colours, the same lights as preview_mesh.mjs, plain mid-grey background. Rows whose text does not parse (no v or f lines, or a face index out of range) are skipped and listed in DIR/skipped.json; the script never crashes on one bad row.",
+        "Resumable: a row whose view files all exist is not rendered again. Print one summary line: rendered, skipped, already done.",
+        "Create tests/fixtures/local/meshes.jsonl with 3 rows: a valid cube with two colours, a valid small pyramid, and one broken row (face index 99). Write tests/js/render_views.test.mjs (node --test) that runs the script on the fixture into a temp dir and checks: 2 x 4 PNG files exist with the PNG signature and a 224x224 IHDR, the broken row is in skipped.json, and a second run renders nothing new."
+      ],
+      "acceptanceCriteria": [
+        "scripts/render_views.mjs and tests/js/render_views.test.mjs exist with exactly these names and the test passes under `node --test tests/js`",
+        "Each valid row yields --views PNG files of --size x --size pixels (asserted from the IHDR bytes)",
+        "A broken row is recorded in skipped.json and does not stop the other rows (asserted)",
+        "A second run over the same output folder renders nothing (asserted from the summary line or file mtimes)",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names",
+        "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "",
+      "dependsOn": []
+    },
+    {
+      "id": "US-002",
+      "title": "clip_score.py: caption-image similarity and caption retrieval with an injectable embedder",
+      "description": "As the experimenter, I want one automatic measure of 'does this mesh look like its caption' so that recognisability stops being my eyeball guess.",
+      "steps": [
+        "Create scripts/clip_score.py with pure functions: `cosine(a, b)`; `mesh_score(view_vecs, text_vec)` = mean cosine over the views, times 100; `retrieval_ranks(score_matrix)` where score_matrix[i][j] is the score of mesh i against caption j and the true caption of mesh i is caption i, returning the 1-based rank of the true caption for each mesh (ties count against the mesh); `recall_at(ranks, k)`.",
+        "Add class `ClipEmbedder(model_id='openai/clip-vit-base-patch32')` with `images(paths) -> list[list[float]]` and `text(captions) -> list[list[float]]`, L2-normalised. Import torch, PIL and transformers only inside its methods, load with local_files_only=True, and if torch is missing raise RuntimeError naming the manual install command `.venv/bin/pip install torch pillow`. Use the CPU (or mps if available); batch the images.",
+        "Add `score_folder(views_dir, items, embedder, views=4)` where items is [{name, caption}]: returns {name: score} for every name whose view files exist, skipping the others. It must work with any object that has images() and text(), so tests pass a fake.",
+        "Write tests/py/test_clip_score.py with a FakeEmbedder (vectors derived deterministically from file names and caption words): cosine and mesh_score values, retrieval_ranks on a hand-made 3x3 matrix including a tie, recall_at, score_folder skipping a missing name, and that importing clip_score does not import torch (check sys.modules)."
+      ],
+      "acceptanceCriteria": [
+        "Importing clip_score in a test does not import torch or transformers (asserted via sys.modules)",
+        "retrieval_ranks returns the expected ranks on a hand-made matrix, and a tie ranks the true caption below the tied one (asserted)",
+        "ClipEmbedder raises RuntimeError mentioning `pip install torch pillow` when torch is not importable (asserted by blocking the import with monkeypatch)",
+        "score_folder works with a fake embedder and skips items without rendered views (asserted)",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "rerank_samples.py: compare first, medoid, CLIP and oracle picks on existing samples",
+      "description": "As the experimenter, I want to know, for free, whether Glimmer already produces recognisable meshes that the medoid rule throws away.",
+      "steps": [
+        "Create scripts/rerank_samples.py with two subcommands. `prepare --samples FILE --out-dir DIR`: read rows {caption, picked, answers} (give each row id p000, p001.. by line order when it has no id), validate every answer with mesh_validate.validate, and write DIR/candidates.jsonl with rows {name: '<id>_<k>', id, k, caption, text} for the valid answers only (text = mesh_validate.extract of the answer), plus DIR/prompts.json [{id, caption, n_valid}].",
+        "`score --out-dir DIR --views-dir VDIR`: build ClipEmbedder (or the embedder a test injects through a function argument), score every candidate with clip_score.score_folder, then for each prompt compute four picks among its valid candidates: first (lowest k), medoid (mesh_generate.pick_best on the original answers), clip (highest score; tie -> lowest k) and oracle (also highest score; kept as the ceiling, identical to clip for a single scorer, so report it as 'clip' and drop oracle if that is simpler, saying so in the doc). Prompts with no valid candidate count as a miss for every rule.",
+        "For each rule report: valid picks, mean CLIP score of the picks, caption retrieval recall@1 and recall@5 of the picked meshes against all prompt captions (clip_score.retrieval_ranks). Write DIR/rerank_report.json and DIR/rerank_report.md (a small table) and DIR/sheet_medoid.jsonl and DIR/sheet_clip.jsonl (rows {name, text} for preview_mesh.mjs).",
+        "Refuse --out-dir inside data/, out/ or eval/ (reuse proof_data._protected_folder). Write tests/py/test_rerank_samples.py with a fixture tests/fixtures/local/samples.jsonl (3 prompts x 3 answers, one answer invalid, one prompt with no valid answer), fake view files in tmp_path and a fake embedder that makes a specific non-medoid candidate the best: assert the clip pick differs from the medoid pick there, the report numbers, and the protected-folder refusal."
+      ],
+      "acceptanceCriteria": [
+        "prepare writes only valid candidates, named <id>_<k>, and prompts.json counts them (asserted)",
+        "score picks the highest-scoring candidate per prompt and a test shows it can differ from the medoid pick (asserted)",
+        "rerank_report.json has, for each of first, medoid and clip: valid, mean_clip, r_at_1, r_at_5, and a prompt with no valid answer lowers valid for every rule (asserted)",
+        "--out-dir inside data/, out/ or eval/ exits non-zero (asserted)",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-002"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "mesh_parts.py: split a mesh into parts and write a part plan",
+      "description": "As the experimenter, I want each training mesh described as a short list of parts with boxes and colours so that the model can be taught to plan the object before writing triangles.",
+      "steps": [
+        "Create scripts/mesh_parts.py working on the text format (glb_to_text.parse_text / to_text). `components(verts, tris)`: connected components of triangles that share a vertex (union-find); also treat identical vertex coordinates as shared so duplicated seam vertices do not split a part.",
+        "`parts(text, max_parts=12, min_tris=2)`: one part per component with {tris, colour (most common face colour), bbox (min x y z, max x y z, ints 0..63)}. Components with fewer than min_tris triangles are merged into the part whose bbox centre is nearest; if more than max_parts remain, merge the smallest into its nearest neighbour until max_parts. Order parts by bbox min (y, then z, then x) so the plan reads bottom-up.",
+        "`plan_text(parts)`: one line per part, `part N #rrggbb x0 y0 z0 x1 y1 z1 tN` (N from 1, tN the triangle count). `reorder(text, parts)`: rewrite the mesh so each part's vertices are contiguous and its faces follow, part by part in plan order, with the canonical sorted order (glb_to_text.sort_text rules: vertices by z,y,x, faces by lowest index) inside each part and colour groups restarted per part. The geometry must be unchanged.",
+        "Write tests/py/test_mesh_parts.py with fixtures in tests/fixtures/local/: a table (top slab + 4 separate legs = 5 parts), a single cube (1 part), a mesh with a 1-triangle speck (merged), and one with 15 separate tiny boxes (merged down to max_parts). Assert part counts, bboxes, the plan line format by regex, and that reorder keeps the same multiset of triangles as coordinate triples and the result passes mesh_validate.validate."
+      ],
+      "acceptanceCriteria": [
+        "The table fixture gives 5 parts and the single cube 1 part (asserted)",
+        "Specks below min_tris are merged and no more than max_parts parts are ever returned (asserted)",
+        "Every plan line matches `^part \\d+ #[0-9a-f]{6}( \\d+){6} t\\d+$` (asserted)",
+        "reorder preserves the triangle multiset as coordinate triples and the output validates (asserted on every fixture)",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-003"
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "local_ab_data.py: four dataset arms (base, plan, clean, clean+plan) from one split",
+      "description": "As the experimenter, I want the same train/holdout split written in four variants so that each lever is measured against the same baseline and nothing else changes.",
+      "steps": [
+        "Create scripts/local_ab_data.py. CLI: `--objects corpus/combined2_objects.jsonl --split corpus/combined2_split.json --out-dir DIR --max-lines 300 --orientations 2 --max-train 0 --holdout-n 40 --seed 1`. --max-train N > 0 keeps a seeded random N train objects (the Mac is slower than the GPU); --holdout-n keeps a seeded random subset of the holdout ids. The same chosen ids are used by every arm.",
+        "`clean(objects)`: drop near-boxes (mesh with 12 or fewer triangles that forms one part per mesh_parts.parts and whose triangles all lie on its bbox faces) and near-duplicates (same vertex count, same triangle count and bbox within 2 units on each axis as an object kept earlier; keep the first). Return (kept, dropped) where dropped lists {id, reason}. Clean applies to train objects only; holdout is never filtered.",
+        "Arms: `base` = proof_unseen.build with sort=True; `plan` = same objects, but every assistant message (train and valid) is THINK_OPEN + '\\n' + plan_text + '\\n' + THINK_CLOSE + '\\n\\n' + reorder(mesh) using mesh_parts on the already rotated and sorted text; `clean` = base after clean(); `clean_plan` = plan after clean(). Import THINK_OPEN and THINK_CLOSE from tags; never type the tags. Each arm goes to DIR/<arm>/ with train.jsonl, valid.jsonl, targets.json (holdout {id, caption, mesh}, mesh always without the plan) in proof_unseen's layout. DIR/manifest.json records the ids, the counts per arm and the dropped list.",
+        "Refuse --out-dir inside data/, out/ or eval/. Write tests/py/test_local_ab_data.py with a tiny objects/split fixture in tests/fixtures/local/ (include one near-box and one near-duplicate): the four arm folders exist, the holdout ids are identical in all arms, clean arms lack the near-box and duplicate, plan arm assistant messages start with THINK_OPEN and the part after THINK_CLOSE validates, targets.json meshes contain no plan, and the protected-folder refusal."
+      ],
+      "acceptanceCriteria": [
+        "All four arms share the same holdout ids and targets (asserted)",
+        "clean drops the near-box and the near-duplicate from train with reasons, and never touches holdout (asserted)",
+        "Plan-arm completions are THINK_OPEN + plan + THINK_CLOSE + mesh using the constants from scripts/tags.py, and the mesh part validates (asserted; the literal tags appear nowhere in the new files)",
+        "--out-dir inside data/, out/ or eval/ exits non-zero (asserted)",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-004"
+      ]
+    },
+    {
+      "id": "US-006",
+      "title": "local_gen.py: sample several meshes per holdout caption with MLX, resumable",
+      "description": "As the experimenter, I want each trained arm to produce K samples per holdout caption in the same shape as gen_v4.samples.jsonl so that rerank_samples.py and local_eval.py score every arm the same way.",
+      "steps": [
+        "Create scripts/local_gen.py. `generate(targets, gen, k, out_file)`: for each target {id, caption} call gen(caption) k times; each call returns (raw_text, tokens, finish). Store per row {id, caption, answers (mesh part after strip_thinking/clean_reply from mesh_generate), plans (text inside the reasoning tags or ''), tokens, finish}. Append one JSON line per finished id to out_file and skip ids already present (resume).",
+        "`make_mlx_gen(model, adapter, system_text, temperature, max_tokens)`: lazy-import mlx_lm inside the function (look at proof_score.make_mlx_gen and mesh_generate's mlx backend; reuse proof_score.make_mlx_gen if its signature fits instead of copying). Add a loop guard: stop and mark finish='loop' when mesh_generate.runaway is true on the text so far, if mlx_lm's streaming API allows it; otherwise rely on max_tokens and say so in the doc.",
+        "CLI: `--targets DIR/targets.json --model Qwen/Qwen2.5-0.5B-Instruct --adapter ADAPTER_DIR --system-from DIR/train.jsonl --k 4 --temperature 0.7 --max-tokens 4096 --out FILE --limit 0`. Refuse --out inside data/, out/ or eval/.",
+        "Write tests/py/test_local_gen.py with a fake gen that returns, in turn, a plain valid mesh, a plan-plus-mesh reply built from THINK_OPEN/THINK_CLOSE, and garbage: rows have k answers, the plan is separated from the mesh, resume skips finished ids (the fake counts calls), and importing local_gen does not import mlx_lm."
+      ],
+      "acceptanceCriteria": [
+        "Output rows have id, caption, answers (length k), plans, tokens and finish, and answers never contain the reasoning tags (asserted)",
+        "A second run with the same out file makes no gen calls for finished ids (asserted with a counting fake)",
+        "Importing local_gen does not import mlx_lm (asserted via sys.modules)",
+        "--out inside data/, out/ or eval/ exits non-zero (asserted)",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-005"
+      ]
+    },
+    {
+      "id": "US-007",
+      "title": "local_eval.py: one comparison table across arms and a verdict",
+      "description": "As the experimenter, I want each arm scored on validity, CLIP match, caption retrieval and geometric match to the held-out reference, side by side, with a pre-agreed rule that says which lever helped.",
+      "steps": [
+        "Create scripts/local_eval.py. Input: `--arm NAME=SAMPLES.jsonl` (repeatable), `--targets targets.json`, `--work-dir DIR`. For every arm reuse rerank_samples (prepare and score, with its injectable embedder) so candidates are rendered and scored the same way; the render step is a callable argument (default: run `node scripts/render_views.mjs` via subprocess) so tests can fake it.",
+        "Per arm compute: any_valid (prompts with at least one valid sample), sample_valid (valid samples / all samples), loop_or_cap (samples with finish 'length' or 'loop'), and for the clip pick and the medoid pick: mean_clip, r_at_1, r_at_5, and mean fscore against the target mesh (mesh_quality.fscore; 0 for a miss). For plan arms also plan_parse (share of samples whose plan lines all match the mesh_parts format).",
+        "Verdict, written into the report exactly as rules: an arm 'beats base' when its clip-pick mean_clip is at least 1.0 higher than base AND its r_at_5 is not lower AND its any_valid is at most 5 percentage points lower; otherwise 'no gain'. Also state whether the clip pick beats the medoid pick within each arm by the same mean_clip rule. Never round away a negative difference.",
+        "Write DIR/compare.json and DIR/compare.md (one table, arms as rows, then the verdict lines). Write tests/py/test_local_eval.py with two tiny fake arms built from fixtures, a fake renderer that only creates files and a fake embedder that favours one arm: assert the table columns, the verdict for both outcomes (beats and no gain) and that a negative difference is shown with its sign."
+      ],
+      "acceptanceCriteria": [
+        "compare.json has, per arm, any_valid, sample_valid, loop_or_cap and, for clip and medoid picks, mean_clip, r_at_1, r_at_5, fscore (asserted)",
+        "The verdict follows the stated rule; tests cover a 'beats base' case and a 'no gain' case (asserted)",
+        "Rendering and embedding are injected, so the tests start no browser and load no model (asserted by using fakes that record calls)",
+        "compare.md shows negative differences with a minus sign (asserted)",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-006"
+      ]
+    },
+    {
+      "id": "US-008",
+      "title": "local_run.sh and docs/13-local-ladder.md: one command per experiment",
+      "description": "As the owner, I want two commands, `rerank` and `ab`, that run the whole local experiment in order and print what they will cost in time before starting, with a dry run to check them.",
+      "steps": [
+        "Create scripts/local_run.sh in the style of scripts/proof_run.sh. `rerank [--samples artifacts/glimmer-v4/gen_v4.samples.jsonl] [--workdir DIR]`: rerank_samples prepare -> node scripts/render_views.mjs -> rerank_samples score -> node scripts/preview_mesh.mjs on sheet_medoid.jsonl and sheet_clip.jsonl -> print rerank_report.md.",
+        "`ab [--workdir DIR] [--max-train 600] [--iters 1000] [--arms base,plan,clean,clean_plan] [--model Qwen/Qwen2.5-0.5B-Instruct]`: local_ab_data.py once, then for each arm in order: mlx_lm lora (same flags and learning-rate guard as proof_run.sh: lr 3e-5, refuse above 1e-4 without --force-lr; max-seq large enough for plan + mesh), local_gen.py on that arm's targets.json, and finally local_eval.py over all arms and print compare.md. Each step skips itself when its output already exists, so an interrupted run resumes. Before starting, print the plan: arms, train rows per arm, iterations, and the line 'time per arm: not measured yet' unless DIR/timings.json from an earlier arm exists, in which case use it. Append each step's wall time to DIR/timings.json.",
+        "Both commands refuse a --workdir inside data/, out/ or eval/, default to a new folder under /tmp, never call runpodctl or any network service, and support --dry-run which only echoes the commands. Write tests/py/test_local_run.py that runs both commands with --dry-run in a temp workdir and checks the commands appear in order with the arms, that an lr above 1e-4 is refused without --force-lr, that a protected workdir is refused, and that no 'runpodctl' string occurs in the script.",
+        "Write docs/13-local-ladder.md: why (the plateau at 76-80% valid and 15-20% recognisable), the three levers, the metric definitions, the verdict rule from local_eval.py, the manual gates (install torch and pillow, download the CLIP model, run rerank, run ab), what a 0.5B proxy can and cannot tell us about Glimmer, and empty result tables marked 'not measured'. Add one line pointing to it in docs/HANDOVER.md under the top note and in INDEX.md if it lists docs."
+      ],
+      "acceptanceCriteria": [
+        "`bash scripts/local_run.sh rerank --dry-run` and `bash scripts/local_run.sh ab --dry-run` print the steps in the stated order and run nothing (asserted)",
+        "The learning-rate guard and the protected-workdir refusal work (asserted)",
+        "scripts/local_run.sh contains no runpodctl call (asserted)",
+        "docs/13-local-ladder.md exists with the verdict rule and the manual gates, and every result cell reads 'not measured'",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-007"
+      ]
+    }
+  ],
+  "metadata": {
+    "specs": [
+      "docs/13-local-ladder.md (written by the last story; earlier stories follow this PRD's description)",
+      "docs/12-proof-ladder.md (history and the final Glimmer result)"
+    ],
+    "readFirst": [
+      "AGENTS.md (reasoning tags: import THINK_OPEN and THINK_CLOSE from scripts/tags.py, never type them)",
+      "scripts/mesh_validate.py (validate(answer) -> (ok, reason, stats); extract)",
+      "scripts/mesh_generate.py (pick_best = the medoid rule, clean_reply, strip_thinking, the mlx backend in make_gen)",
+      "scripts/glb_to_text.py (parse_text, to_text, sort_text: the canonical sorted format)",
+      "scripts/proof_unseen.py (build(objects, train_ids, holdout_ids, orientations, seed, max_lines, sort) and chat(); the MLX dataset layout train.jsonl / valid.jsonl / targets.json)",
+      "scripts/proof_data.py (_protected_folder: refuse outputs inside data/, out/, eval/)",
+      "scripts/mesh_quality.py (fscore(gen_text, ref_text): geometric match against a reference)",
+      "scripts/preview_mesh.mjs (how a text mesh is rendered with Three.js in Playwright Chromium)",
+      "scripts/proof_run.sh and tests/py/test_proof_run.py (driver script style with --dry-run, and how it is tested)",
+      "the first line of corpus/combined2_objects.jsonl and corpus/combined2_split.json (READ ONLY: objects {id, name, text, caption}; split {train, holdout})",
+      "the first line of artifacts/glimmer-v4/gen_v4.samples.jsonl (READ ONLY: {caption, picked, answers})"
+    ],
+    "owns": [
+      "scripts/render_views.mjs",
+      "scripts/clip_score.py",
+      "scripts/rerank_samples.py",
+      "scripts/mesh_parts.py",
+      "scripts/local_ab_data.py",
+      "scripts/local_gen.py",
+      "scripts/local_eval.py",
+      "scripts/local_run.sh",
+      "tests/py/test_clip_score.py",
+      "tests/py/test_rerank_samples.py",
+      "tests/py/test_mesh_parts.py",
+      "tests/py/test_local_ab_data.py",
+      "tests/py/test_local_gen.py",
+      "tests/py/test_local_eval.py",
+      "tests/py/test_local_run.py",
+      "tests/js/render_views.test.mjs",
+      "tests/fixtures/local/",
+      "docs/13-local-ladder.md"
+    ],
+    "requires": [],
+    "standingRule": "Offline-only PRD. Ralph builds and tests the tools with tiny fixtures and fake embedders and generators. It never downloads a model, never installs torch, never trains, never starts mlx_lm or a CLIP model, and never runs runpodctl. The real runs are manual gates listed below. Do not edit existing scripts: new behaviour goes in new files that import from them.",
+    "guardrails": [
+      "Work offline. Tests use fixtures under tests/fixtures and mocked HTTP. Never call Baseten, Meta, Hugging Face or any remote service from a story, a test or a script you run. The only network use allowed is `npm install` and `.venv/bin/pip install` of packages the story names.",
+      "Never commit, push, tag or publish. autoCommit is off and the owner commits.",
+      "Never delete, overwrite or reformat anything under data/, out/, eval/, .env or .venv. They are the owner's data (a long Glimmer generation run may be writing data/raw right now). Tests write only to temporary directories.",
+      "Do not start long jobs. Any command that would run more than about 5 minutes (corpus generation, training, GGUF conversion, evals) is written as a script plus docs and left for the owner. A live smoke call to the local Ollama is allowed only if the story says so, with at most 2 briefs, and must skip cleanly when Ollama is down. Never rent GPUs or run `runpodctl` with anything that creates a pod.",
+      "Edit only the files named in the story's steps, plus their tests and the doc the story names. Do not change prompts/system.txt: every existing raw answer was generated against it.",
+      "Match the surrounding code: short comments that explain why, argparse CLIs, resumable file-per-item outputs, no new dependency the story does not name. Python runs with `.venv/bin/python`; Node scripts are ESM `.mjs` (Node 22).",
+      "Three.js stays pinned at 0.160.0 and the validator keeps serving the local copy in place of the CDN URL.",
+      "Python scripts must stay importable without heavy deps: import torch, transformers, trl or peft only inside functions or under `if __name__ == '__main__'` so pytest can import them.",
+      "Record only real results. Never invent pass rates, token counts, timings or costs; where a number is unknown write 'not measured'.",
+      "Debug output goes to data/ or a temp dir, never into scripts/ or docs/.",
+      "If the spec is wrong or impossible, do the closest thing that works and explain the difference in `notes`. If you cannot finish a story, set `notes` to why and stop; do not mark it passing."
+    ],
+    "qualityGates": {
+      "universal": [
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "chromium": [
+        "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
+      ]
+    },
+    "manualGates": [
+      "Owner installs the scorer once: `.venv/bin/pip install torch pillow` and downloads openai/clip-vit-base-patch32 to the Hugging Face cache (about 600 MB)",
+      "Owner runs `bash scripts/local_run.sh rerank` on artifacts/glimmer-v4/gen_v4.samples.jsonl (free, minutes) and reads whether CLIP picks beat medoid picks",
+      "Owner runs `bash scripts/local_run.sh ab` (hours on the Mac: four small MLX LoRA arms) and reads the comparison table and verdict before deciding anything about Glimmer"
+    ]
+  }
+}

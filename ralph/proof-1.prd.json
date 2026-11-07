@@ -1,0 +1,163 @@
+{
+  "name": "Proof ladder 1: can a small model memorise text meshes",
+  "branchName": "ralph/proof-1",
+  "description": "Tooling for the confidence ladder in docs/12-proof-ladder.md: step 1 memorise one mesh, step 2 memorise the training objects, then judge pass or fail and decide whether more Glimmer spending is justified. A hand-run on 3 Nov 2026 showed Qwen2.5-0.5B-Instruct with MLX LoRA reproduces one 6,051-character mesh exactly (519 of 519 lines, valid, stops) at learning rate 3e-5, while 2e-4 diverged (loss 0.78 to 11). This PRD turns that experiment into tested, repeatable scripts.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "proof_data: pick training rows and write an MLX memorisation set",
+      "description": "As the experimenter, I want to pick specific training meshes and write them as an MLX chat dataset so that I can test whether a model can memorise them. Use the exact file and function names given in the steps: other names fail review.",
+      "steps": [
+        "Create tests/fixtures/proof/train.jsonl with 4 tiny rows in the exact shape of data/mesh/sft/train.jsonl (id, source_id, prompt = [system message, user caption message], completion = [assistant message with a valid mesh text]); two rows share one source_id, and the mesh lengths differ.",
+        "Create scripts/proof_data.py with pure functions `load_rows(path)`, `pick(rows, mode, n)` and `write_mlx(rows, out_dir, repeat=1)`. pick modes: `median` (the row whose completion length is the median), `smallest`, `spread` (n rows, one per distinct source_id, evenly spread by completion length). write_mlx writes out_dir/train.jsonl and out_dir/valid.jsonl with lines of the form {\"messages\": [system, user, assistant]} (train repeated `repeat` times, valid once, both the same rows because this is a memorisation test) and out_dir/targets.json, a list of {id, caption, mesh}.",
+        "Add a CLI: `--sft data/mesh/sft/train.jsonl --pick median --n 1 --repeat 1 --out-dir DIR`. --out-dir is required (no default) and the script exits non-zero with a clear message if it points inside data/, eval/ or out/.",
+        "Write tests/py/test_proof_data.py using the fixtures and tmp_path: each pick mode returns the expected rows, `spread` never returns two rows with one source_id, the written files parse as JSONL with a messages list of three roles, targets.json matches the picked rows, and the protected-folder refusal works."
+      ],
+      "acceptanceCriteria": [
+        "Importing `proof_data` in a test (from scripts/proof_data.py) exposes load_rows, pick and write_mlx, and the test reads tests/fixtures/proof/train.jsonl; the files are named exactly scripts/proof_data.py and tests/py/test_proof_data.py (a different filename means the story is not done)",
+        "pick supports median, smallest and spread and each mode is covered by a test",
+        "The MLX files have exactly the three message roles system, user, assistant and the target mesh equals the picked completion text byte for byte (asserted)",
+        "--out-dir pointing at data/, eval/ or out/ is refused with a non-zero exit (asserted)",
+        "No file under data/ is read except through the --sft argument and none is written",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Nemotron Lightning's first attempt (scripts/pick.py) was rejected by owner review and removed; redone by the next model and verified: scripts/proof_data.py with load_rows/pick/write_mlx.",
+      "dependsOn": []
+    },
+    {
+      "id": "US-002",
+      "title": "proof_score: compare generated meshes with their targets",
+      "description": "As the experimenter, I want one scorer that says whether a model reproduced a mesh exactly, produced a valid mesh, and stopped on its own. Use the exact file and function names given in the steps: other names fail review.",
+      "steps": [
+        "Create scripts/proof_score.py importing validate from mesh_validate. `compare(output, target, tokens, max_tokens)` returns a dict with exact (stripped text equal), lines_identical, lines_total, valid, reason, stopped (tokens < max_tokens), tokens.",
+        "Add `score_run(targets, gen, max_tokens)` where targets is the list from proof_data's targets.json and gen(caption) -> (text, tokens) is injected. It returns a report {n, exact, valid, stopped, lines_identical_share, items:[...]}; it never imports mlx at module level.",
+        "Add an `mlx` backend function `make_mlx_gen(model, adapter, system_text, temperature, max_tokens)` that imports mlx_lm only inside the function, builds the prompt with the tokenizer chat template using the system text, and returns a gen callable. Add a CLI: `--targets DIR/targets.json --sft-system-from DIR/train.jsonl --model NAME --adapter DIR --max-tokens N --temperature 0.0 --out report.json`, printing a one-line summary.",
+        "Write tests/py/test_proof_score.py with fake gens: an exact copy (exact and valid and stopped), a copy with one changed line (not exact, lines_identical = total minus 1), an output that is a runaway of repeated vertex lines hitting max_tokens (stopped False, invalid), a non-mesh answer (invalid, reason from validate), and a report over 3 targets with mixed outcomes."
+      ],
+      "acceptanceCriteria": [
+        "Importing `proof_score` (scripts/proof_score.py) exposes compare, score_run and make_mlx_gen; the files are named exactly scripts/proof_score.py and tests/py/test_proof_score.py",
+        "compare reports exact, valid and stopped independently, covered by at least 5 tests",
+        "A runaway output with tokens equal to max_tokens is reported stopped = false (asserted)",
+        "Importing scripts/proof_score.py does not import mlx_lm (asserted by importing it in the test with mlx_lm absent from sys.modules)",
+        "The report JSON written by the CLI path is built by a tested function and contains no invented numbers",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "proof_ladder: pass or fail per rung and the spending decision",
+      "description": "As the owner, I want each rung of the confidence ladder to give a clear pass or fail and a plain recommendation, so I know whether to keep paying for Glimmer training. Use the exact file and function names given in the steps: other names fail review.",
+      "steps": [
+        "Create scripts/proof_ladder.py. `judge(rung, report)` returns (passed, reason) with thresholds in one dict at the top of the file: rung `one` passes when exact is 1 of 1 and stopped is 1 of 1; rung `seen` passes when valid share is at least 0.8 and stopped share is at least 0.8; rung `unseen_same_category` passes when valid share is at least 0.6; rung `unseen_new_category` passes when valid share is at least 0.4. Document that the last two thresholds are placeholders to revise.",
+        "Add `decide(reports)` taking the reports found so far (dict rung to report) and returning a short recommendation string: if `one` failed, say the format or hyperparameters are wrong and name learning rate first; if `one` passed and `seen` is missing, say run the seen rung; if `seen` failed, say stop Glimmer GPU spending and fix the small-model setup first; if `seen` passed, say growing the data is the next step. Never claim a rung that has no report passed.",
+        "Add a CLI: `--report one=path.json --report seen=path.json`, printing one line per rung (PASS, FAIL or NOT RUN with the reason) and the recommendation.",
+        "Write docs/12-proof-ladder.md: the four rungs and their thresholds; the measured result of rung one on 3 Nov 2026 (Qwen2.5-0.5B-Instruct, MLX LoRA rank 8, 24 layers, one 6,051-character object of 340 faces, 200 iterations at learning rate 3e-5: 519 of 519 lines identical, valid, stopped at 6,048 tokens; the same setup at 2e-4 diverged from loss 0.78 to 11 and produced gibberish); the note that Qwen's tokenizer needs about 6,200 tokens for that object against about 4,300 with Glimmer, so max sequence length must exceed it; and 'not measured' for rungs two to four. Add a short table of the commands.",
+        "Write tests/py/test_proof_ladder.py covering every judge threshold on both sides and every branch of decide, including the missing-report case."
+      ],
+      "acceptanceCriteria": [
+        "Importing `proof_ladder` (scripts/proof_ladder.py) exposes judge and decide; the files are named exactly scripts/proof_ladder.py, tests/py/test_proof_ladder.py and docs/12-proof-ladder.md",
+        "Every threshold in judge is tested just below and just above its boundary",
+        "decide never reports a rung as passed when its report is missing (asserted)",
+        "docs/12-proof-ladder.md states the rung-one result with its settings and writes 'not measured' for rungs two to four",
+        "The CLI prints PASS, FAIL or NOT RUN per rung and exits 0 in all three cases",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-002"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "proof_run.sh: one command from dataset to verdict, with a learning-rate guard",
+      "description": "As the owner, I want a single wrapper that builds the dataset, trains with MLX, generates, scores and prints the verdict, and refuses the learning rate that diverged. Use the exact file and function names given in the steps: other names fail review.",
+      "steps": [
+        "Create scripts/proof_run.sh taking a rung name `one` or `seen` and optional `--model` (default Qwen/Qwen2.5-0.5B-Instruct), `--iters`, `--lr`, `--max-seq`, `--workdir` (default a new folder under /tmp), `--dry-run`. `one` picks the median row (proof_data --pick median --n 1); `seen` picks `--pick spread --n 15`.",
+        "The script runs, in order: proof_data, `.venv/bin/python -m mlx_lm lora --train` with batch size 1, LoRA from the repo's mlx yaml style, learning rate default 3e-5, iterations default 200 for `one` and 600 for `seen`, then proof_score with temperature 0.0, then proof_ladder, printing the verdict. Each command is echoed before it runs; --dry-run echoes them all and runs none.",
+        "Add the guard: a --lr above 1e-4 exits with a message that 2e-4 diverged on 3 Nov 2026 (loss 0.78 to 11) unless `--force-lr` is also given. Before training, print an estimate line that says the run is expected to take roughly 10 minutes for `one`, and 'not measured' for `seen`.",
+        "Write tests/py/test_proof_run.py with subprocess calls in --dry-run mode only: the echoed commands appear in the documented order and contain lr 3e-5 by default, `seen` uses the spread pick, --lr 2e-4 is refused with a non-zero exit and the explanation, --force-lr lets it through, an unknown rung exits non-zero, and `bash -n scripts/proof_run.sh` passes. No test may start mlx_lm."
+      ],
+      "acceptanceCriteria": [
+        "The files are named exactly scripts/proof_run.sh and tests/py/test_proof_run.py, and the script calls scripts/proof_data.py, scripts/proof_score.py and scripts/proof_ladder.py by those names",
+        "In --dry-run mode the five commands are echoed in the documented order and none is executed (asserted by running with an empty PATH that has no mlx and no python for the run steps, or by checking no workdir output files exist)",
+        "--lr 2e-4 exits non-zero with the divergence explanation, and --lr 2e-4 --force-lr does not",
+        "The default learning rate in the echoed training command is 3e-5",
+        "docs/12-proof-ladder.md gains a short 'Run it' section with the two commands and the time estimates, using 'not measured' where unknown",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-003"
+      ]
+    }
+  ],
+  "metadata": {
+    "specs": [
+      "docs/11-mesh-lora-e2e.md"
+    ],
+    "readFirst": [
+      "docs/11-mesh-lora-e2e.md (the run plan and success table)",
+      "scripts/mesh_validate.py (validate: returns ok, reason, stats)",
+      "scripts/mesh_generate.py (run, clean_reply, the injectable gen(caption) pattern and its resumable per-id JSON outputs)",
+      "scripts/mesh_sft_data.py and the first lines of data/mesh/sft/train.jsonl (READ ONLY: rows have id, source_id, prompt = [system, user] messages, completion = [assistant message])",
+      "scripts/mesh_lora_mlx.sh (how mlx_lm lora is invoked in this repo)",
+      "tests/py/test_mesh_generate.py and tests/py/conftest.py (test style; scripts/ is on sys.path)"
+    ],
+    "owns": [
+      "scripts/proof_data.py",
+      "scripts/proof_score.py",
+      "scripts/proof_ladder.py",
+      "scripts/proof_run.sh",
+      "tests/py/test_proof_data.py",
+      "tests/py/test_proof_score.py",
+      "tests/py/test_proof_ladder.py",
+      "tests/py/test_proof_run.py",
+      "tests/fixtures/proof/",
+      "docs/12-proof-ladder.md"
+    ],
+    "requires": [],
+    "standingRule": "Offline-only PRD. Ralph builds and tests the harness with tiny fixtures and fake generators; it never trains, never downloads a model and never starts mlx_lm. The training and generation runs are manual gates for the owner. Do not edit existing scripts except where a story says so.",
+    "guardrails": [
+      "Work offline. Tests use fixtures under tests/fixtures and mocked HTTP. Never call Baseten, Meta, Hugging Face or any remote service from a story, a test or a script you run. The only network use allowed is `npm install` and `.venv/bin/pip install` of packages the story names.",
+      "Never commit, push, tag or publish. autoCommit is off and the owner commits.",
+      "Never delete, overwrite or reformat anything under data/, out/, eval/, .env or .venv. They are the owner's data (a long Glimmer generation run may be writing data/raw right now). Tests write only to temporary directories.",
+      "Do not start long jobs. Any command that would run more than about 5 minutes (corpus generation, training, GGUF conversion, evals) is written as a script plus docs and left for the owner. A live smoke call to the local Ollama is allowed only if the story says so, with at most 2 briefs, and must skip cleanly when Ollama is down. Never rent GPUs or run `runpodctl` with anything that creates a pod.",
+      "Edit only the files named in the story's steps, plus their tests and the doc the story names. Do not change prompts/system.txt: every existing raw answer was generated against it.",
+      "Match the surrounding code: short comments that explain why, argparse CLIs, resumable file-per-item outputs, no new dependency the story does not name. Python runs with `.venv/bin/python`; Node scripts are ESM `.mjs` (Node 22).",
+      "Three.js stays pinned at 0.160.0 and the validator keeps serving the local copy in place of the CDN URL.",
+      "Python scripts must stay importable without heavy deps: import torch, transformers, trl or peft only inside functions or under `if __name__ == '__main__'` so pytest can import them.",
+      "Record only real results. Never invent pass rates, token counts, timings or costs; where a number is unknown write 'not measured'.",
+      "Debug output goes to data/ or a temp dir, never into scripts/ or docs/.",
+      "If the spec is wrong or impossible, do the closest thing that works and explain the difference in `notes`. If you cannot finish a story, set `notes` to why and stop; do not mark it passing."
+    ],
+    "qualityGates": {
+      "universal": [
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "chromium": [
+        "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
+      ]
+    },
+    "manualGates": [
+      "Owner runs `bash scripts/proof_run.sh one` (about 10 minutes on the Mac, free) and reads the printed ladder verdict",
+      "Owner runs `bash scripts/proof_run.sh seen` (longer; check the printed time estimate first) before any further Glimmer GPU spend"
+    ]
+  }
+}

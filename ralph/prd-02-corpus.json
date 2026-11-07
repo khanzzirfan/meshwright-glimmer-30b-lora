@@ -1,0 +1,180 @@
+{
+  "name": "Muse Three.js 2: corpus tooling for a 1,000-scene run (Glimmer or Spark Open)",
+  "branchName": "ralph/02-corpus",
+  "description": "Builds the tooling to grow the dataset from the 51-brief pilot to 1,000 or more examples with either teacher: local Muse Glimmer or Muse Spark Open on Baseten: resumable brief growth, a chunked overnight driver, a repair pass for failed scenes, merge and de-duplication into the SFT files, and an optional screenshot quality score. Ralph writes the tools; the owner runs the long jobs.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "gen_briefs: grow an existing brief set",
+      "description": "As the pipeline owner, I want to append new briefs to an existing set without reusing ids or leaking eval briefs so that the corpus can grow in stages.",
+      "steps": [
+        "Add `--append` to scripts/gen_briefs.py: read data/briefs.jsonl (and the .eval file), continue ids after the highest existing one, skip anything near-duplicate of an existing brief (train or eval), and write only the new rows to the train file by appending.",
+        "In append mode never rewrite or re-split the eval file; create it only if it does not exist. `--count` means the final total of train briefs wanted.",
+        "Keep the balanced schedule from PRD 1 continuing from where the existing set stops (balance counts existing rows per domain).",
+        "Tests with a fake client: append adds only new ids, never touches existing lines or the eval file, rejects near-duplicates of eval briefs, and keeps domain counts within plus or minus 1."
+      ],
+      "acceptanceCriteria": [
+        "Running append twice with the same fake client output adds zero rows the second time (asserted)",
+        "Existing briefs.jsonl lines are byte-identical after an append (asserted)",
+        "No brief in the train file is a near-duplicate of any eval brief (asserted)",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "",
+      "dependsOn": []
+    },
+    {
+      "id": "US-002",
+      "title": "run_corpus.py: chunked, resumable overnight driver",
+      "description": "As the pipeline owner, I want one command that generates, validates and reports in chunks so that I can leave it running overnight and stop or resume it safely.",
+      "steps": [
+        "Create scripts/run_corpus.py with `--target N --chunk 50 --teacher glimmer|spark [--think] [--model M] [--dry-run]`. Teacher presets: glimmer = --ollama-native, model muse-glimmer:30b-mlx, concurrency 1; spark = OpenAI route, model meta-models/muse-spark-open-1026, concurrency 4, --max-tokens 32000, and a required `--token-budget` per chunk (refuse to run spark without one).",
+        "Each loop: find the next chunk of briefs without a raw file, run teacher_generate.py with the teacher preset on that chunk via a temporary briefs file, then validate_scenes.mjs with --skip-done, then pilot_report.py; log to data/logs/corpus-<timestamp>.log and print an ETA from the measured seconds per scene.",
+        "Stop cleanly between chunks if the file data/STOP exists (and say so), and after Ctrl-C leave no half-written raw files.",
+        "`--dry-run` prints the chunks it would run and the exact commands without executing anything. Write tests for chunk selection, the STOP file and the dry-run output (patch subprocess so nothing runs)."
+      ],
+      "acceptanceCriteria": [
+        "`python scripts/run_corpus.py --target 100 --chunk 25 --dry-run` prints 2 chunks for a fixture of 50 done briefs and exits 0 without calling any process",
+        "A test shows chunk selection skips briefs that already have raw files and stops when data/STOP appears",
+        "docs/07-local-glimmer.md documents the overnight command, the STOP file and how to resume",
+        "`--teacher spark` without `--token-budget` exits non-zero before any call (asserted)",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "repair_scenes.py: one repair attempt for failed scenes",
+      "description": "As the pipeline owner, I want failed scenes sent back to the model once with their error so that more of the corpus survives validation.",
+      "steps": [
+        "Create scripts/repair_scenes.py: for each row in the validation report with reasons in {js_error, blank, static, bad_import, external_dep}, build a prompt containing the original brief, the previous HTML and the failure (console error text or reason), and ask the same model to return a corrected complete page in the same fenced format.",
+        "Reuse teacher_generate's call path (import it; do not copy) so both Ollama-native and OpenAI backends work; write results to data/raw_repair/<id>.json with a `repair_of` field and the original reason.",
+        "Never repair truncated or no_html rows, and never repair a scene twice (skip if data/raw_repair/<id>.json exists).",
+        "Tests with a fake call: only the allowed reasons are repaired, the prompt contains the error text, existing repair files are skipped, output shape matches teacher_generate raw files so the validator accepts the directory."
+      ],
+      "acceptanceCriteria": [
+        "A fixture report with one row per reason yields repair calls only for the 5 allowed reasons (asserted)",
+        "`node scripts/validate_scenes.mjs --raw data/raw_repair ...` accepts the produced files (shape asserted in a test against the validator's field reads)",
+        "docs/03-pipeline-walkthrough.md describes the repair pass and says it runs once per scene",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-002"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "build_dataset: merge repairs, de-duplicate, report stats",
+      "description": "As the pipeline owner, I want the SFT files to merge original and repaired scenes, drop near-duplicate code and report what was kept so that the dataset is clean and I know its size.",
+      "steps": [
+        "Accept several teachers: `--raw` and `--report` may be given more than once (e.g. data/raw + data/validation.jsonl and data/raw_spark + data/validation_spark.jsonl). For a brief passing under several teachers keep one by `--prefer spark,glimmer` order; tag each row with `teacher` from the raw file's `model` field.",
+        "Extend scripts/build_dataset.py with `--repair-raw` and `--repair-report` (optional): prefer an original ok row, else a repaired ok row; tag each row with `source` (original or repair).",
+        "Drop near-duplicate scenes: shingle the JavaScript (5-token shingles) and drop a row whose Jaccard similarity to an already kept row is above 0.9 (keep the first by id); add `--min-chars` and `--max-chars` filters with defaults 800 and 60000.",
+        "Write data/sft/stats.json: counts by level, domain and source, dropped counts by reason (duplicate, too short, too long), and an estimated token count (characters divided by 3.5, labelled as an estimate).",
+        "Tests: repair preference, duplicate dropped, length filters, stats.json fields, output files unchanged for the no-repair case."
+      ],
+      "acceptanceCriteria": [
+        "Two fixture scenes differing only in a colour constant are de-duplicated, two genuinely different ones both survive (asserted)",
+        "stats.json contains bySource, byLevel, byDomain, dropped and estimatedTokens with the estimate flagged as such",
+        "Running without the repair flags produces exactly the same train.jsonl as before this story for the PRD 1 fixtures",
+        "With two teachers passing the same brief only the preferred one is kept and stats.json has a byTeacher count (asserted)",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-003"
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "score_scenes.py: optional screenshot quality score",
+      "description": "As the pipeline owner, I want an optional blind quality score so that scenes that render but do not match the brief can be left out of training.",
+      "steps": [
+        "Create scripts/score_scenes.py: for each ok row send the screenshot (base64) and the brief, never the code, to a local Ollama vision model chosen with a required `--model`, asking for a JSON object {score: 1-5, reason}; write data/scores.jsonl, resumable.",
+        "Before scoring, call Ollama /api/show for the model and refuse with a clear message if it does not list an image capability; do not assume any specific model has vision.",
+        "Add `--min-score` to build_dataset.py (default off) that drops rows below the threshold or without a score when it is set.",
+        "Tests with mocked HTTP: capability check refuses a text-only model, JSON parsing tolerates fenced and prose-wrapped output, resume skips scored ids, build_dataset honours --min-score."
+      ],
+      "acceptanceCriteria": [
+        "Scoring a text-only model name fails fast with a message that names the missing capability (asserted)",
+        "The score prompt contains the brief and no HTML or JavaScript (asserted)",
+        "`--min-score 4` removes rows scored 3 and rows with no score in a fixture (asserted)",
+        "docs/06-budget-and-risks.md notes that the vision model is chosen by the owner and unverified",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-004"
+      ]
+    }
+  ],
+  "metadata": {
+    "specs": [
+      "docs/03-pipeline-walkthrough.md",
+      "docs/06-budget-and-risks.md",
+      "docs/07-local-glimmer.md"
+    ],
+    "readFirst": [
+      "docs/07-local-glimmer.md (measured speed, why concurrency stays 1, thinking vs no thinking)",
+      "docs/03-pipeline-walkthrough.md stages 1 to 4",
+      "scripts/*.py and scripts/lib/validate.mjs as left by PRD 1"
+    ],
+    "owns": [
+      "scripts/gen_briefs.py",
+      "scripts/run_corpus.py",
+      "scripts/repair_scenes.py",
+      "scripts/build_dataset.py",
+      "scripts/score_scenes.py",
+      "tests/",
+      "docs/07-local-glimmer.md"
+    ],
+    "requires": [
+      "prd-01-hardening"
+    ],
+    "standingRule": "Offline-only PRD. The corpus run itself (about 18 hours without thinking at the measured 41 tok/s) is a manual gate. Ralph only builds and tests the tools with mocks and fixtures.",
+    "guardrails": [
+      "Work offline. Tests use fixtures under tests/fixtures and mocked HTTP. Never call Baseten, Meta, Hugging Face or any remote service from a story, a test or a script you run. The only network use allowed is `npm install` and `.venv/bin/pip install` of packages the story names.",
+      "Never commit, push, tag or publish. autoCommit is off and the owner commits.",
+      "Never delete, overwrite or reformat anything under data/, out/, eval/, .env or .venv. They are the owner's data (a long Glimmer generation run may be writing data/raw right now). Tests write only to temporary directories.",
+      "Do not start long jobs. Any command that would run more than about 5 minutes (corpus generation, training, GGUF conversion, evals) is written as a script plus docs and left for the owner. A live smoke call to the local Ollama is allowed only if the story says so, with at most 2 briefs, and must skip cleanly when Ollama is down. Never rent GPUs or run `runpodctl` with anything that creates a pod.",
+      "Edit only the files named in the story's steps, plus their tests and the doc the story names. Do not change prompts/system.txt: every existing raw answer was generated against it.",
+      "Match the surrounding code: short comments that explain why, argparse CLIs, resumable file-per-item outputs, no new dependency the story does not name. Python runs with `.venv/bin/python`; Node scripts are ESM `.mjs` (Node 22).",
+      "Three.js stays pinned at 0.160.0 and the validator keeps serving the local copy in place of the CDN URL.",
+      "Python scripts must stay importable without heavy deps: import torch, transformers, trl or peft only inside functions or under `if __name__ == '__main__'` so pytest can import them.",
+      "Record only real results. Never invent pass rates, token counts, timings or costs; where a number is unknown write 'not measured'.",
+      "Debug output goes to data/ or a temp dir, never into scripts/ or docs/.",
+      "If the spec is wrong or impossible, do the closest thing that works and explain the difference in `notes`. If you cannot finish a story, set `notes` to why and stop; do not mark it passing."
+    ],
+    "qualityGates": {
+      "universal": [
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "chromium": [
+        "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
+      ]
+    },
+    "manualGates": [
+      "Owner runs `python scripts/run_corpus.py --target 1000 --chunk 50` overnight with `caffeinate -i` and reads data/pilot-report.md after each chunk",
+      "Owner picks a vision-capable local model and runs score_scenes.py on 20 scenes before trusting the scores"
+    ]
+  }
+}

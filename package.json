@@ -1,0 +1,15 @@
+{
+  "name": "muse-threejs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/validate_scenes.mjs --raw data/raw --scenes data/scenes --shots data/shots --report data/validation.jsonl",
+    "test": "node --test tests/js",
+    "check": "bash scripts/check.sh"
+  },
+  "dependencies": {
+    "playwright": "^1.48.0",
+    "pngjs": "^7.0.0",
+    "three": "0.160.0"
+  }
+}
