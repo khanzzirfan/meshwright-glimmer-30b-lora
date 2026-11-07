@@ -1,0 +1,216 @@
+Initializing Ralph TUI...
+Env filter:
+  Blocked:     BASETEN_API_KEY, META_API_KEY
+  Passthrough: NVIDIA_NIM_API_KEY
+
+Session: b125c9c6-ac3b-4e0c-a5b4-cdd1240f74b1
+Agent: claude
+Tracker: json
+PRD: ./ralph/glb-ops.prd.json
+Max iterations: 40
+
+[23:35:01] [INFO] [session] Session b125c9c6-ac3b-4e0c-a5b4-cdd1240f74b1 created. Agent: claude, Tracker: json
+[23:35:01] [INFO] [engine] Ralph started. Total tasks: 8
+[23:35:01] [INFO] [progress] Iteration 1/40: Working on US-002 - Start dev round 1 (12 dev briefs, Glimmer plain, new animation prompt)
+[23:35:06] [INFO] [agent] [94m[Bash][0m $ tail -40 .ralph-tui/progress.md
+[23:35:10] [INFO] [agent] [94m[Bash][0m $ later stories should poll `status` rather than wait. --- EOF
+[23:35:13] [INFO] [agent] US-002 is done. `bash scripts/glb_ops.sh start dev1` printed `started dev1 (pid 82340), raw 0/12`.
+[23:35:13] [INFO] [agent] - **Status:** `bash scripts/glb_ops.sh status` printed `dev1: running, raw 0/12, started 2026-11-07T12:35:07Z`.
+[23:35:13] [INFO] [agent] - **One job at a time:** the start command did not print 'one job at a time', so no other job was running.
+[23:35:13] [INFO] [agent] - **Numbers:** the pid, the raw count and the start time above are copied from the command output.
+[23:35:13] [INFO] [agent] - **Progress log:** I appended the US-002 entry to `.ralph-tui/progress.md`. I made no other file changes and no commits.
+[23:35:13] [INFO] [agent] The job runs detached and had finished 0 of 12 briefs when I checked. Later stories should poll `status` rather than wait on it.
+[23:35:13] [INFO] [agent] <promise>COMPLETE</promise>
+[23:35:14] [INFO] [progress] Iteration 1 finished. Task US-002: COMPLETED. Duration: 13s
+[23:35:14] [INFO] [tracker] Task US-002 completed in iteration 1
+[23:39:14] [INFO] [progress] Iteration 2/40: Working on US-003 - Wait for dev round 1 and judge it
+[23:39:20] [INFO] [agent] [94m[Bash][0m $ ls runs/glb_v2/dev1 2>&1 | head
+[23:39:22] [INFO] [agent] [94m[Bash][0m $ echo "exit=$?"
+[23:45:35] [INFO] [agent] [94m[Bash][0m $ ls runs/glb_v2/dev1
+[23:45:37] [INFO] [agent] [94m[Bash][0m $ cat runs/glb_v2/dev1/judge.json
+[23:45:42] [INFO] [agent] I'll append the progress entry now. It copies the judge output unchanged and uses only numbers from command output.
+[23:45:45] [INFO] [agent] [94m[Bash][0m $ the verdict is still PASS under the stated rule. --- EOF tail -5 .ralph-tui/progress.md
+[23:45:49] [INFO] [agent] US-003 is done: dev round 1 finished and the judge verdict is PASS.
+[23:45:49] [INFO] [agent] - **Wait:** `bash scripts/glb_ops.sh wait dev1` exited 0 with "job dev1 finished with exit 0, raw 12/12".
+[23:45:49] [INFO] [agent] - **Judge:** I ran `python3 scripts/glb_ops_judge.py dev runs/glb_v2/dev1`, which wrote `runs/glb_v2/dev1/judge.json` with `"verdict": "PASS"`.
+[23:45:49] [INFO] [agent] - **Numbers:** 11 of 12 briefs were valid (the rule needs at least 10). All 3 animated briefs kept their animation (the rule needs at least 2 of 3).
+[23:45:49] [INFO] [agent] - **Notes:** The full judge JSON, unchanged, is in the new US-003 entry I appended to `.ralph-tui/progress.md`.
+[23:45:49] [INFO] [agent] The judge's `reasons` counts add up to 13 (11 ok, 1 `js_error`, 1 `no_download`) while `n` is 12. I didn't investigate it, and the verdict is PASS under the stated rule either way. It may be worth checking before the 48-brief runs.
+[23:45:49] [INFO] [agent] I didn't run the Step 4 quality checks (`scripts/check.sh`), since I changed no code. I made no commits.
+[23:45:49] [INFO] [agent] <promise>COMPLETE</promise>
+[23:45:49] [INFO] [progress] Iteration 2 finished. Task US-003: COMPLETED. Duration: 395s
+[23:45:49] [INFO] [tracker] Task US-003 completed in iteration 2
+[23:49:49] [INFO] [progress] Iteration 3/40: Working on US-004 - Freeze the prompt for the real runs
+[23:49:54] [INFO] [agent] [94m[Bash][0m $ grep -n "freeze" -B2 -A20 scripts/glb_ops.sh | head -60
+[23:49:58] [INFO] [agent] [94m[Bash][0m $ ls runs/glb_v2 runs/glb_v2/jobs 2>&1 | head -30
+[23:50:00] [INFO] [agent] [94m[Bash][0m $ grep -n "US-001" -A12 ralph/glb-ops.prd.json | grep -i -n "notes\|sha"
+[23:50:02] [INFO] [agent] Prompt hash unchanged since dev1 and verdict is PASS. Freezing.
+[23:50:02] [INFO] [agent] [94m[Bash][0m $ grep sha runs/glb_v2/STATE.md
+[23:50:07] [INFO] [agent] [94m[Bash][0m $ it refuses otherwise.   - The story 1 notes were not in progress.md (it starts at US-002), so I comp...
+[23:50:12] [INFO] [agent] US-004 is done: `bash scripts/glb_ops.sh freeze` printed `FROZEN e4a89010c8b4297c3705d16cce4c08fa96929b7f5e1848d93b799a98817e5601` and exited 0.
+[23:50:12] [INFO] [agent] - **Files created:** `runs/glb_v2/PROMPT_FROZEN.json` and `runs/glb_v2/system_glb.frozen.txt` both exist now (the frozen copy is 2664 bytes).
+[23:50:12] [INFO] [agent] - **Hash check:** the sha256 in `PROMPT_FROZEN.json` matches the one in `runs/glb_v2/STATE.md` and `runs/glb_v2/jobs/dev1.prompt_sha`. It also matches a fresh `shasum` of `prompts/system_glb.txt`, so the prompt didn't change after dev1.
+[23:50:12] [INFO] [agent] - **Story 1 notes:** the "story 1 notes" hash wasn't in `.ralph-tui/progress.md`, which starts at US-002. I used `STATE.md` and `dev1.prompt_sha` instead. `STATE.md` is where preflight wrote the hash for story 1.
+[23:50:12] [INFO] [agent] - **Notes:** every number in the US-004 entry I appended to `.ralph-tui/progress.md` is copied from command output.
+[23:50:12] [INFO] [agent] - **Gate:** I didn't run `bash scripts/check.sh`, because no repo code changed this story.
+[23:50:12] [INFO] [agent] <promise>COMPLETE</promise>
+[23:50:12] [INFO] [progress] Iteration 3 finished. Task US-004: COMPLETED. Duration: 23s
+[23:50:12] [INFO] [tracker] Task US-004 completed in iteration 3
+[23:54:12] [INFO] [progress] Iteration 4/40: Working on US-005 - Start Glimmer plain on the 48 eval briefs
+[23:54:18] [INFO] [agent] [94m[Bash][0m $ bash scripts/glb_ops.sh status
+[23:54:25] [INFO] [agent] [94m[Bash][0m $ bash scripts/glb_ops.sh status
+[23:54:30] [INFO] [agent] [94m[Bash][0m $ the job is detached, so later stories should poll `status`/`wait`. --- EOF
+[23:54:39] [INFO] [agent] US-005 is done: the plain Glimmer run is started on the 48 eval briefs with the frozen prompt.
+[23:54:39] [INFO] [agent] - **Start:** `bash scripts/glb_ops.sh start glimmer` printed `started glimmer (pid 85323), raw 0/48`.
+[23:54:39] [INFO] [agent] - **Status:** `bash scripts/glb_ops.sh status` lists glimmer as running, 0/48 raw, started 2026-11-07T12:54:25Z. dev1 is finished (exit 0, 12/12), so glimmer is the only job running.
+[23:54:39] [INFO] [agent] - **Prompt:** the status output shows the prompt frozen at sha256 `e4a89010c8b4297c3705d16cce4c08fa96929b7f5e1848d93b799a98817e5601`.
+[23:54:39] [INFO] [agent] - **Notes:** every number in the progress.md entry is copied from that command output. The only file I changed is `.ralph-tui/progress.md`.
+[23:54:39] [INFO] [agent] I did not run the repo gate, since I changed no code.
+[23:54:39] [INFO] [agent] The job runs detached, so later stories should poll `status` or `wait` rather than block on it.
+[23:54:39] [INFO] [agent] <promise>COMPLETE</promise>
+[23:54:39] [INFO] [progress] Iteration 4 finished. Task US-005: COMPLETED. Duration: 27s
+[23:54:39] [INFO] [tracker] Task US-005 completed in iteration 4
+[23:58:39] [INFO] [progress] Iteration 5/40: Working on US-006 - Wait for Glimmer plain and check the result
+[23:58:44] [INFO] [agent] [94m[Bash][0m $ wc -l runs/glb_v2/glimmer/validation.jsonl
+[23:58:45] [INFO] [agent] [91m[Error: Exit code 1
+[23:58:45] [INFO] [agent]   "valid": 11,
+[23:58:45] [INFO] [agent]   "animated": 3,
+[23:58:45] [INFO] [agent]   "animated_with_animation": 3,
+[23:58:45] [INFO] [agent]   "reasons": {
+[23:58:45] [INFO] [agent]     "ok": 11,
+[23:58:45] [INFO] [agent]     "js_error": 1,
+[23:58:45] [INFO] [agent]     "no_download": 1
+[23:58:45] [INFO] [agent]   },
+[23:58:45] [INFO] [agent]   "dev_animated_with_animation": 3,
+[23:58:45] [INFO] [agent]   "verdict": "PASS",
+[23:58:45] [INFO] [agent]   "rule": "n == 12, valid >= 10, animated dev briefs with an animation >= 2 of 3"
+[23:58:45] [INFO] [agent] }
+[23:58:45] [INFO] [agent] ```
+[23:58:45] [INFO] [agent] - Files changed: none in the repo besides this entry (runs/glb_v2/dev1/judge.json was created by the judge).
+[23:58:45] [INFO] [agent] - **Learnings:**
+[23:58:45] [INFO] [agent]   - `wait` returns 0 when finished, 2 when still running; it finished within one call here.
+[23:58:45] [INFO] [agent]   - The judge is not run by `wait`; run `glb_ops_judge.py dev runs/glb_v2/dev1` yourself. `freeze` refuses without a PASS in judge.json.
+[23:58:45] [INFO] [agent]   - The reasons counts sum to 13 (11+1+1) while n is 12. I did not investigate; the verdict is still PASS under the stated rule.
+[23:58:45] [INFO] [agent] ---
+[23:58:45] [INFO] [agent] ## 2026-11-07 - US-004
+[23:58:45] [INFO] [agent] - Ran `bash scripts/glb_ops.sh freeze`; output: "FROZEN e4a89010c8b4297c3705d16cce4c08fa96929b7f5e1848d93b799a98817e5601" (exit 0).
+[23:58:45] [INFO] [agent] - Created runs/glb_v2/PROMPT_FROZEN.json (frozen_at 2026-11-07T12:50:03Z) and runs/glb_v2/system_glb.frozen.txt (2664 bytes).
+[23:58:45] [INFO] [agent] - The sha256 equals the one in runs/glb_v2/STATE.md (preflight) and jobs/dev1.prompt_sha, so the prompt was not changed after dev1.
+[23:58:45] [INFO] [agent] - Files changed: none in the repo besides this entry (the two runs/glb_v2 files were created by freeze).
+[23:58:45] [INFO] [agent] - **Learnings:**
+[23:58:45] [INFO] [agent]   - freeze checks judge.json for PASS and that dev1.prompt_sha matches the current prompt hash; it refuses otherwise.
+[23:58:45] [INFO] [agent]   - The story 1 notes were not in progress.md (it starts at US-002), so I compared against STATE.md and dev1.prompt_sha instead.
+[23:58:45] [INFO] [agent] ---
+[23:58:45] [INFO] [agent] ## 2026-11-07 - US-005
+[23:58:45] [INFO] [agent] - Ran `bash scripts/glb_ops.sh start glimmer`; output: "started glimmer (pid 85323), raw 0/48" (exit 0).
+[23:58:45] [INFO] [agent] - `bash scripts/glb_ops.sh status` output:
+[23:58:45] [INFO] [agent]   - "dev1: finished exit 0, raw 12/12, started 2026-11-07T12:35:07Z"
+[23:58:45] [INFO] [agent]   - "glimmer: running, raw 0/48, started 2026-11-07T12:54:25Z"
+[23:58:45] [INFO] [agent]   - "prompt frozen: "sha256": "e4a89010c8b4297c3705d16cce4c08fa96929b7f5e1848d93b799a98817e5601""
+[23:58:45] [INFO] [agent] - Only glimmer is running (dev1 finished). Files changed: none besides this entry.
+[23:58:45] [INFO] [agent] - **Learnings:**
+[23:58:45] [INFO] [agent]   - start prints the pid and raw progress; the job is detached, so later stories should poll `status`/`wait`.
+[23:58:45] [INFO] [agent] ---
+[23:58:45] [INFO] [agent] 3:# only starts, waits for and checks jobs. Jobs run detached and are resumable; one job runs at a time.
+[23:58:45] [INFO] [agent] 5:#   scripts/glb_ops.sh start dev1|glimmer|glimmer-think
+[23:58:45] [INFO] [agent] 6:#   scripts/glb_ops.sh wait JOB [SECONDS]   wait up to 540 s; exit 0 finished, 2 still running, 1 failed or never started
+[23:58:45] [INFO] [agent] 23:    dev1) echo "--out-root $RUNS/dev1 --only glimmer --briefs bench/glb/dev_briefs.jsonl" ;;
+[23:58:45] [INFO] [agent] 24:    glimmer) echo "--out-root $RUNS --only glimmer" ;;
+[23:58:45] [INFO] [agent] 25:    glimmer-think) echo "--out-root $RUNS --only glimmer-think" ;;
+[23:58:45] [INFO] [agent] 30:job_raw() { case "$1" in dev1) echo "$RUNS/dev1/glimmer/raw" ;; *) echo "$RUNS/$1/raw" ;; esac; }
+[23:58:45] [INFO] [agent] 42:    curl -s localhost:11434/api/tags | grep -q "muse-glimmer:30b-mlx" || { echo "PREFLIGHT FAILED: Ollama is not serving muse-glimmer:30b-mlx"; exit 1; }
+[23:58:45] [INFO] [agent] 55:  job="${1:-}"; args=$(job_args "$job") || { echo "unknown job '$job' (dev1, glimmer, glimmer-think)"; exit 1; }
+[23:58:45] [INFO] [agent] 64:  case "$job" in glimmer|glimmer-think) require_freeze ;; esac
+[23:58:45] [INFO] [agent] 71:cmd_wait() {
+[23:58:45] [INFO] [agent] 74:  waited=0
+[23:58:45] [INFO] [agent] 75:  while [ ! -f "$JOBS/$job.exit" ] && job_alive "$job" && [ "$waited" -lt "$secs" ]; do sleep "$POLL"; waited=$((waited + POLL)); done
+[23:58:45] [INFO] [agent] 105:  for m in glimmer glimmer-think; do [ -f "$RUNS/$m/validation.jsonl" ] || { echo "REFUSED: $RUNS/$m has no validation.jsonl yet"; exit 1; }; done
+[23:58:45] [INFO] [agent] 108:  [ -d "$RUNS/glimmer-v1" ] || cp -R eval/glb_bench/glimmer "$RUNS/glimmer-v1"
+[23:58:45] [INFO] [agent] 118:  wait) shift; cmd_wait "$@" ;;
+[23:58:45] [INFO] [agent] wc: runs/glb_v2/glimmer/validation.jsonl: open: No such file or directory][0m
+[23:58:46] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[00:07:50] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[00:16:56] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[00:26:00] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[00:35:02] [INFO] [agent] Still waiting on the Glimmer run (47/48 raw done); checking again.
+[00:35:03] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[00:36:35] [INFO] [agent] [94m[Bash][0m $ tail -30 runs/glb_v2/jobs/glimmer.log 2>/dev/null
+[00:36:38] [INFO] [agent] [94m[Bash][0m $ head -5 runs/glb_v2/jobs/glimmer.log
+[00:36:45] [INFO] [agent] [94m[Bash][0m $ not investigated. --- EOF
+[00:36:50] [INFO] [agent] US-006 is done. The Glimmer plain run finished, and `wait glimmer` exited 0 with "job glimmer finished with exit 0, raw 48/48".
+[00:36:50] [INFO] [agent] - **Validation file:** `wc -l runs/glb_v2/glimmer/validation.jsonl` printed `48 runs/glb_v2/glimmer/validation.jsonl`.
+[00:36:50] [INFO] [agent] - **Summary:** No JSON summary was printed this iteration. The only summary is a text line at the end of `runs/glb_v2/jobs/glimmer.log`, which I copied unchanged into the notes: `pass rate 91.7% { ok: 44, js_error: 4, no_download: 4 }`.
+[00:36:50] [INFO] [agent] - **Other numbers:** The generation log says "done, 0 failed (rerun to retry), 0 skipped by budget, 124918 tokens used". The run took 40:40.
+[00:36:50] [INFO] [agent] - **Notes:** All numbers in the `.ralph-tui/progress.md` entry are copied from command output. That is the only file I changed.
+[00:36:50] [INFO] [agent] The reason counts add up to 52 for 48 briefs. The same thing happened on the dev1 run. It looks like `js_error` and `no_download` land on the same brief, but I didn't confirm that.
+[00:36:50] [INFO] [agent] <promise>COMPLETE</promise>
+[00:36:50] [INFO] [progress] Iteration 5 finished. Task US-006: COMPLETED. Duration: 2291s
+[00:36:50] [INFO] [tracker] Task US-006 completed in iteration 5
+[00:40:50] [INFO] [progress] Iteration 6/40: Working on US-007 - Start Glimmer with thinking on the 48 eval briefs
+[00:40:55] [INFO] [agent] [94m[Bash][0m $ tail -40 .ralph-tui/progress.md
+[00:40:57] [INFO] [agent] [94m[Bash][0m $ bash scripts/glb_ops.sh status
+[00:41:01] [INFO] [agent] [94m[Bash][0m $ output: "started glimmer-think (pid 90305), raw 0/48" (exit 0, not REFUSED). - `bash scripts/glb_ops...
+[00:41:04] [INFO] [agent] US-007 is done. `glimmer-think` is started and running; it hasn't finished.
+[00:41:04] [INFO] [agent] - **Prerequisite:** `glimmer` had finished OK before I started. Its exit file `runs/glb_v2/jobs/glimmer.exit` exists, and status showed `glimmer: finished exit 0, raw 48/48`.
+[00:41:04] [INFO] [agent] - **Start:** `bash scripts/glb_ops.sh start glimmer-think` printed `started glimmer-think (pid 90305), raw 0/48`. It exited 0 and was not REFUSED.
+[00:41:04] [INFO] [agent] - **Status:** `bash scripts/glb_ops.sh status` lists `glimmer-think: running, raw 0/48, started 2026-11-07T13:40:57Z`.
+[00:41:04] [INFO] [agent] I appended the US-007 entry to `.ralph-tui/progress.md`, with the numbers copied from the command output. No other files changed, and I made no commits.
+[00:41:04] [INFO] [agent] <promise>COMPLETE</promise>
+[00:41:05] [INFO] [progress] Iteration 6 finished. Task US-007: COMPLETED. Duration: 15s
+[00:41:05] [INFO] [tracker] Task US-007 completed in iteration 6
+[00:45:05] [INFO] [progress] Iteration 7/40: Working on US-008 - Wait for Glimmer with thinking and check the result
+[00:45:14] [INFO] [agent] [94m[Bash][0m $ ls runs/glb_v2/ 2>&1
+[00:45:18] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[00:54:21] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[01:03:25] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[01:03:25] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[01:21:29] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[01:30:32] [INFO] [agent] Still waiting on the glimmer-think job (raw 15/48, about 3 briefs per 9-minute wait). I'll keep polling until it exits.
+[01:30:32] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[01:39:35] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[01:48:38] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[01:57:42] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[02:06:45] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[02:15:50] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[02:24:53] [INFO] [agent] Still polling glimmer-think (raw 31/48). About 6 more waits to go.
+[02:24:53] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[02:33:57] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[02:43:00] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[02:52:04] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[03:01:07] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[03:10:10] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[03:19:14] [INFO] [agent] glimmer-think is at raw 45/48, so it should finish in one or two more waits.
+[03:19:15] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[03:28:20] [INFO] [agent] [94m[Bash][0m $ echo "exit $?"
+[03:30:23] [INFO] [agent] [94m[Bash][0m $ bash scripts/glb_ops.sh status
+[03:30:27] [INFO] [agent] [94m[Bash][0m $ not investigated. --- EOF
+[03:30:31] [INFO] [agent] US-008 is done. The glimmer-think run finished and I checked it against the criteria.
+[03:30:31] [INFO] [agent] - **Wait result:** `wait glimmer-think` exited 0 on the last call, with "job glimmer-think finished with exit 0, raw 48/48". The earlier calls all exited 2 ("still running").
+[03:30:31] [INFO] [agent] - **Validation lines:** `wc -l` printed `48 runs/glb_v2/glimmer-think/validation.jsonl`.
+[03:30:31] [INFO] [agent] - **Summary line:** it is a text line, not JSON, and I copied it unchanged into notes: `pass rate 93.8% { ok: 45, js_error: 3, no_download: 3 }`.
+[03:30:31] [INFO] [agent] - **Numbers:** all of them were copied from command output.
+[03:30:31] [INFO] [agent] The reason counts add up to 51 for 48 files, because `js_error` and `no_download` land on the same brief. The earlier dev1 and glimmer runs showed the same thing. I didn't investigate it.
+[03:30:31] [INFO] [agent] I appended the US-008 entry to `.ralph-tui/progress.md` and changed no other repo files.
+[03:30:31] [INFO] [agent] <promise>COMPLETE</promise>
+[03:30:31] [INFO] [progress] Iteration 7 finished. Task US-008: COMPLETED. Duration: 9926s
+[03:30:31] [INFO] [tracker] Task US-008 completed in iteration 7
+[03:34:31] [INFO] [progress] Iteration 8/40: Working on US-009 - Report and blind contact sheets
+[03:34:37] [INFO] [agent] [94m[Bash][0m $ sed -n 1,12p runs/glb_v2/report.md
+[03:34:54] [INFO] [agent] [94m[Bash][0m $ recognisable column shows "not rated" until rating.csv is filled in. --- EOF
+[03:34:58] [INFO] [agent] US-009 is done. `bash scripts/glb_ops.sh report` printed `REPORT OK: runs/glb_v2/report.md runs/glb_v2/sheet/rating.csv`. I did not run the quality checks (`bash scripts/check.sh`), because I changed no code. The command also printed "rendered 162, skipped 0, already done 0, rating rows 192".
+[03:34:58] [INFO] [agent] `runs/glb_v2/report.md`, `runs/glb_v2/RESULTS.md` and `runs/glb_v2/sheet/rating.csv` all exist.
+[03:34:58] [INFO] [agent] `grep -c '^| ' runs/glb_v2/report.md` printed 31.
+[03:34:58] [INFO] [agent] The Models table (first 12 lines of `report.md`, 48 briefs) lists all four models:
+[03:34:58] [INFO] [agent] | Model | Pass (95% Wilson) | Animated pass | Median triangles |
+[03:34:58] [INFO] [agent] |---|---|---|---|
+[03:34:58] [INFO] [agent] | ccore-q8 | 62.5% (48.4%-74.8%) | 7/11 | 2476 |
+[03:34:58] [INFO] [agent] | glimmer | 91.7% (80.4%-96.7%) | 8/11 | 581 |
+[03:34:58] [INFO] [agent] | glimmer-think | 93.8% (83.2%-97.9%) | 7/11 | 304 |
+[03:34:58] [INFO] [agent] | glimmer-v1 | 89.6% (77.8%-95.5%) | 2/11 | 484 |
+[03:34:58] [INFO] [agent] The Recognisable column shows "not rated" for every model until `rating.csv` is filled in.
+[03:34:58] [INFO] [agent] I appended the US-009 entry to `.ralph-tui/progress.md`, with these numbers copied from the command output. I made no commits.
+[03:34:58] [INFO] [agent] <promise>COMPLETE</promise>
+[03:34:59] [INFO] [progress] Iteration 8 finished. Task US-009: COMPLETED. Duration: 28s
+[03:34:59] [INFO] [tracker] Task US-009 completed in iteration 8
+[03:36:22] [INFO] [system] Received SIGTERM, stopping gracefully...
+[03:36:22] [INFO] [engine] Ralph stopped. Reason: interrupted. Iterations: 8, Tasks completed: 8

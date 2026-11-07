@@ -1,0 +1,243 @@
+{
+  "name": "GLB benchmark ops: run the v2 Glimmer benchmark one step at a time",
+  "description": "Operations PRD for docs/13-glb-code-track.md sections 11 and 12. The agent is an operator: each story is one owner-approved command of scripts/glb_ops.sh (start a job, wait for it, check it). Order: preflight, dev-set run with the new animation prompt, judge it, freeze the prompt, Glimmer plain on the 48 eval briefs, Glimmer with thinking, report. The agent never edits code, prompts, docs or anything under eval/. Results land in runs/glb_v2/ (ignored by git).",
+  "branchName": "ralph/glb-ops",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Preflight: Ollama up, nothing running, prompt hash recorded",
+      "description": "As the operator I want to confirm the machine is ready so that the run does not start on a broken setup. Use the exact commands in the steps.",
+      "steps": [
+        "Run `bash scripts/glb_ops.sh preflight` and read the output.",
+        "If it prints PREFLIGHT OK, copy the 'prompt sha256' line into this story's notes.",
+        "If it prints PREFLIGHT FAILED, copy the message into notes and stop without finishing the story."
+      ],
+      "acceptanceCriteria": [
+        "`bash scripts/glb_ops.sh preflight` printed PREFLIGHT OK in this iteration",
+        "runs/glb_v2/STATE.md exists and contains a sha256 line",
+        "The prompt sha256 is copied into notes exactly as printed",
+        "Every number you report in notes is copied from a command's output, never estimated"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-002",
+      "title": "Start dev round 1 (12 dev briefs, Glimmer plain, new animation prompt)",
+      "description": "As the operator I want to start the dev-set job so that the animation rule is tested on briefs that are not in the eval set.",
+      "steps": [
+        "Run `bash scripts/glb_ops.sh start dev1`.",
+        "Run `bash scripts/glb_ops.sh status` and copy the dev1 line into notes."
+      ],
+      "acceptanceCriteria": [
+        "`bash scripts/glb_ops.sh start dev1` printed 'started dev1' or 'already running' or 'already finished OK'",
+        "`bash scripts/glb_ops.sh status` lists dev1 as running or finished",
+        "No other job is running (the start command did not print 'one job at a time' for a different job)",
+        "Every number you report in notes is copied from a command's output, never estimated"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-003",
+      "title": "Wait for dev round 1 and judge it",
+      "description": "As the operator I want the dev result judged by the fixed rule (at least 10 of 12 valid, at least 2 of 3 animated briefs keep their animation) so that the owner sees real numbers before the 48-brief runs.",
+      "steps": [
+        "Run `bash scripts/glb_ops.sh wait dev1 540`. If the command exits 2 the job is still running: this is expected. Copy its one-line output into this story's notes, leave the story unfinished and stop; Ralph runs this story again after a delay.",
+        "If it exits 0, run `python3 scripts/glb_ops_judge.py dev runs/glb_v2/dev1` and copy the printed JSON (valid, dev_animated_with_animation, reasons, verdict) into notes.",
+        "If the verdict is PASS, finish the story. If it is FAIL, write the numbers in notes and stop WITHOUT finishing: the owner changes the prompt, not you."
+      ],
+      "acceptanceCriteria": [
+        "`wait dev1` exited 0 (job finished with exit 0)",
+        "runs/glb_v2/dev1/judge.json exists and its verdict is PASS",
+        "The judge JSON printed in this iteration is copied into notes unchanged",
+        "Every number you report in notes is copied from a command's output, never estimated"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-002"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-004",
+      "title": "Freeze the prompt for the real runs",
+      "description": "As the operator I want the prompt hash locked after a PASS so that every eval run uses the same prompt and a later edit is caught.",
+      "steps": [
+        "Run `bash scripts/glb_ops.sh freeze`.",
+        "Copy the FROZEN line into notes."
+      ],
+      "acceptanceCriteria": [
+        "`bash scripts/glb_ops.sh freeze` printed 'FROZEN' followed by a sha256",
+        "runs/glb_v2/PROMPT_FROZEN.json and runs/glb_v2/system_glb.frozen.txt exist",
+        "The sha256 in PROMPT_FROZEN.json equals the one in the story 1 notes unless the owner changed the prompt after dev1 (then freeze refuses and you stop)",
+        "Every number you report in notes is copied from a command's output, never estimated"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-003"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-005",
+      "title": "Start Glimmer plain on the 48 eval briefs",
+      "description": "As the operator I want the plain Glimmer run started with the frozen prompt so that it can be compared with the v1 baseline.",
+      "steps": [
+        "Run `bash scripts/glb_ops.sh start glimmer`.",
+        "Run `bash scripts/glb_ops.sh status` and copy the glimmer line into notes."
+      ],
+      "acceptanceCriteria": [
+        "`bash scripts/glb_ops.sh start glimmer` printed 'started glimmer' or 'already running' or 'already finished OK' (not REFUSED)",
+        "`bash scripts/glb_ops.sh status` lists glimmer as running or finished",
+        "No other job is running",
+        "Every number you report in notes is copied from a command's output, never estimated"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-004"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-006",
+      "title": "Wait for Glimmer plain and check the result",
+      "description": "As the operator I want to confirm the 48-brief plain run finished with a validation file so that the numbers can be reported.",
+      "steps": [
+        "Run `bash scripts/glb_ops.sh wait glimmer 540`. If the command exits 2 the job is still running: this is expected. Copy its one-line output into this story's notes, leave the story unfinished and stop; Ralph runs this story again after a delay.",
+        "If it exits 0, run `python3 scripts/glb_ops_judge.py summary runs/glb_v2/glimmer` and copy the JSON into notes."
+      ],
+      "acceptanceCriteria": [
+        "`wait glimmer` exited 0",
+        "runs/glb_v2/glimmer/validation.jsonl has 48 lines (`wc -l` output copied into notes)",
+        "The summary JSON printed in this iteration is copied into notes unchanged",
+        "Every number you report in notes is copied from a command's output, never estimated"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-005"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-007",
+      "title": "Start Glimmer with thinking on the 48 eval briefs",
+      "description": "As the operator I want the thinking variant started next, because the decision uses the better of the two Glimmer settings.",
+      "steps": [
+        "Run `bash scripts/glb_ops.sh start glimmer-think`.",
+        "Run `bash scripts/glb_ops.sh status` and copy the glimmer-think line into notes."
+      ],
+      "acceptanceCriteria": [
+        "`bash scripts/glb_ops.sh start glimmer-think` printed 'started glimmer-think' or 'already running' or 'already finished OK' (not REFUSED)",
+        "`bash scripts/glb_ops.sh status` lists glimmer-think as running or finished",
+        "glimmer finished OK before this started (its exit file exists)",
+        "Every number you report in notes is copied from a command's output, never estimated"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-006"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-008",
+      "title": "Wait for Glimmer with thinking and check the result",
+      "description": "As the operator I want to confirm the thinking run finished (it is slow, about 2 to 3 hours) so that the numbers can be reported.",
+      "steps": [
+        "Run `bash scripts/glb_ops.sh wait glimmer-think 540`. If the command exits 2 the job is still running: this is expected. Copy its one-line output into this story's notes, leave the story unfinished and stop; Ralph runs this story again after a delay.",
+        "If it exits 0, run `python3 scripts/glb_ops_judge.py summary runs/glb_v2/glimmer-think` and copy the JSON into notes."
+      ],
+      "acceptanceCriteria": [
+        "`wait glimmer-think` exited 0",
+        "runs/glb_v2/glimmer-think/validation.jsonl has 48 lines (`wc -l` output copied into notes)",
+        "The summary JSON printed in this iteration is copied into notes unchanged",
+        "Every number you report in notes is copied from a command's output, never estimated"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-007"
+      ],
+      "completionNotes": "Completed by agent"
+    },
+    {
+      "id": "US-009",
+      "title": "Report and blind contact sheets",
+      "description": "As the operator I want one report and one blind rating sheet so that the owner can compare v1, v2 and ccore side by side.",
+      "steps": [
+        "Run `bash scripts/glb_ops.sh report`.",
+        "Copy the line that begins REPORT OK into notes.",
+        "Run `ls runs/glb_v2/sheet` and copy the list into notes."
+      ],
+      "acceptanceCriteria": [
+        "`bash scripts/glb_ops.sh report` printed REPORT OK",
+        "runs/glb_v2/report.md, runs/glb_v2/RESULTS.md and runs/glb_v2/sheet/rating.csv exist",
+        "The Models table of report.md lists glimmer, glimmer-think, glimmer-v1 and ccore-q8 (run `grep -c '^| ' runs/glb_v2/report.md` and `sed -n 1,12p runs/glb_v2/report.md` and copy the output into notes)",
+        "Every number you report in notes is copied from a command's output, never estimated"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-008"
+      ],
+      "completionNotes": "Completed by agent"
+    }
+  ],
+  "metadata": {
+    "specs": [
+      "docs/13-glb-code-track.md"
+    ],
+    "readFirst": [
+      "scripts/glb_ops.sh (the header lists every subcommand and its exit codes)",
+      "docs/13-glb-code-track.md sections 11 and 12"
+    ],
+    "owns": [
+      "runs/glb_v2/"
+    ],
+    "requires": [],
+    "standingRule": "Operator PRD, owner-approved on 7 Nov 2026: starting local jobs through scripts/glb_ops.sh and waiting for them is allowed here, and it overrides the 'no long jobs' line in AGENTS.md for this PRD only. Run exactly the commands in the story. One story per iteration. A wait story that finds the job still running ends without finishing and is run again later. If a result is missing or a command fails, write the exact output in notes and stop. Never edit prompts/system_glb.txt, even when the dev verdict is FAIL: the owner decides.",
+    "guardrails": [
+      "You are an operator, not a developer. Run only the commands named in the story. Do not edit any file in scripts/, prompts/, bench/, docs/, tests/, ralph/ or .ralph-tui/config.toml, and nothing under data/, out/, eval/, .env or .venv.",
+      "Never commit, push, tag or publish.",
+      "No network and no cloud: never run runpodctl with anything that creates a pod, never call Baseten or any remote model. The benchmark scripts talk only to the local Ollama at localhost:11434.",
+      "Never kill processes or delete files under runs/. Jobs are stopped and restarted only through scripts/glb_ops.sh.",
+      "One story per iteration. Never run two jobs at once; scripts/glb_ops.sh refuses and you must not work around it.",
+      "A foreground command may run for at most about 9 minutes (scripts/glb_ops.sh wait caps itself at 540 seconds). Do not poll in a loop or call sleep yourself.",
+      "Do not output the completion promise unless every acceptance criterion holds. If a criterion cannot hold yet, say why in notes and stop.",
+      "Record only real results: copy numbers from command output; where unknown write 'not measured'."
+    ],
+    "qualityGates": {
+      "universal": [
+        "Every number you report in notes is copied from a command's output, never estimated"
+      ],
+      "chromium": [
+        "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
+      ]
+    },
+    "manualGates": [
+      "Owner rates runs/glb_v2/sheet/rating.csv blind, then reads runs/glb_v2/RESULTS.md and records the outcome (A, B or C) in docs/13 section 10",
+      "Owner decides what to do after a FAIL verdict on dev1 (prompt change and a new dev round)"
+    ],
+    "updatedAt": "2026-11-07T16:34:59.413Z"
+  }
+}

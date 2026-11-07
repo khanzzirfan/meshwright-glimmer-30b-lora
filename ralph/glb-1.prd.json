@@ -1,7 +1,7 @@
 {
   "name": "GLB benchmark 1: score Three.js answers by the GLB they export",
-  "description": "Phase 1 tooling for docs/13-glb-code-track.md: a GLB parser, a GLB mode for the scene validator that clicks Export and checks the downloaded file, a configurable system prompt and sampling for teacher_generate, a resumable benchmark runner over bench/glb/models.json, a report with confidence intervals and head-to-head counts, and a blind contact sheet for human rating. The owner then runs untuned Muse Glimmer and ccore's Qwen3.5-4B-GLB-3D-Coder on the 48 briefs in bench/glb/briefs.jsonl and decides on phase 2 with the rules in docs/13 section 7.",
   "branchName": "ralph/glb-1",
+  "description": "Phase 1 tooling for docs/13-glb-code-track.md: a GLB parser, a GLB mode for the scene validator that clicks Export and checks the downloaded file, a configurable system prompt and sampling for teacher_generate, a resumable benchmark runner over bench/glb/models.json, a report with confidence intervals and head-to-head counts, and a blind contact sheet for human rating. The owner then runs untuned Muse Glimmer and ccore's Qwen3.5-4B-GLB-3D-Coder on the 48 briefs in bench/glb/briefs.jsonl and decides on phase 2 with the rules in docs/13 section 7.",
   "userStories": [
     {
       "id": "US-001",
@@ -25,8 +25,7 @@
       "priority": 1,
       "passes": true,
       "notes": "",
-      "dependsOn": [],
-      "completionNotes": "Completed by agent"
+      "dependsOn": []
     },
     {
       "id": "US-002",
@@ -53,8 +52,7 @@
       "notes": "",
       "dependsOn": [
         "US-001"
-      ],
-      "completionNotes": "Completed by agent"
+      ]
     },
     {
       "id": "US-003",
@@ -78,8 +76,7 @@
       "notes": "",
       "dependsOn": [
         "US-002"
-      ],
-      "completionNotes": "Completed by agent"
+      ]
     },
     {
       "id": "US-004",
@@ -105,8 +102,7 @@
       "notes": "",
       "dependsOn": [
         "US-003"
-      ],
-      "completionNotes": "Completed by agent"
+      ]
     },
     {
       "id": "US-005",
@@ -132,8 +128,7 @@
       "notes": "",
       "dependsOn": [
         "US-004"
-      ],
-      "completionNotes": "Completed by agent"
+      ]
     },
     {
       "id": "US-006",
@@ -160,8 +155,7 @@
       "notes": "",
       "dependsOn": [
         "US-005"
-      ],
-      "completionNotes": "Completed by agent"
+      ]
     },
     {
       "id": "US-007",
@@ -185,8 +179,7 @@
       "notes": "",
       "dependsOn": [
         "US-006"
-      ],
-      "completionNotes": "Completed by agent"
+      ]
     }
   ],
   "metadata": {
@@ -252,7 +245,6 @@
     "manualGates": [
       "Owner pastes ccore's verbatim system prompt into prompts/ccore_glb_system.txt and runs `ollama pull hf.co/ccore/Qwen3.5-4B-GLB-3D-Coder:Q8_0`",
       "Owner runs `.venv/bin/python scripts/glb_bench.py --out-root eval/glb_bench` overnight, then glb_report.py and glb_sheet.mjs, rates rating.csv blind, and records the outcome (A, B or C) in docs/13 section 10"
-    ],
-    "updatedAt": "2026-11-07T07:11:13.518Z"
+    ]
   }
 }

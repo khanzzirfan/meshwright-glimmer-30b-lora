@@ -188,3 +188,15 @@ def test_dry_run_subprocess_writes_nothing(tmp_path):
     assert "teacher_generate.py" in proc.stdout
     assert "validate_scenes.mjs" in proc.stdout
     assert not out_root.exists() or list(out_root.iterdir()) == []
+
+
+def test_remote_ollama_url_and_concurrency_reach_the_generate_command():
+    generate = glb_bench.plan(glb_bench.load_models(MODELS), args(only=["ccore-q8"], ollama_url="http://localhost:11435", concurrency=4))[0]
+    assert value_after(generate, "--ollama-url") == "http://localhost:11435"
+    assert value_after(generate, "--concurrency") == "4"
+
+
+def test_defaults_keep_the_local_server_and_one_request_at_a_time():
+    generate = glb_bench.plan(glb_bench.load_models(MODELS), args(only=["ccore-q8"]))[0]
+    assert "--ollama-url" not in generate
+    assert value_after(generate, "--concurrency") == "1"

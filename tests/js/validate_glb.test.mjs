@@ -65,8 +65,10 @@ test('glb mode exports and checks the downloaded file', { timeout: 180000 }, () 
     if (name.endsWith('.json')) fs.copyFileSync(path.join(GLB_FIXTURES, name), path.join(rawDir, name));
   }
   let runResult;
+  let emptyCache;
   try {
-    runResult = run(rawDir, ['--mode', 'glb', '--glb-dir', glbDir]);
+    emptyCache = fs.mkdtempSync(path.join(os.tmpdir(), 'no-three-'));
+    runResult = run(rawDir, ['--mode', 'glb', '--glb-dir', glbDir, '--three-versions-dir', emptyCache]);
     const rows = new Map(runResult.rows.map((row) => [row.id, row]));
 
     for (const id of ['g_ok', 'g_unpkg', 'g_anim', 'g_bare']) {
@@ -95,6 +97,7 @@ test('glb mode exports and checks the downloaded file', { timeout: 180000 }, () 
     fs.rmSync(rawDir, { recursive: true, force: true });
     fs.rmSync(glbDir, { recursive: true, force: true });
     if (runResult) fs.rmSync(runResult.tmp, { recursive: true, force: true });
+    if (emptyCache) fs.rmSync(emptyCache, { recursive: true, force: true });
   }
 });
 
@@ -125,6 +128,59 @@ test('a reply that starts with <html> counts as a page in glb mode only', { time
   } finally {
     fs.rmSync(rawDir, { recursive: true, force: true });
     fs.rmSync(glbDir, { recursive: true, force: true });
+    for (const r of results) fs.rmSync(r.tmp, { recursive: true, force: true });
+  }
+});
+
+test('--allow-addons accepts a Three.js add-on, and records it, only when asked', { timeout: 180000 }, () => {
+  const rawDir = fs.mkdtempSync(path.join(os.tmpdir(), 'addon-raw-'));
+  const glbDir = fs.mkdtempSync(path.join(os.tmpdir(), 'addon-glb-'));
+  fs.copyFileSync(path.join(GLB_FIXTURES, 'g_addon.json'), path.join(rawDir, 'g_addon.json'));
+  const results = [];
+  try {
+    const strict = run(rawDir, ['--mode', 'glb', '--glb-dir', glbDir]);
+    results.push(strict);
+    assert.ok(strict.rows[0].reasons.includes('bad_import'), JSON.stringify(strict.rows[0].reasons));
+    const open = run(rawDir, ['--mode', 'glb', '--glb-dir', glbDir, '--allow-addons']);
+    results.push(open);
+    assert.equal(open.rows[0].ok, true, JSON.stringify(open.rows[0].reasons));
+    assert.deepEqual(open.rows[0].stats.addons, ['controls/OrbitControls.js']);
+    assert.deepEqual(open.requests, [], 'a page reached the network');
+  } finally {
+    fs.rmSync(rawDir, { recursive: true, force: true });
+    fs.rmSync(glbDir, { recursive: true, force: true });
+    for (const r of results) fs.rmSync(r.tmp, { recursive: true, force: true });
+  }
+});
+
+test('a page gets the Three.js version it asked for when it is cached', { timeout: 180000 }, () => {
+  const rawDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ver-raw-'));
+  const glbDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ver-glb-'));
+  const cache = fs.mkdtempSync(path.join(os.tmpdir(), 'ver-cache-'));
+  fs.copyFileSync(path.join(GLB_FIXTURES, 'g_unpkg.json'), path.join(rawDir, 'g_unpkg.json')); // asks for three@0.165.0
+  // a fake 0.165.0 release: the real files under a version folder, so the page loads without the network
+  const pkg = path.join(ROOT, 'node_modules', 'three');
+  fs.mkdirSync(path.join(cache, '0.165.0'));
+  fs.symlinkSync(path.join(pkg, 'build'), path.join(cache, '0.165.0', 'build'));
+  fs.symlinkSync(path.join(pkg, 'examples'), path.join(cache, '0.165.0', 'examples'));
+  const results = [];
+  try {
+    const cached = run(rawDir, ['--mode', 'glb', '--glb-dir', glbDir, '--three-versions-dir', cache]);
+    results.push(cached);
+    const row = cached.rows[0];
+    assert.equal(row.ok, true, JSON.stringify(row.reasons));
+    assert.equal(row.stats.three_requested, '0.165.0');
+    assert.equal(row.stats.three_served, '0.165.0');
+    assert.equal(row.stats.version_rewritten, undefined, 'a cached version must not be flagged as rewritten');
+    const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'ver-empty-'));
+    try {
+      const fallback = run(rawDir, ['--mode', 'glb', '--glb-dir', glbDir, '--three-versions-dir', empty]);
+      results.push(fallback);
+      assert.equal(fallback.rows[0].stats.three_served, '0.160.0');
+      assert.equal(fallback.rows[0].stats.version_rewritten, true);
+    } finally { fs.rmSync(empty, { recursive: true, force: true }); }
+  } finally {
+    for (const d of [rawDir, glbDir, cache]) fs.rmSync(d, { recursive: true, force: true });
     for (const r of results) fs.rmSync(r.tmp, { recursive: true, force: true });
   }
 });

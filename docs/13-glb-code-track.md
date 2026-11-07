@@ -180,3 +180,25 @@ outcome into section 10, whatever they are.
 | Date | Model | Pass | Export | Animated pass | Median tris | Recognisable | Median tokens | Notes |
 |---|---|---|---|---|---|---|---|---|
 | | not run | | | | | | | |
+
+## 11. Method changes and findings during phase 1 (7 Nov 2026)
+
+Nothing here changes the decision rules in section 7. It records what was learned while running, so the results in section 10 can be read honestly.
+
+**Prompt fix, with a leak.** The first 2-brief Glimmer smoke run produced two 15-byte "GLB" files containing the text `[object Object]`.
+Cause: Glimmer called `GLTFExporter.parse(asset, onDone, {binary:true})`. In Three.js r160 the signature is `parse(input, onDone, onError, options)`, so the options object landed in the error slot and the exporter returned JSON. The validator caught it (`bad_glb`); "the page renders" would not have.
+Fix: `prompts/system_glb.txt` now shows the exact call. g001 and g002 are two of the 48 eval briefs, so the prompt was tuned after seeing them (a small leak, disclosed here). Any further prompt tuning must use a separate dev set of new briefs, and the prompt is frozen before any rating.
+
+**Add-ons (`--allow-addons`).** ccore's pages import `OrbitControls`, `RoundedBoxGeometry` and `RoomEnvironment`; its own prompt allows add-ons. The strict rule scored all 4 smoke answers `bad_import`, which would have failed ccore for following its card. `glb_bench.py` now passes `--allow-addons` to every model's validation, add-ons are served from the local copy, and each row records `stats.addons`. Glimmer's prompt still forbids them; the flag is about scoring the exported GLB, not about house rules.
+
+**Three.js versions.** ccore asks for versions from 0.160.0 to 0.170.0. Serving all of them 0.160.0 could fail pages for API changes, not for bad code. `scripts/fetch_three.mjs` downloads the requested releases into `.cache/three/` (gitignored; `npm pack`, the only network use), and the validator serves each page the version it asked for (`--three-versions-dir`, default `.cache/three`), with `stats.three_requested` and `stats.three_served`. A version that is not cached falls back to 0.160.0 and is flagged `version_rewritten`. Re-validate ccore after fetching: `node scripts/fetch_three.mjs --from-raw eval/glb_bench/ccore-q8/raw`.
+
+**Where each model ran.** Glimmer: local Ollama on the Mac (`muse-glimmer:30b-mlx`, a 4-bit build of about 19 GB, the build people would run; BF16 would need an 80 GB card and is a different model). ccore (`hf.co/ccore/Qwen3.5-4B-GLB-3D-Coder:Q8_0`, digest `271ca3eddf16` on both machines): on a rented RTX 4090 community pod (about $0.34/h, Ollama with 8 parallel slots), reached through an SSH tunnel with `glb_bench.py --ollama-url http://localhost:11435 --concurrency 8`. Generation only; validation and rendering ran on the Mac. The first 4 ccore answers (g001 to g004) come from a smoke run with identical model, prompt and sampling and were reused. Pod cost is recorded in section 10 once it is deleted.
+
+**Interim Glimmer result (plain run, thinking off, add-ons allowed, 48 briefs).** 43 of 48 valid GLBs (89.6%): 4 real code bugs (`js_error`: two invalid animation track names, two undefined variables) and 1 page that never finishes loading (g044: an animation keyframe track with 2 times for 5 values makes the Three.js mixer loop forever; reproduced with a 60 s timeout, so `load_fail` is correct). Median 1,798 tokens per answer, about 40 tok/s locally. Validity alone does not separate the models; section 5.4 (recognisable) decides.
+
+**Added to the decision.** Median seconds per asset on the Mac (ccore's median answer is about 14,000 tokens, Glimmer's about 1,800), median triangles per model (ccore's smoke GLBs had 4,000 to 18,000 triangles; "low-poly" is judged by the share at or under 5,000), and an automatic render-to-brief score (`scripts/clip_score.py`) alongside the human rating, because the human rating cannot be fully blind when one model's answers are about 8 times longer and more detailed. If the two models are within about 15 points on recognisable, add 2 to 3 samples per brief before concluding, and check the 4-bit build against BF16 on a rented A100 before blaming the model.
+
+**Phase 2 note (owner decision, 7 Nov 2026).** The owner is comfortable training on ccore's MIT dataset. Open items before publishing: the dataset card does not name the generating model, so that model's output terms are unchecked; keep ccore's validation split and our 48 briefs out of training; train on answer-only rows (no reasoning) and a shorter subset, estimated 1,000 rows of about 6 to 7K tokens, about 3 to 4 hours on an A100 (estimate from v3's speed, not measured).
+
+**Dev set.** `bench/glb/dev_briefs.jsonl` holds 12 new briefs (ids d001 to d012, no overlap with the 48 eval briefs) for prompt tuning and smoke tests. Never rate or report them as results, and never train on the 48 eval briefs.

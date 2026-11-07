@@ -19,9 +19,6 @@ const ALLOWED_HOSTS = new Set(["cdnjs.cloudflare.com", "cdn.jsdelivr.net", "unpk
 const SCENE_URL = "http://scene.local/";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LOCAL_THREE = path.join(ROOT, "node_modules/three/build/three.module.min.js");
-const LOCAL_THREE_GLB = path.join(ROOT, "node_modules/three/build/three.module.js");
-const LOCAL_GLTF_EXPORTER = path.join(ROOT, "node_modules/three/examples/jsm/exporters/GLTFExporter.js");
-const LOCAL_TEXTURE_UTILS = path.join(ROOT, "node_modules/three/examples/jsm/utils/TextureUtils.js");
 
 const arg = (n, d) => { const i = process.argv.indexOf("--" + n); return i > -1 ? process.argv[i + 1] : d; };
 const mode = arg("mode", "scene");
@@ -32,6 +29,13 @@ if (mode !== "scene" && mode !== "glb") {
 const rawDir = arg("raw", "data/raw"), scenesDir = arg("scenes", "data/scenes");
 const shotsDir = arg("shots", "data/shots"), reportPath = arg("report", "data/validation.jsonl");
 const glbDir = arg("glb-dir", "data/glb");
+// GLB mode: accept any Three.js add-on (OrbitControls, RoundedBoxGeometry, ...) from the allowed hosts, served locally.
+// The benchmark asks whether the exported GLB works, so a model is not failed for using add-ons its own prompt allows.
+const allowAddons = process.argv.includes("--allow-addons");
+// GLB mode: serve a page the Three.js version it asked for when it is cached (scripts/fetch_three.mjs fills the cache);
+// otherwise fall back to the local 0.160.0 and flag version_rewritten.
+const threeVersionsDir = path.resolve(arg("three-versions-dir", path.join(ROOT, ".cache/three")));
+const loadTimeout = Number(arg("load-timeout", "15000"));
 for (const d of [scenesDir, shotsDir, path.dirname(reportPath)]) fs.mkdirSync(d, { recursive: true });
 if (mode === "glb") fs.mkdirSync(glbDir, { recursive: true });
 
@@ -77,11 +81,30 @@ function classifyGlbUrl(raw) {
   const p = decodeURIComponent(url.pathname);
   if (/\/build\/three\.module(?:\.min)?\.js$/.test(p)) return "core";
   if (/\/three\.js\/[\d.]+\/three\.module(?:\.min)?\.js$/.test(p)) return "core";
+  if (/\/build\/three\.core(?:\.min)?\.js$/.test(p)) return "core_part"; // three.module.js re-exports it from r171 on
   if (/\/examples\/jsm\/$/.test(p)) return "addons";
   if (/\/examples\/jsm\/exporters\/GLTFExporter\.js$/.test(p)) return "exporter";
   // GLTFExporter imports this helper itself; it is served but not directly allowed in an answer.
   if (/\/examples\/jsm\/utils\/TextureUtils\.js$/.test(p)) return "exporter_dep";
+  if (allowAddons && /\/examples\/jsm\/.+\.js$/.test(p)) return "addon";
   return "bad_import";
+}
+
+function versionRoot(raw) {
+  // folder holding build/ and examples/jsm/ for the version the URL asks for (cached copy, else the local 0.160.0)
+  const v = requestedThreeVersion(raw);
+  if (v && v !== THREE_VERSION) {
+    const dir = path.join(threeVersionsDir, v);
+    if (fs.existsSync(path.join(dir, "build", "three.module.js"))) return { root: dir, version: v };
+  }
+  return { root: path.join(ROOT, "node_modules/three"), version: THREE_VERSION };
+}
+
+function jsmFile(raw) {
+  const sub = decodeURIComponent(new URL(raw).pathname).split("/examples/jsm/")[1] || "";
+  const base = path.join(versionRoot(raw).root, "examples/jsm");
+  const file = path.resolve(base, sub);
+  return file.startsWith(base + path.sep) && fs.existsSync(file) ? file : null;
 }
 
 function requestedThreeVersion(raw) {
@@ -108,12 +131,14 @@ function staticChecksGlb(html, stats) {
   const specs = [...html.matchAll(/from\s+["']([^"']+)["']|import\s+["']([^"']+)["']/g)].map(m => m[1] || m[2]);
   const srcs = [...html.matchAll(/<script[^>]+src\s*=\s*["']([^"']+)["']/gi)].map(m => m[1]);
   const versions = [];
+  const addons = new Set();
   for (const spec of [...specs, ...srcs]) {
     const resolved = resolveGlbSpecifier(spec, map);
     const kind = classifyGlbUrl(resolved);
     if (kind === "bad_import" || kind === "exporter_dep") r.push("bad_import");
     else if (kind === "external_dep") r.push("external_dep");
-    else if (kind === "core" || kind === "exporter") {
+    else if (kind === "core" || kind === "exporter" || kind === "addon") {
+      if (kind === "addon") addons.add(resolved.split("/examples/jsm/")[1]);
       const v = requestedThreeVersion(resolved);
       if (v) versions.push(v);
     }
@@ -123,15 +148,18 @@ function staticChecksGlb(html, stats) {
     const kind = classifyGlbUrl(value);
     if (kind === "bad_import" || kind === "exporter_dep") r.push("bad_import");
     else if (kind === "external_dep") r.push("external_dep");
-    else if (kind === "core" || kind === "exporter") {
+    else if (kind === "core" || kind === "exporter" || kind === "addon") {
       const v = requestedThreeVersion(value);
       if (v) versions.push(v);
     }
   }
+  if (addons.size) stats.addons = [...addons].sort();
   const other = versions.find(v => v !== THREE_VERSION);
   if (other) {
     stats.three_requested = other;
-    stats.version_rewritten = true;
+    const cached = fs.existsSync(path.join(threeVersionsDir, other, "build", "three.module.js"));
+    stats.three_served = cached ? other : THREE_VERSION;
+    if (!cached) stats.version_rewritten = true;
   }
   return [...new Set(r)];
 }
@@ -155,7 +183,7 @@ function isServedLocally(url) {
   if (url.startsWith(SCENE_URL) || /^(?:data|blob|about):/.test(url)) return true;
   if (mode === "scene") return url === CDN;
   const kind = classifyGlbUrl(url);
-  return kind === "core" || kind === "exporter" || kind === "exporter_dep" || kind === "addons";
+  return kind === "core" || kind === "core_part" || kind === "exporter" || kind === "exporter_dep" || kind === "addons" || kind === "addon";
 }
 
 async function findExportTarget(page) {
@@ -241,9 +269,13 @@ async function validate(browser, file) {
       if (/^(?:data|blob|about):/.test(url)) return route.continue();
       if (url === SCENE_URL) return route.fulfill({ body: html, contentType: "text/html" });
       const kind = classifyGlbUrl(url);
-      if (kind === "core") return route.fulfill({ path: LOCAL_THREE_GLB, contentType: "text/javascript" });
-      if (kind === "exporter") return route.fulfill({ path: LOCAL_GLTF_EXPORTER, contentType: "text/javascript" });
-      if (kind === "exporter_dep") return route.fulfill({ path: LOCAL_TEXTURE_UTILS, contentType: "text/javascript" });
+      const vr = versionRoot(url).root;
+      const serve = (f) => (f && fs.existsSync(f) ? route.fulfill({ path: f, contentType: "text/javascript" }) : route.abort());
+      if (kind === "core") return serve(path.join(vr, "build/three.module.js"));
+      if (kind === "core_part") return serve(path.join(vr, "build/three.core.js"));
+      if (kind === "exporter") return serve(path.join(vr, "examples/jsm/exporters/GLTFExporter.js"));
+      if (kind === "exporter_dep") return serve(jsmFile(url));
+      if (kind === "addon") return serve(jsmFile(url));
       return route.abort();
     });
   } else {
@@ -252,7 +284,7 @@ async function validate(browser, file) {
     await page.route(SCENE_URL, r => r.fulfill({ body: html, contentType: "text/html" }));
   }
   try {
-    await page.goto(SCENE_URL, { waitUntil: "load", timeout: 15000 });
+    await page.goto(SCENE_URL, { waitUntil: "load", timeout: loadTimeout });
     await page.waitForTimeout(WAIT_MS);
     const s1 = await page.screenshot();
     await page.waitForTimeout(600);

@@ -1,0 +1,12 @@
+{"id": "d001", "title": "Wooden stool", "brief": "A round wooden stool with three splayed legs and a flat seat.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "d002", "title": "Mushroom cluster", "brief": "Three red mushrooms with white spots, one tall and two small, growing from a patch of grass.", "domain": "nature", "level": 2, "style": "stylised", "kind": "static"}
+{"id": "d003", "title": "Street lamp", "brief": "A black iron street lamp with a curved arm and a glass lantern that glows warm yellow.", "domain": "props_and_tools", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "d004", "title": "Mailbox with flag", "brief": "A blue mailbox on a wooden post whose red flag swings up and down in a loop.", "domain": "props_and_tools", "level": 3, "style": "toon", "kind": "animated"}
+{"id": "d005", "title": "Ice cream cone", "brief": "An ice cream cone with a waffle cone and two scoops, pink and chocolate, with a cherry on top.", "domain": "food", "level": 2, "style": "toon", "kind": "static"}
+{"id": "d006", "title": "Sailboat", "brief": "A small sailboat with a white hull, a mast and one triangular red sail.", "domain": "vehicles", "level": 3, "style": "low-poly", "kind": "static"}
+{"id": "d007", "title": "Cottage garden set", "brief": "A garden set side by side: a wooden bench, a round bird bath and a small picket fence section.", "domain": "modular_kits", "level": 3, "style": "low-poly", "kind": "set"}
+{"id": "d008", "title": "Robot dog", "brief": "A boxy robot dog with four legs, a tail antenna and glowing blue eyes.", "domain": "creatures", "level": 3, "style": "low-poly", "kind": "static"}
+{"id": "d009", "title": "Spinning fan", "brief": "A desk fan with a round base, a neck and a three-blade rotor that spins.", "domain": "props_and_tools", "level": 3, "style": "low-poly", "kind": "animated"}
+{"id": "d010", "title": "Stone tower", "brief": "A round stone watchtower with a crenellated top, a wooden door and two narrow windows.", "domain": "buildings", "level": 3, "style": "low-poly", "kind": "static"}
+{"id": "d011", "title": "Potion bottles", "brief": "Three glass potion bottles of different shapes and colours: red round, green tall, purple square, each with a cork.", "domain": "fantasy_medieval", "level": 3, "style": "stylised", "kind": "set"}
+{"id": "d012", "title": "Hot air balloon", "brief": "A hot air balloon with a striped envelope, a wicker basket and ropes that gently bobs up and down.", "domain": "vehicles", "level": 4, "style": "toon", "kind": "animated"}

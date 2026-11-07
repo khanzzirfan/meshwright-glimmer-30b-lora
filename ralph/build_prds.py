@@ -57,11 +57,14 @@ def die(msg: str) -> None:
 def build(src: Path) -> dict:
     s = json.loads(src.read_text())
     stories = s["stories"]
+    # an operations PRD can replace the default gates and guardrails (build PRDs never do)
+    universal = s.get("universalGates", UNIVERSAL_GATES)
+    guardrails = s.get("guardrails", GUARDRAILS)
     out_stories = []
     for i, st in enumerate(stories, 1):
         sid = f"US-{i:03d}"
         deps = st.get("dependsOn", [out_stories[-1]["id"]] if out_stories else [])
-        gates = list(UNIVERSAL_GATES) + ([CHROMIUM_GATE] if st.get("chromium") else [])
+        gates = list(universal) + ([CHROMIUM_GATE] if st.get("chromium") else [])
         out_stories.append({
             "id": sid,
             "title": st["title"],
@@ -84,8 +87,8 @@ def build(src: Path) -> dict:
             "owns": s.get("owns", []),
             "requires": s.get("requires", []),
             "standingRule": s["standingRule"],
-            "guardrails": GUARDRAILS,
-            "qualityGates": {"universal": UNIVERSAL_GATES, "chromium": [CHROMIUM_GATE]},
+            "guardrails": guardrails,
+            "qualityGates": {"universal": universal, "chromium": [CHROMIUM_GATE]},
             "manualGates": s.get("manualGates", []),
         },
     }
@@ -109,7 +112,8 @@ def validate(path: Path) -> list[str]:
     seen = set()
     for s in stories:
         tag = f"{path.name} {s['id']}"
-        if len(s["acceptanceCriteria"]) < len(UNIVERSAL_GATES) + 2:
+        n_gates = len(d.get("metadata", {}).get("qualityGates", {}).get("universal", UNIVERSAL_GATES))
+        if len(s["acceptanceCriteria"]) < n_gates + 2:
             errs.append(f"{tag}: fewer than 2 story-specific criteria")
         if not s["steps"]:
             errs.append(f"{tag}: no steps")

@@ -20,3 +20,9 @@ __pycache__/
 
 # Command Code agent state
 .commandcode/
+
+# downloaded Three.js releases for the validator
+.cache/
+
+# local benchmark runs (large, regenerated)
+runs/
