@@ -22,6 +22,8 @@ def call_ollama(model, system, brief, a):
         value = getattr(a, key)
         if value is not None:
             options[key] = value
+    if getattr(a, "seed", None) is not None:
+        options["seed"] = a.seed
     body = {
         "model": model, "stream": False, "think": a.think,
         "options": options,
@@ -93,6 +95,7 @@ def main():
     ap.add_argument("--top-k", type=int, default=None, help="with --ollama-native: only sent when given")
     ap.add_argument("--min-p", type=float, default=None, help="with --ollama-native: only sent when given")
     ap.add_argument("--repeat-penalty", type=float, default=None, help="with --ollama-native: only sent when given")
+    ap.add_argument("--seed", type=int, default=None, help="with --ollama-native: sampling seed (options.seed); recorded in each raw row; omitted by default")
     a = ap.parse_args()
 
     out = Path(a.out)
@@ -119,6 +122,8 @@ def main():
         if "error" not in res:  # failed calls are not saved, so a rerun retries them
             res["system_file"] = system_file
             res["system_sha256"] = system_sha256
+            if a.seed is not None:  # only recorded when given, so default rows are unchanged
+                res["seed"] = a.seed
             (out / f"{b['id']}.json").write_text(json.dumps(res))
             u = res.get("usage") or {}
             with lock:

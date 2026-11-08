@@ -30,7 +30,7 @@ def load_briefs(path):
 
 
 def load_model(directory):
-    """Load one model folder. Returns {'rows': [validation row], 'raws': {id: raw row}}."""
+    """Load one model folder. Returns {'rows', 'raws', 'assembly'} (assembly is None without assembly.jsonl)."""
     directory = Path(directory)
     rows = []
     report = directory / "validation.jsonl"
@@ -45,14 +45,59 @@ def load_model(directory):
             except json.JSONDecodeError:
                 continue
             raws[raw.get("id") or path.stem] = raw
-    return {"rows": rows, "raws": raws}
+    assembly = None
+    assembly_file = directory / "assembly.jsonl"
+    if assembly_file.exists():
+        assembly = [
+            json.loads(line) for line in assembly_file.read_text().splitlines() if line.strip()
+        ]
+    return {"rows": rows, "raws": raws, "assembly": assembly}
 
 
 def _median(values):
     return statistics.median(values) if values else None
 
 
-def metrics(rows, raws, briefs):
+def assembly_summary(rows, assembly_rows=None):
+    """Assembled share and median parts over valid rows (docs/14 section 4).
+
+    Prefers a parsed assembly.jsonl (kind-aware) when given, else reads stats.glb.assembly from the
+    validation rows. Returns None when there is no assembly data at all.
+    """
+    valid = 0
+    assembled = 0
+    parts = []
+    if assembly_rows is not None:
+        for line in assembly_rows:
+            result = line.get("assembly")
+            if not result:
+                continue
+            valid += 1
+            if result.get("assembled"):
+                assembled += 1
+            if isinstance(result.get("parts"), (int, float)):
+                parts.append(result["parts"])
+    else:
+        for row in rows:
+            result = ((row.get("stats") or {}).get("glb") or {}).get("assembly")
+            if not row.get("ok") or not result:
+                continue
+            valid += 1
+            if result.get("assembled"):
+                assembled += 1
+            if isinstance(result.get("parts"), (int, float)):
+                parts.append(result["parts"])
+    if not valid:
+        return None
+    return {
+        "valid": valid,
+        "assembled": assembled,
+        "share": assembled / valid,
+        "median_parts": _median(parts),
+    }
+
+
+def metrics(rows, raws, briefs, assembly_rows=None):
     """Compute the docs/13 section 5.3 metrics over every brief."""
     by_id = {row["id"]: row for row in rows}
     n = len(briefs)
@@ -128,6 +173,7 @@ def metrics(rows, raws, briefs):
             "total_seconds": sum(seconds) if seconds else None,
         },
         "by_domain": by_domain,
+        "assembly": assembly_summary(rows, assembly_rows),
     }
 
 
@@ -161,21 +207,84 @@ def recognisable(ratings, key_map, ids):
     return good / len(ids)
 
 
-def build_report(root, briefs_path, ratings_path=None, key_map_path=None):
+def good_rate(ratings, key_map, ids):
+    """Share of ids rated exactly 2 (docs/14 section 1, secondary). Missing rows count as 0."""
+    by_key = {row.get("key"): row for row in ratings}
+    id_to_key = {info.get("id"): key for key, info in key_map.items()}
+    if not ids:
+        return None
+    good = 0
+    for brief_id in ids:
+        row = by_key.get(id_to_key.get(brief_id))
+        if row is not None and str(row.get("rating", "")).strip() == "2":
+            good += 1
+    return good / len(ids)
+
+
+def merge_validation_rows(base_rows, repair_rows):
+    """Base rows with each repaired-ok row replacing a failing original (docs/14 section 5)."""
+    by_id = {row["id"]: row for row in base_rows}
+    order = [row["id"] for row in base_rows]
+    for row in repair_rows:
+        if row["id"] not in by_id:
+            order.append(row["id"])
+            by_id[row["id"]] = row
+        elif row.get("ok") and not by_id[row["id"]].get("ok"):
+            by_id[row["id"]] = row
+    return [by_id[brief_id] for brief_id in order]
+
+
+def merge_assembly_rows(base_lines, repair_lines):
+    """Merge two assembly.jsonl line lists by id, a repaired line winning when it has a result."""
+    if base_lines is None and repair_lines is None:
+        return None
+    by_id = {}
+    order = []
+    for line in (base_lines or []) + (repair_lines or []):
+        if line["id"] not in by_id:
+            order.append(line["id"])
+            by_id[line["id"]] = line
+        elif line.get("assembly"):
+            by_id[line["id"]] = line
+    return [by_id[brief_id] for brief_id in order]
+
+
+def load_extra_run(name, directory):
+    """Load one --extra-runs entry. A `repair` directory becomes '<model> after 1 repair', merged
+    with its parent run so its pass count is the original ok ids plus the repaired ids."""
+    directory = Path(directory)
+    parent = directory.parent
+    if directory.name == "repair" and (parent / "validation.jsonl").exists():
+        base = load_model(parent)
+        repair = load_model(directory)
+        loaded = {
+            "rows": merge_validation_rows(base["rows"], repair["rows"]),
+            "raws": {**base["raws"], **repair["raws"]},
+            "assembly": merge_assembly_rows(base["assembly"], repair["assembly"]),
+        }
+        return f"{parent.name} after 1 repair", loaded
+    return (name or directory.name), load_model(directory)
+
+
+def build_report(root, briefs_path, ratings_path=None, key_map_path=None, extra_runs=None):
     root = Path(root)
     briefs = load_briefs(briefs_path)
     brief_ids = [brief["id"] for brief in briefs]
     models = {}
     pass_maps = {}
+
+    loaded_models = {}
     for directory in sorted(p for p in root.iterdir() if p.is_dir()):
         if not (directory / "validation.jsonl").exists():
             continue
-        loaded = load_model(directory)
-        result = metrics(loaded["rows"], loaded["raws"], briefs)
-        pass_maps[directory.name] = {
-            row["id"]: bool(row.get("ok")) for row in loaded["rows"]
-        }
-        models[directory.name] = result
+        loaded_models[directory.name] = load_model(directory)
+    for name, directory in extra_runs or []:
+        label, loaded = load_extra_run(name, directory)
+        loaded_models[label] = loaded
+
+    for name, loaded in loaded_models.items():
+        models[name] = metrics(loaded["rows"], loaded["raws"], briefs, loaded["assembly"])
+        pass_maps[name] = {row["id"]: bool(row.get("ok")) for row in loaded["rows"]}
 
     ratings = []
     key_map = None
@@ -185,6 +294,7 @@ def build_report(root, briefs_path, ratings_path=None, key_map_path=None):
         for name, result in models.items():
             model_map = {k: v for k, v in key_map.items() if v.get("model") == name}
             result["recognisable"] = recognisable(ratings, model_map, brief_ids)
+            result["good_rate"] = good_rate(ratings, model_map, brief_ids)
 
     head = {}
     names = list(models)
@@ -216,12 +326,19 @@ def render_markdown(report):
         "Model", "Pass (95% Wilson)", "Export", "Animated pass", "Median triangles",
         "Max triangles", "Share <= 5000 tris", "Recognisable", "Median tokens",
         "Median seconds", "Total seconds",
+        "Assembled (of valid)", "Median parts", "Good (rated 2), secondary",
     ]
     lines.append("| " + " | ".join(header) + " |")
     lines.append("|" + "|".join("---" for _ in header) + "|")
     for name in names:
         m = models[name]
         low, high = m["wilson"]
+        assembly = m.get("assembly")
+        assembled_cell = "not computed"
+        parts_cell = "not computed"
+        if assembly:
+            assembled_cell = f"{assembly['assembled']}/{assembly['valid']} ({_percent(assembly['share'])})"
+            parts_cell = _number(assembly["median_parts"])
         lines.append("| " + " | ".join([
             name,
             f"{_percent(m['pass_rate'])} ({low:.1%}-{high:.1%})",
@@ -234,6 +351,9 @@ def render_markdown(report):
             _number(m["cost"]["median_completion_tokens"]),
             _number(m["cost"]["median_seconds"]),
             _number(m["cost"]["total_seconds"]),
+            assembled_cell,
+            parts_cell,
+            _percent(m.get("good_rate")) if "good_rate" in m else "not rated",
         ]) + " |")
     lines.append("")
 
@@ -278,6 +398,11 @@ def main(argv=None):
     ap.add_argument("--briefs", required=True, help="briefs JSONL scored by every model")
     ap.add_argument("--ratings", default=None, help="rating.csv from glb_sheet.mjs")
     ap.add_argument("--key-map", default=None, help="key_map.json (default: beside rating.csv)")
+    ap.add_argument(
+        "--extra-runs", action="append", default=[], metavar="NAME=DIR",
+        help="add a derived run as an extra row (repeatable); a repair directory is labelled "
+             "'<model> after 1 repair' and merges its parent's passes",
+    )
     a = ap.parse_args(argv)
 
     if a.ratings:
@@ -287,8 +412,17 @@ def main(argv=None):
     else:
         key_map = None
 
+    extra_runs = []
+    for value in a.extra_runs:
+        if "=" not in value:
+            ap.error(f"--extra-runs must be NAME=DIR, got: {value}")
+        name, directory = value.split("=", 1)
+        if not (Path(directory) / "validation.jsonl").exists():
+            ap.error(f"--extra-runs has no validation.jsonl: {directory}")
+        extra_runs.append((name, directory))
+
     root = Path(a.root)
-    report = build_report(root, a.briefs, a.ratings, key_map)
+    report = build_report(root, a.briefs, a.ratings, key_map, extra_runs)
     (root / "report.json").write_text(json.dumps(report, indent=2) + "\n")
     markdown = render_markdown(report)
     (root / "report.md").write_text(markdown + "\n")

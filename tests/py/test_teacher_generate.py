@@ -73,6 +73,21 @@ def test_default_request_is_unchanged_and_row_has_system_metadata(monkeypatch, t
     assert row["system_sha256"] == hashlib.sha256(system_text.encode()).hexdigest()
 
 
+def test_default_has_no_seed_in_the_request_or_the_row(monkeypatch, tmp_path):
+    requests, out = run_main(monkeypatch, tmp_path, [])
+
+    assert "seed" not in requests[0]["options"]
+    assert "seed" not in json.loads((out / "b000.json").read_text())
+
+
+def test_seed_reaches_the_options_and_the_raw_row(monkeypatch, tmp_path):
+    requests, out = run_main(monkeypatch, tmp_path, ["--seed", "7"])
+
+    assert requests[0]["options"]["seed"] == 7
+    row = json.loads((out / "b000.json").read_text())
+    assert row["seed"] == 7
+
+
 def test_system_file_and_sampling_reach_the_request_exactly(monkeypatch, tmp_path):
     system_file = tmp_path / "ccore_system.txt"
     system_text = "You are ccore's asset coder.\nKeep thinking on.\n"

@@ -24,6 +24,8 @@ def args(**overrides):
         "max_tokens": 40000,
         "allow_paid": False,
         "dry_run": False,
+        "seed": None,
+        "run_suffix": "",
     }
     base.update(overrides)
     return SimpleNamespace(**base)
@@ -33,10 +35,10 @@ def value_after(cmd, flag):
     return cmd[cmd.index(flag) + 1]
 
 
-def test_models_json_has_six_rows_and_two_enabled():
+def test_models_json_has_seven_rows_and_two_enabled():
     models = glb_bench.load_models(MODELS)
     assert [m["name"] for m in models] == [
-        "ccore-q8", "glimmer", "glimmer-think", "qwen35-4b-base", "ccore-ourprompt", "spark-open",
+        "ccore-q8", "glimmer", "glimmer-think", "qwen35-4b-base", "ccore-ourprompt", "spark-open", "glimmer-v3",
     ]
     assert {m["name"] for m in models if m["enabled"]} == {"ccore-q8", "glimmer"}
     fields = {"name", "provider", "model", "system", "temperature", "top_p", "top_k", "min_p",
@@ -200,3 +202,37 @@ def test_defaults_keep_the_local_server_and_one_request_at_a_time():
     generate = glb_bench.plan(glb_bench.load_models(MODELS), args(only=["ccore-q8"]))[0]
     assert "--ollama-url" not in generate
     assert value_after(generate, "--concurrency") == "1"
+
+
+# --- US-005: --seed and --run-suffix -------------------------------------------------------------
+
+
+def test_default_plan_without_seed_or_suffix_is_byte_identical():
+    out = ROOT / "_bench_out_tmp"
+    assert glb_bench.plan(glb_bench.load_models(MODELS), args(only=["glimmer"])) == [
+        [sys.executable, "scripts/teacher_generate.py", "--briefs", "bench/glb/briefs.jsonl",
+         "--out", str(out / "glimmer" / "raw"), "--model", "muse-glimmer:30b-mlx",
+         "--ollama-native", "--system", str(ROOT / "prompts" / "system_glb.txt"),
+         "--temperature", "0.7", "--top-p", "0.95",
+         "--num-ctx", "49152", "--max-tokens", "40000", "--concurrency", "1"],
+        ["node", "scripts/validate_scenes.mjs", "--mode", "glb", "--allow-addons",
+         "--raw", str(out / "glimmer" / "raw"), "--scenes", str(out / "glimmer" / "scenes"),
+         "--shots", str(out / "glimmer" / "shots"), "--glb-dir", str(out / "glimmer" / "glb"),
+         "--report", str(out / "glimmer" / "validation.jsonl")],
+    ]
+
+
+def test_seed_reaches_the_generate_command_only_when_given():
+    assert "--seed" not in glb_bench.plan(glb_bench.load_models(MODELS), args(only=["glimmer"]))[0]
+    generate = glb_bench.plan(glb_bench.load_models(MODELS), args(only=["glimmer"], seed=42))[0]
+    assert value_after(generate, "--seed") == "42"
+
+
+def test_run_suffix_changes_every_run_directory():
+    generate, validate = glb_bench.plan(
+        glb_bench.load_models(MODELS), args(only=["glimmer"], run_suffix="-s2")
+    )
+    run = Path(args().out_root) / "glimmer-s2"
+    assert value_after(generate, "--out") == str(run / "raw")
+    assert value_after(validate, "--scenes") == str(run / "scenes")
+    assert value_after(validate, "--report") == str(run / "validation.jsonl")

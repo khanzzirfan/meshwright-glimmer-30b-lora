@@ -6,7 +6,7 @@ import { PNG } from "pngjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseGlb } from "./glb_check.mjs";
+import { assembly, glbJson, parseGlb } from "./glb_check.mjs";
 
 const BLANK_MIN_COLORS = 12;      // fewer distinct colours (after quantising) than this = blank
 const STATIC_MIN_DIFF = 0.002;    // share of pixels that must change between two frames
@@ -29,6 +29,17 @@ if (mode !== "scene" && mode !== "glb") {
 const rawDir = arg("raw", "data/raw"), scenesDir = arg("scenes", "data/scenes");
 const shotsDir = arg("shots", "data/shots"), reportPath = arg("report", "data/validation.jsonl");
 const glbDir = arg("glb-dir", "data/glb");
+// GLB mode: kind-aware assembly. Each raw row embeds its brief (teacher_generate.py), so the kind comes
+// from raw.brief.kind; --briefs FILE supplies a fallback for runs whose raw rows do not embed one.
+const briefsPath = arg("briefs", null);
+const briefKinds = new Map();
+if (mode === "glb" && briefsPath) {
+  for (const line of fs.readFileSync(briefsPath, "utf8").split("\n")) {
+    if (!line.trim()) continue;
+    const b = JSON.parse(line);
+    if (b && b.id) briefKinds.set(b.id, b.kind || "static");
+  }
+}
 // GLB mode: accept any Three.js add-on (OrbitControls, RoundedBoxGeometry, ...) from the allowed hosts, served locally.
 // The benchmark asks whether the exported GLB works, so a model is not failed for using add-ons its own prompt allows.
 const allowAddons = process.argv.includes("--allow-addons");
@@ -198,7 +209,7 @@ async function findExportTarget(page) {
   return null;
 }
 
-async function exportGlb(page, res, id, errors) {
+async function exportGlb(page, res, id, errors, kind) {
   const target = await findExportTarget(page);
   if (!target) { res.reasons.push("no_export_button"); return; }
 
@@ -239,7 +250,10 @@ async function exportGlb(page, res, id, errors) {
     res.stats.error = String(e.message || e).slice(0, 300);
     return;
   }
-  const parsed = parseGlb(fs.readFileSync(out));
+  const buf = fs.readFileSync(out);
+  const parsed = parseGlb(buf);
+  const json = glbJson(buf);
+  if (json) parsed.assembly = assembly(json, { kind });
   res.stats.glb = parsed;
   if (!parsed.ok) res.reasons.push(parsed.reason);
 }
@@ -248,6 +262,7 @@ async function validate(browser, file) {
   const id = path.basename(file, ".json");
   const raw = JSON.parse(fs.readFileSync(path.join(rawDir, file), "utf8"));
   const res = { id, ok: false, reasons: [], stats: {} };
+  const kind = (raw.brief && raw.brief.kind) || briefKinds.get(id) || "static";
   if (raw.finish_reason === "length") { res.reasons.push("truncated"); return res; }
   const html = extractHtml(raw.content || "");
   if (!html) { res.reasons.push("no_html"); return res; }
@@ -295,7 +310,7 @@ async function validate(browser, file) {
     if (errors.length) { res.reasons.push("js_error"); res.stats.error = errors[0].slice(0, 300); }
     if (b.colors < BLANK_MIN_COLORS) res.reasons.push("blank");
     if (mode !== "glb" && res.stats.diff < STATIC_MIN_DIFF) res.reasons.push("static");
-    if (mode === "glb") await exportGlb(page, res, id, errors);
+    if (mode === "glb") await exportGlb(page, res, id, errors, kind);
   } catch (e) {
     res.reasons.push("load_fail"); res.stats.error = String(e.message).slice(0, 300);
   } finally { await ctx.close(); }

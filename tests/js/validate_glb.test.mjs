@@ -77,6 +77,10 @@ test('glb mode exports and checks the downloaded file', { timeout: 180000 }, () 
       assert.equal(row.ok, true, `${id} should pass: ${JSON.stringify(row.reasons)}`);
       assert.deepEqual(row.reasons, []);
       assert.ok(fs.existsSync(path.join(glbDir, id + '.glb')), `${id}.glb not written`);
+      // US-002: the validator adds a kind-aware assembly to stats.glb without touching the reasons.
+      assert.equal(typeof row.stats.glb.assembly, 'object', `${id} is missing stats.glb.assembly`);
+      assert.equal(row.stats.glb.assembly.parts, 1);
+      assert.equal(row.stats.glb.assembly.assembled, true);
     }
 
     assert.equal(rows.get('g_unpkg').stats.version_rewritten, true);

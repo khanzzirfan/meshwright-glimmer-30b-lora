@@ -15,6 +15,9 @@ export function makeGlb({
   version = 2,
   badMagic = false,
   truncate = false,
+  nodes = null,
+  scene = null,
+  boxes = null,
 } = {}) {
   triangles = Math.max(0, Math.floor(triangles));
   animations = Math.max(0, Math.floor(animations));
@@ -32,19 +35,36 @@ export function makeGlb({
   };
 
   const gltfMeshes = [];
+  const boxList = Array.isArray(boxes) ? boxes : [];
   for (let m = 0; m < meshes; m++) {
     const vertexCount = triangles * 3;
     const positions = Buffer.alloc(vertexCount * 3 * 4);
-    const baseX = m * 10;
-    for (let k = 0; k < vertexCount; k++) {
-      const o = k * 12;
-      positions.writeFloatLE(baseX + k, o);
-      positions.writeFloatLE(k % 2, o + 4);
-      positions.writeFloatLE(m, o + 8);
+    const box = boxList[m];
+    let min;
+    let max;
+    if (box && Array.isArray(box.min) && Array.isArray(box.max)) {
+      min = box.min.slice(0, 3).map(Number);
+      max = box.max.slice(0, 3).map(Number);
+      const corners = [];
+      for (const cx of [min[0], max[0]]) for (const cy of [min[1], max[1]]) for (const cz of [min[2], max[2]]) corners.push([cx, cy, cz]);
+      for (let k = 0; k < vertexCount; k++) {
+        const c = corners[k % corners.length];
+        const o = k * 12;
+        positions.writeFloatLE(c[0], o);
+        positions.writeFloatLE(c[1], o + 4);
+        positions.writeFloatLE(c[2], o + 8);
+      }
+    } else {
+      const baseX = m * 10;
+      for (let k = 0; k < vertexCount; k++) {
+        const o = k * 12;
+        positions.writeFloatLE(baseX + k, o);
+        positions.writeFloatLE(k % 2, o + 4);
+        positions.writeFloatLE(m, o + 8);
+      }
+      min = vertexCount === 0 ? [0, 0, 0] : [baseX, 0, m];
+      max = vertexCount === 0 ? [0, 0, 0] : [baseX + vertexCount - 1, 1, m];
     }
-
-    const min = vertexCount === 0 ? [0, 0, 0] : [baseX, 0, m];
-    const max = vertexCount === 0 ? [0, 0, 0] : [baseX + vertexCount - 1, 1, m];
     const posView = addView(positions, 34962);
     const posAccessor = accessors.length;
     accessors.push({
@@ -113,12 +133,13 @@ export function makeGlb({
     }
   }
 
-  const nodes = Array.from({ length: meshes }, (_, i) => ({ mesh: i, name: `node${i}` }));
+  const gltfNodes = Array.isArray(nodes) ? nodes : Array.from({ length: meshes }, (_, i) => ({ mesh: i, name: `node${i}` }));
+  const sceneNodes = Array.isArray(scene) ? scene : gltfNodes.map((_, i) => i);
   const json = {
     asset: { version: '2.0', generator: 'tests/js/glb_util.mjs' },
     scene: 0,
-    scenes: [{ nodes: nodes.map((_, i) => i) }],
-    nodes,
+    scenes: [{ nodes: sceneNodes }],
+    nodes: gltfNodes,
     meshes: gltfMeshes,
     materials: meshes > 0 ? [{ name: 'mat', pbrMetallicRoughness: { baseColorFactor: [0.7, 0.7, 0.7, 1] } }] : [],
     accessors,

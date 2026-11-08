@@ -1,0 +1,4 @@
+{"id": "c1", "ok": true, "reasons": [], "stats": {"export_ms": 10, "glb": {"ok": true, "triangles": 100}}}
+{"id": "c2", "ok": true, "reasons": [], "stats": {"export_ms": 11, "glb": {"ok": true, "triangles": 200}}}
+{"id": "c3", "ok": false, "reasons": ["bad_glb"], "stats": {}}
+{"id": "c4", "ok": true, "reasons": [], "stats": {"export_ms": 12, "glb": {"ok": true, "triangles": 300}}}

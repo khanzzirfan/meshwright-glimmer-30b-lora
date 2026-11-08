@@ -1,0 +1,4 @@
+{"id": "c1", "ok": true, "reasons": [], "stats": {"export_ms": 10, "glb": {"ok": true, "triangles": 100}}}
+{"id": "c2", "ok": false, "reasons": ["js_error"], "stats": {}}
+{"id": "c3", "ok": true, "reasons": [], "stats": {"export_ms": 12, "glb": {"ok": true, "triangles": 300}}}
+{"id": "c4", "ok": false, "reasons": ["load_fail"], "stats": {}}

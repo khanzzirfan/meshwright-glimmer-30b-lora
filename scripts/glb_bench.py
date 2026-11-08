@@ -94,8 +94,9 @@ def plan(models, args):
     root = Path(args.out_root)
     briefs = str(getattr(args, "briefs", "bench/glb/briefs.jsonl"))
     commands = []
+    suffix = getattr(args, "run_suffix", "") or ""
     for model in selected:
-        run_dir = root / model["name"]
+        run_dir = root / (model["name"] + suffix)
         cmd = [
             sys.executable, "scripts/teacher_generate.py",
             "--briefs", briefs,
@@ -106,6 +107,9 @@ def plan(models, args):
             cmd.append("--ollama-native")
         cmd += ["--system", str(resolve_path(model["system"]))]
         _add_sampling(cmd, model)
+        seed = getattr(args, "seed", None)
+        if seed is not None:
+            cmd += ["--seed", _num(seed)]
         cmd += [
             "--num-ctx", str(getattr(args, "num_ctx", 49152)),
             "--max-tokens", str(getattr(args, "max_tokens", 40000)),
@@ -147,6 +151,8 @@ def main(argv=None):
     ap.add_argument("--max-tokens", type=int, default=40000)
     ap.add_argument("--ollama-url", default=None, help="Ollama server for generation, e.g. http://localhost:11435 through an SSH tunnel to a rented GPU (default: the local server)")
     ap.add_argument("--concurrency", type=int, default=1, help="parallel requests; use more than 1 only against a server started with OLLAMA_NUM_PARALLEL")
+    ap.add_argument("--seed", type=int, default=None, help="sampling seed forwarded to teacher_generate.py (options.seed); omitted by default")
+    ap.add_argument("--run-suffix", default="", help="appended to every run directory name: <out-root>/<name><suffix> (default: none)")
     ap.add_argument("--allow-paid", action="store_true", help="allow rows with paid true")
     ap.add_argument("--dry-run", action="store_true", help="print every command and run nothing")
     a = ap.parse_args(argv)

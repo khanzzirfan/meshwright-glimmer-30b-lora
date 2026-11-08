@@ -1,0 +1,2 @@
+{"id": "c2", "ok": true, "reasons": [], "stats": {"export_ms": 9, "glb": {"ok": true, "triangles": 150}}}
+{"id": "c4", "ok": false, "reasons": ["load_fail"], "stats": {}}

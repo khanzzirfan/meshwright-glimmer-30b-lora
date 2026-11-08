@@ -1,7 +1,7 @@
 {
   "name": "GLB improvement 1: assembly metric, repair retry, best-of-N, phase 2 data",
-  "branchName": "ralph/imp-1",
   "description": "Offline tooling for docs/14-glb-improvement.md. Measure whether an exported asset's parts actually fit together (the main reason Glimmer's assets are crude), add a one-shot repair retry and a best-of-N picker as product features, and build the phase 2 training set from ccore's validated dataset with an eval-leak guard. The owner then runs ralph/imp-ops.prd.json on this Mac and decides on the rented-GPU LoRA (docs/14 section 8).",
+  "branchName": "ralph/imp-1",
   "userStories": [
     {
       "id": "US-001",
@@ -21,9 +21,10 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "",
-      "dependsOn": []
+      "dependsOn": [],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-002",
@@ -43,11 +44,12 @@
         "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-001"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-003",
@@ -67,11 +69,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-002"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-004",
@@ -92,11 +95,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-003"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-005",
@@ -116,11 +120,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-004"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-006",
@@ -140,11 +145,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-005"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-007",
@@ -163,11 +169,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-006"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-008",
@@ -187,11 +194,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-007"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     }
   ],
   "metadata": {
@@ -270,6 +278,7 @@
       "Owner reviews the imp-1 diff and commits it",
       "Owner runs ralph/imp-ops.prd.json (local only), then decides the open items in docs/14 section 9",
       "Owner approves any rented-GPU spend for the phase 2 LoRA (docs/14 section 8); Ralph never creates pods"
-    ]
+    ],
+    "updatedAt": "2026-11-08T00:48:41.951Z"
   }
 }

@@ -16,6 +16,8 @@ opencode only when Command Code credit runs out.
 | 5 | `prd-05-mesh.json` | 6 | **mesh track:** augmentation, text-to-GLB, four-angle renders, caption script, leak-free dataset builder, eval report | read the baseline quality report |
 | 6 | `prd-06-captions-corpus.json` | 9 | **mesh track:** category tags, fact-grounded caption styles, caption quality filter, model bake-off, consensus corpus with provenance, prompt variants, CC0 kit intake with licence ledger, corpus report | run the bake-off and the real caption run yourself |
 | 7 | `glb-1.prd.json` | 7 | **GLB code track:** GLB parser, validator `--mode glb`, per-model prompt and sampling, resumable benchmark runner, report with Wilson intervals and head-to-head, blind contact sheet, docs-consistency test | paste ccore's verbatim system prompt, run the benchmark overnight, rate `rating.csv` blind and record the outcome in docs/13 section 10 |
+| 8 | `imp-1.prd.json` | 8 | **GLB improvement track (offline):** assembly metric, repair retry, best-of-N picker, phase 2 data from ccore's set, LoRA cost estimate, docs wiring | review the imp-1 diff, then run `imp-ops.prd.json` locally |
+| 9 | `imp-ops.prd.json` | 8 | **GLB improvement ops (local only):** assembly backfill, repair on v3's failures, two more v3 seeds and best of 3, phase 2 dataset build, all through `scripts/imp_ops.sh` | rate the best-of-3 sheet and approve the phase 2 LoRA spend (docs/14 section 8) |
 
 PRDs 5 and 6 are the mesh track (docs/08-mesh-track.md). PRD 6 needs PRD 5 finished first because it edits
 `caption_meshes.py` and `build_mesh_dataset.py`. PRDs 1 to 4 are the Three.js-code track and can wait.

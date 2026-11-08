@@ -37,6 +37,10 @@ ccore's training set (`ccore/ThreeJS-3D-GLB-Assets`, MIT, 3,501 train and 417 va
 
 B and C are product features. The benchmark's primary number stays single-shot pass and recognisable rate, as frozen in docs/13. Report B and C as separate rows ("pass after 1 repair", "best of 3"), never in place of the single-shot row.
 
+`glb_report.py` carries this: `Assembled (of valid)` and `Median parts` are appended from `assembly.jsonl` (or `stats.glb.assembly` in the validation rows; `not computed` when a model has neither), and `Good (rated 2), secondary` is the share of briefs rated exactly 2 next to the recognisable rate. `--extra-runs NAME=DIR` (repeatable) adds a derived run as an extra row; a repair directory (`<model>/repair`, section 5) is labelled `<model> after 1 repair` and its pass count is the original ok ids plus the repaired ids, so single-shot, repair and best-of-3 sit side by side.
+
+`scripts/imp_ops.sh` is the only way the imp-ops PRD starts the long local jobs, so an operator agent never runs a raw bench or repair command. It runs one job at a time, detached and resumable: `bash scripts/imp_ops.sh preflight`, `start JOB`, `wait JOB [SECONDS]` (540 s cap) and `status`. `start v3s2` runs `.venv/bin/python scripts/glb_bench.py --out-root runs/glb_v3 --only glimmer-v3 --seed 2 --run-suffix -s2`, `start v3s3` is the same with `--seed 3 --run-suffix -s3`, and `start repair-v3` runs `.venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3 --model-row glimmer-v3`. `start` refuses unless `runs/glb_v3/PROMPT_FROZEN.json` matches `prompts/system_glb_v3.txt` and refuses a second job while one is alive; `IMP_OPS_DRY=1 start JOB` prints the command instead.
+
 ## 4. Assembly metric (A)
 
 Computed from the exported GLB only, in `scripts/glb_check.mjs`, as `assembly(json)`:
@@ -49,7 +53,9 @@ Computed from the exported GLB only, in `scripts/glb_check.mjs`, as `assembly(js
 - `min_y`: the lowest world y. `ground_gap = max(0, min_y)`.
 - `assembled` (boolean): for briefs of kind `static` or `animated`, `largest_share >= 0.9 && floaters == 0 && ground_gap <= tol`. For kind `set`, `floaters == 0 && ground_gap <= tol` (several components are expected in a set).
 
-The validator adds this to `stats.glb.assembly` in GLB mode. It never adds a failure reason: assembly is a quality signal, not a validity rule. A backfill CLI writes `assembly.jsonl` next to an existing run's `validation.jsonl` without re-rendering, so old runs can be compared.
+The validator adds this to `stats.glb.assembly` in GLB mode, using the kind from the raw row's brief (`raw.brief.kind`) and falling back to the optional `--briefs FILE` flag (then `static`). It never adds a failure reason: assembly is a quality signal, not a validity rule.
+
+`scripts/glb_assembly.mjs --run RUN_DIR --briefs FILE [--tol-frac 0.02]` backfills a run already on disk: for every row in `RUN_DIR/validation.jsonl` it writes `RUN_DIR/assembly.jsonl` with lines `{id, kind, assembly}` — the kind-aware `assembly()` result, or `null` when the row is not `ok` — reading each ok row's `RUN_DIR/glb/<id>.glb` without re-rendering, printing `assembled X of Y valid`, and never rewriting `validation.jsonl`.
 
 Thresholds are first guesses. imp-ops US-002 compares `assembled` with the unblinded ratings, and the owner may tune `tol` once with the result recorded in section 10.
 
@@ -68,7 +74,7 @@ Thresholds are first guesses. imp-ops US-002 compares `assembled` with the unbli
 
 - `teacher_generate.py --seed N`: passed as `options.seed` on the Ollama native route. It is recorded in each raw row and changes nothing when absent.
 - `glb_bench.py --seed N --run-suffix S`: the run directory becomes `<out-root>/<name><S>`.
-- `scripts/glb_best_of.py --runs DIR [DIR ...] --briefs FILE --out DIR`: for each brief, rank the candidates and copy the winner's raw JSON, GLB, screenshot and validation row into `--out`, adding `picked_from`. It also writes `assembly.jsonl` and `picks.json`. The output works with glb_report.py and glb_sheet.mjs. Ranking keys, in order:
+- `scripts/glb_best_of.py --runs DIR [DIR ...] --briefs FILE --out DIR [--no-compute]`: for each brief, rank the candidates and copy the winner's raw JSON, GLB, screenshot and validation row into `--out`, adding `picked_from` (the winning run directory's name). It also writes `--out/assembly.jsonl` and `--out/picks.json` (`{id: {picked_from, rank_keys}}` for every brief, `null` when no run has a candidate). A run with no `assembly.jsonl` gets one from `glb_assembly.mjs`; `--no-compute` refuses instead. The output works with glb_report.py and glb_sheet.mjs. Ranking keys, in order:
   1. `ok`
   2. `assembled`
   3. parts within 8-60
@@ -89,8 +95,9 @@ Thresholds are first guesses. imp-ops US-002 compares `assembled` with the unbli
   3. title matches an eval subject (whole-word, case-insensitive, title only)
   4. duplicate answer text
 - **System prompt:** the default `--system ccore` uses `prompts/ccore_glb_system.txt` verbatim. Its answers use OrbitControls and Three.js 0.160-0.170, which break our v3 rules, so the student is evaluated with ccore's prompt (`--allow-addons` and the version cache already make that fair). Using our v3 prompt instead is an owner decision (section 9).
-- **`--extra-run`:** adds the valid and assembled rows of a Glimmer run (for example the best-of-3 output). Their system prompt is `--extra-system`, and rows whose brief id is in the eval briefs are refused. In practice, generate extra Glimmer data on new briefs (`gen_briefs.py`), never on g001-g048.
-- **Stats:** `stats.json` holds kept and dropped counts by reason, kept counts by domain, the completion-length median and max, and the sha256 of each input parquet.
+- **`--extra-run`:** adds the valid and assembled rows of a Glimmer run (for example the best-of-3 output). Their system prompt is `--extra-system`, and rows whose brief id is in the eval briefs are refused (the whole command stops). In practice, generate extra Glimmer data on new briefs (`gen_briefs.py`), never on g001-g048.
+- **`--seed`:** shuffles the train split with this seed (default 7) so domains are not clustered; the val split keeps ccore's order.
+- **Stats:** `stats.json` holds kept and dropped counts by reason (per split), kept counts by domain, the completion-length median and max, the system and leak-file sha256, and the sha256 of each input parquet.
 
 ## 8. Phase 2 training (E): manual gate
 
@@ -98,7 +105,7 @@ The owner approves the spend first. Starting points, all of them estimates, not 
 
 - **Data:** about 600 rows after drops at `--max-chars 22000`, roughly 4-6K tokens each.
 - **Method:** QLoRA on Muse Glimmer 30B with `scripts/mesh_lora_hf.py --data DIR --quant 4bit --max-len 9728 --rank 16 --epochs 2`, on an A100 80 GB or L40S. Run a 20-step smoke run first (`--max-steps 20`) and time it before running the full job.
-- **Cost:** the earlier "$4-8" figure was a guess. Use `scripts/glb_phase2_estimate.py --data DIR --sec-per-step S --price-per-hour P` with S taken from the smoke run.
+- **Cost:** the earlier "$4-8" figure was a guess. Use `scripts/glb_phase2_estimate.py --data DIR --sec-per-step S --price-per-hour P [--epochs 2] [--grad-accum 8] [--batch 1] [--chars-per-token 3.3]` with S taken from the smoke run. It reads `DIR/train.jsonl` and `DIR/val.jsonl`, prints the rows, completion characters, an estimated token count (labelled `estimate, chars/token = X`), steps per epoch, total steps, hours and cost. Without `--sec-per-step` it prints `sec-per-step not measured: run the 20-step smoke first` and no cost, so no unmeasured number is reported (`--sec-per-step` and `--price-per-hour` are given together). It writes nothing.
 - **Eval:** merge or convert the adapter for Ollama (`scripts/export_gguf.sh` or MLX), add a `glimmer-lora` row (disabled), and run the 12 dev briefs first, then the 48 eval briefs. Report it beside v2, v3 and ccore, with seconds per asset, because longer answers are slower on the Mac.
 - **Go/no-go:** good-asset rate at least 10 points above v3, with valid GLB at or above 85% and median seconds per asset at or below 180 on the Mac.
 

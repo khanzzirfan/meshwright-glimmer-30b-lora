@@ -1,0 +1,4 @@
+{"id": "c1", "title": "Crate", "brief": "A wooden crate.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "c2", "title": "Chair", "brief": "A simple chair.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "c3", "title": "Tree", "brief": "A small tree.", "domain": "nature", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "c4", "title": "Market stall", "brief": "A market stall set.", "domain": "buildings", "level": 3, "style": "low-poly", "kind": "set"}

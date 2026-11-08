@@ -3,6 +3,11 @@
 Tracker for muse-threejs. Tick items as they are done, add a line to the results log for every run, and record
 decisions with a date. Map of files: [INDEX.md](INDEX.md).
 
+## Imp track (8 Nov 2026): GLB improvement
+- [ ] Offline build: `ralph/imp-1.prd.json` (8 stories) — assembly metric, repair retry, best-of-N picker, phase 2 data from ccore's set, cost estimate and docs wiring. Spec: [docs/14-glb-improvement.md](docs/14-glb-improvement.md).
+- [ ] Local ops: `ralph/imp-ops.prd.json` (8 stories) — assembly backfill, repair on v3's failures, two more v3 seeds and the best of 3, then the phase 2 dataset build. Every job runs through `scripts/imp_ops.sh`.
+- [ ] Manual gate: owner reviews the imp-1 diff, then approves the phase 2 LoRA spend (docs/14 section 8).
+
 ## Now (7 Nov 2026): GLB code benchmark
 - [ ] Ralph `ralph/glb-1.prd.json` (7 stories): GLB check, validator GLB mode, bench runner, report, blind sheet. Spec: [docs/13-glb-code-track.md](docs/13-glb-code-track.md).
 - [ ] Paste ccore's system prompt into `prompts/ccore_glb_system.txt`; pull the Q8_0 GGUF.

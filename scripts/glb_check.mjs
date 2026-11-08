@@ -33,6 +33,228 @@ function triangleCount(mode, count) {
   return 0;
 }
 
+// --- assembly metric (docs/14 section 4) ------------------------------------
+
+const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+
+const num = (v, d) => (Number.isFinite(Number(v)) ? Number(v) : d);
+
+// Column-major 4x4 (glTF layout): element (row r, col c) lives at index c * 4 + r.
+function matMul(a, b) {
+  const o = new Array(16);
+  for (let c = 0; c < 4; c++) {
+    for (let r = 0; r < 4; r++) {
+      o[c * 4 + r] =
+        a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+    }
+  }
+  return o;
+}
+
+function matFromTRS(t, r, s) {
+  const tx = num(t && t[0], 0);
+  const ty = num(t && t[1], 0);
+  const tz = num(t && t[2], 0);
+  const sx = num(s && s[0], 1);
+  const sy = num(s && s[1], 1);
+  const sz = num(s && s[2], 1);
+  let x = num(r && r[0], 0);
+  let y = num(r && r[1], 0);
+  let z = num(r && r[2], 0);
+  let w = num(r && r[3], 1);
+  const len = Math.hypot(x, y, z, w);
+  if (len > 0) {
+    x /= len;
+    y /= len;
+    z /= len;
+    w /= len;
+  } else {
+    x = 0;
+    y = 0;
+    z = 0;
+    w = 1;
+  }
+  const m = new Array(16);
+  m[0] = (1 - 2 * (y * y + z * z)) * sx;
+  m[1] = 2 * (x * y + z * w) * sx;
+  m[2] = 2 * (x * z - y * w) * sx;
+  m[3] = 0;
+  m[4] = 2 * (x * y - z * w) * sy;
+  m[5] = (1 - 2 * (x * x + z * z)) * sy;
+  m[6] = 2 * (y * z + x * w) * sy;
+  m[7] = 0;
+  m[8] = 2 * (x * z + y * w) * sz;
+  m[9] = 2 * (y * z - x * w) * sz;
+  m[10] = (1 - 2 * (x * x + y * y)) * sz;
+  m[11] = 0;
+  m[12] = tx;
+  m[13] = ty;
+  m[14] = tz;
+  m[15] = 1;
+  return m;
+}
+
+function nodeMatrix(node) {
+  if (Array.isArray(node.matrix) && node.matrix.length === 16 && node.matrix.every((v) => Number.isFinite(Number(v)))) {
+    return node.matrix.map(Number);
+  }
+  return matFromTRS(node.translation, node.rotation, node.scale);
+}
+
+function matApply(m, p) {
+  return [
+    m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12],
+    m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13],
+    m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14],
+  ];
+}
+
+const unionBox = (a, b) => ({
+  min: [Math.min(a.min[0], b.min[0]), Math.min(a.min[1], b.min[1]), Math.min(a.min[2], b.min[2])],
+  max: [Math.max(a.max[0], b.max[0]), Math.max(a.max[1], b.max[1]), Math.max(a.max[2], b.max[2])],
+});
+
+// Transform the 8 corners of a local min/max box and return the world axis-aligned box.
+function transformBox(m, box) {
+  let min = null;
+  let max = null;
+  for (const cx of [box.min[0], box.max[0]]) {
+    for (const cy of [box.min[1], box.max[1]]) {
+      for (const cz of [box.min[2], box.max[2]]) {
+        const w = matApply(m, [cx, cy, cz]);
+        if (min === null) {
+          min = w;
+          max = w.slice();
+        } else {
+          for (let i = 0; i < 3; i++) {
+            min[i] = Math.min(min[i], w[i]);
+            max[i] = Math.max(max[i], w[i]);
+          }
+        }
+      }
+    }
+  }
+  return { min, max };
+}
+
+// Signed separation between two 1D intervals: 0 when they overlap, positive gap otherwise.
+const axisGap = (aMin, aMax, bMin, bMax) => Math.max(aMin - bMax, bMin - aMax, 0);
+
+// The world boxes of the mesh nodes, walking the node tree from the scene roots.
+function worldBoxes(json) {
+  const accessors = Array.isArray(json.accessors) ? json.accessors : [];
+  const meshes = Array.isArray(json.meshes) ? json.meshes : [];
+  const nodes = Array.isArray(json.nodes) ? json.nodes : [];
+
+  const scenes = Array.isArray(json.scenes) ? json.scenes : [];
+  const sceneIndex = Number.isInteger(json.scene) ? json.scene : 0;
+  const scene = scenes[sceneIndex] ?? scenes[0];
+  const roots = scene && Array.isArray(scene.nodes) ? scene.nodes : nodes.map((_, i) => i);
+
+  const boxes = [];
+  const visited = new Set();
+  const walk = (index, parentMatrix) => {
+    const node = nodes[index];
+    if (!node || typeof node !== 'object') throw new Error('bad_node');
+    if (visited.has(index)) throw new Error('cycle');
+    visited.add(index);
+    const world = matMul(parentMatrix, nodeMatrix(node));
+    if (Number.isInteger(node.mesh) && meshes[node.mesh]) {
+      let box = null;
+      const prims = Array.isArray(meshes[node.mesh].primitives) ? meshes[node.mesh].primitives : [];
+      for (const prim of prims) {
+        const pos = accessors[prim?.attributes?.POSITION];
+        if (!Array.isArray(pos?.min) || !Array.isArray(pos?.max)) continue;
+        const local = { min: pos.min.slice(0, 3).map(Number), max: pos.max.slice(0, 3).map(Number) };
+        if (![...local.min, ...local.max].every(Number.isFinite)) continue;
+        const world2 = transformBox(world, local);
+        box = box ? unionBox(box, world2) : world2;
+      }
+      if (box) boxes.push(box);
+    }
+    if (Array.isArray(node.children)) for (const c of node.children) walk(c, world);
+  };
+  for (const r of roots) walk(r, IDENTITY);
+  return boxes;
+}
+
+export function assembly(json, { kind = 'static', tolFrac = 0.02 } = {}) {
+  try {
+    if (json === null || typeof json !== 'object' || Array.isArray(json)) {
+      return { parts: 0, assembled: false, error: 'not_an_object' };
+    }
+    const parts = worldBoxes(json);
+    const n = parts.length;
+
+    let union = null;
+    for (const b of parts) union = union ? unionBox(union, b) : b;
+    const tol = union
+      ? tolFrac * Math.hypot(union.max[0] - union.min[0], union.max[1] - union.min[1], union.max[2] - union.min[2])
+      : 0;
+
+    const parent = Array.from({ length: n }, (_, i) => i);
+    const find = (i) => {
+      while (parent[i] !== i) {
+        parent[i] = parent[parent[i]];
+        i = parent[i];
+      }
+      return i;
+    };
+    const join = (a, b) => {
+      const ra = find(a);
+      const rb = find(b);
+      if (ra !== rb) parent[ra] = rb;
+    };
+    const touches = (A, B) => {
+      for (let i = 0; i < 3; i++) {
+        if (axisGap(A.min[i], A.max[i], B.min[i], B.max[i]) > tol) return false;
+      }
+      return true;
+    };
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) if (touches(parts[i], parts[j])) join(i, j);
+    }
+
+    const sizes = new Map();
+    for (let i = 0; i < n; i++) {
+      const r = find(i);
+      sizes.set(r, (sizes.get(r) || 0) + 1);
+    }
+    let largest = 0;
+    for (const s of sizes.values()) largest = Math.max(largest, s);
+    const components = sizes.size;
+    const largest_share = n ? largest / n : 0;
+
+    const min_y = n ? parts.reduce((m, b) => Math.min(m, b.min[1]), Infinity) : null;
+    const ground_gap = min_y === null ? null : Math.max(0, min_y);
+
+    let floaters = 0;
+    for (let i = 0; i < n; i++) {
+      if (sizes.get(find(i)) !== 1) continue;
+      const p = parts[i];
+      if (p.min[1] <= tol) continue;
+      let supported = false;
+      for (let j = 0; j < n && !supported; j++) {
+        if (j === i) continue;
+        const q = parts[j];
+        if (q.max[1] > p.min[1] + tol) continue;
+        if (p.min[1] - q.max[1] > tol) continue;
+        if (axisGap(p.min[0], p.max[0], q.min[0], q.max[0]) > tol) continue;
+        if (axisGap(p.min[2], p.max[2], q.min[2], q.max[2]) > tol) continue;
+        supported = true;
+      }
+      if (!supported) floaters++;
+    }
+
+    const grounded = ground_gap !== null && ground_gap <= tol;
+    const assembled = kind === 'set' ? floaters === 0 && grounded : largest_share >= 0.9 && floaters === 0 && grounded;
+
+    return { parts: n, components, largest_share, floaters, min_y, ground_gap, tol, assembled };
+  } catch (e) {
+    return { parts: 0, assembled: false, error: String((e && e.message) || e).slice(0, 80) };
+  }
+}
+
 function measure(json, bytes, version) {
   const meshes = Array.isArray(json.meshes) ? json.meshes : [];
   const nodes = Array.isArray(json.nodes) ? json.nodes : [];
@@ -78,7 +300,7 @@ function measure(json, bytes, version) {
 
   const bbox = min === null ? emptyBbox() : { min, max, size: max.map((v, i) => v - min[i]) };
   const empty = meshes.length === 0 || triangles === 0;
-  return {
+  const result = {
     ok: !empty,
     reason: empty ? 'empty_glb' : null,
     bytes,
@@ -92,6 +314,8 @@ function measure(json, bytes, version) {
     animations: animations.length,
     bbox,
   };
+  if (!empty) result.assembly = assembly(json);
+  return result;
 }
 
 export function parseGlb(buf) {
@@ -129,6 +353,31 @@ export function parseGlb(buf) {
     return measure(json, bytes, version);
   } catch {
     return bad(bytes);
+  }
+}
+
+// Return the glTF JSON object of a GLB buffer, or null when it is unreadable. Used to compute the
+// kind-aware assembly for a GLB already on disk (parseGlb only reports the static-kind assembly).
+export function glbJson(buf) {
+  try {
+    let data;
+    if (Buffer.isBuffer(buf)) data = buf;
+    else if (ArrayBuffer.isView(buf)) data = Buffer.from(buf.buffer, buf.byteOffset, buf.byteLength);
+    else if (buf instanceof ArrayBuffer) data = Buffer.from(buf);
+    else return null;
+    if (data.length < 20) return null;
+    if (data.readUInt32LE(0) !== MAGIC) return null;
+    if (data.readUInt32LE(4) !== 2) return null;
+    if (data.readUInt32LE(8) !== data.length) return null;
+    const jsonLength = data.readUInt32LE(12);
+    if (data.readUInt32LE(16) !== JSON_CHUNK) return null;
+    const jsonEnd = 20 + jsonLength;
+    if (jsonEnd > data.length) return null;
+    const json = JSON.parse(data.subarray(20, jsonEnd).toString('utf8'));
+    if (json === null || typeof json !== 'object' || Array.isArray(json)) return null;
+    return json;
+  } catch {
+    return null;
   }
 }
 

@@ -1,0 +1,2 @@
+{"id": "c1", "ok": true, "reasons": [], "stats": {"export_ms": 10, "glb": {"ok": true, "triangles": 100}}}
+{"id": "c2", "ok": false, "reasons": ["no_export_button"], "stats": {}}
