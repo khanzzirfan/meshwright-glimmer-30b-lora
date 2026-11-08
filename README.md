@@ -266,6 +266,54 @@ runs sampled so far, so the next seed can be limited to them (docs/14 section 6)
 - `--briefs FILE` (required) names every candidate id and `--out FILE` (required) receives the remaining ids,
   one per line, in `--briefs` order; it prints `remaining X of Y`.
 
+## One-command generator (glb_generate.py)
+
+`scripts/glb_generate.py` is the imp-4 product: one command that turns a prompt into a GLB (docs/14). It
+samples the frozen prompt until a candidate is valid **and** assembled, then writes the winner.
+
+```bash
+.venv/bin/python scripts/glb_generate.py "a low-poly treasure chest" --out-dir runs/imp/gen/chest
+```
+
+- A single positional PROMPT is the brief; `--kind static|animated|set` (default `static`) sets the
+  assembly rule the validator applies.
+- `--max-samples N` (default 3) caps the samples and `--seed-start N` (default 1) is the first seed, so
+  the seeds are `seed-start .. seed-start+max-samples-1`. The loop stops at the first candidate that is
+  both `ok` and assembled: a good first sample costs one request.
+- `--model-row NAME` (default `glimmer-v3`) selects the row from `--models` (default
+  `bench/glb/models.json`) and `--ollama-url URL` (default `http://localhost:11434`) is the generation
+  server. A row marked `paid` is refused unless `--allow-paid` is given.
+- `--out-dir DIR` (required) must be outside `data/`, `out/` and `eval/`. Each attempt is written under
+  `<out-dir>/attempts/<seed>/` as `raw/asset.json` (the generation row), `page.html` (the extracted page)
+  and the validator's `scenes/`, `shots/`, `glb/asset.glb` and `validation.jsonl`. The winner's GLB is
+  copied to `<out-dir>/asset.glb`.
+- Unless `--no-validate` is given, every attempt is validated with `node scripts/validate_scenes.mjs
+  --mode glb --allow-addons` in the bench's directory layout. Point `GLB_GENERATE_VALIDATOR` at a script
+  to swap the validator (the offline tests use a small fake).
+- When no sample is assembled it spends every sample and picks a winner with `glb_best_of.py`'s ranking
+  (imported, never copied).
+- When every sample failed and one failed for a reason `glb_repair.py` can fix, it spends **one repair
+  turn** (docs/14 section 5): `glb_repair.py`'s four-message builder and fix message are imported, never
+  copied. The repaired answer is written to `<out-dir>/attempts/repair/`, validated like a sample and
+  competes in the ranking; its record carries `repair: true`. `truncated`, `no_html` and `external_dep`
+  are never repaired, and `--no-repair` turns the turn off.
+- It writes `<out-dir>/result.json` with `{prompt, kind, attempts: [{seed, ok, reasons, assembled, parts,
+  triangles, seconds}], picked_seed, picked_ok, picked_assembled, total_seconds, system_sha256}` and exits
+  0 when the picked candidate is valid, else 2. The one repair entry adds `repair: true`.
+- `--briefs FILE` runs the loop for every brief in the file (each row `{id, brief, kind}`) into
+  `<out-dir>/<id>/`, using that brief's `kind`. `--ids-file FILE` keeps only the listed ids (one per
+  line, blank lines and `#` comments ignored) and `--limit N` keeps the first `N` after that. A brief
+  whose `<out-dir>/<id>/result.json` already exists is skipped, so a rerun resumes and makes no request.
+  `--briefs` and a positional PROMPT are mutually exclusive (give one or the other).
+- In batch mode it writes `<out-dir>/summary.json` `{briefs, picked_ok, picked_assembled, mean_samples,
+  mean_seconds, repairs_used}` over every brief's `result.json` and prints a one-screen table.
+  `mean_samples` is the mean number of generation samples per brief (the repair turn is counted separately
+  in `repairs_used`). It exits 0 when every brief's pick is valid, else 2.
+
+```bash
+.venv/bin/python scripts/glb_generate.py --briefs bench/glb/briefs.jsonl --limit 3 --out-dir runs/imp/gen
+```
+
 ## Phase 2 data (ccore_prep.py)
 
 `scripts/ccore_prep.py` turns ccore's downloaded parquet shards into the conversational prompt/completion set that

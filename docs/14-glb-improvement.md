@@ -136,3 +136,25 @@ The owner approves the spend first. Starting points, all of them estimates, not 
 | | live adaptive best-of-N (seeds 4-6) | valid 48/48, assembled 45/48, mean samples 1.3750, mean seconds 84.5416 |
 | | phase 2 data build | train 541, val 86 |
 | | phase 2 LoRA | not run |
+
+## 11. One-command generator
+
+`scripts/glb_generate.py` is the imp-4 product: it packages the repair retry (section 5) and the best-of-N picker (section 6) into one command that turns a text prompt into a GLB.
+
+```
+.venv/bin/python scripts/glb_generate.py "a low-poly treasure chest" --kind static --out-dir runs/imp/gen/chest
+```
+
+- **Usage.** A single positional PROMPT, or `--briefs FILE` for a batch (the two are mutually exclusive). Flags: `--kind static|animated|set` (default `static`), `--out-dir DIR` (outside `data/`, `out/` and `eval/`), `--max-samples N` (default 3), `--seed-start N` (default 1), `--model-row NAME` (default `glimmer-v3`), `--models FILE`, `--ollama-url URL`, `--allow-paid`, `--no-validate` and `--no-repair`. Batch mode adds `--limit N` and `--ids-file FILE`. Tests swap the validator by pointing `GLB_GENERATE_VALIDATOR` at a script.
+- **How it chooses.** It samples the frozen v3 prompt once per seed (`seed-start .. seed-start + max-samples - 1`), validates each sample with `node scripts/validate_scenes.mjs --mode glb --allow-addons`, and stops at the first candidate that is both valid and assembled. When no sample is assembled it keeps every sample and picks the winner with `glb_best_of.py`'s ranking keys (`ok`, then `assembled`, then parts within 8-60, then triangles <= 5000, then higher `largest_share`, then run order), never the eval ratings. When every sample failed and one failed for a reason `glb_repair.py` can fix, it spends one repair turn (section 5). It writes the winner to `<out-dir>/asset.glb`, every attempt to `<out-dir>/result.json`, and, in batch mode, the totals to `<out-dir>/summary.json`.
+
+**Evidence** (imp-ops-3, fresh seeds 4-6, the 48 eval briefs):
+
+| One command | Value |
+|---|---|
+| Valid GLB | 100% (48/48) |
+| Assembled | 93.8% (45/48) |
+| Mean samples per brief | 1.375 |
+| Mean seconds per brief | 84.5 |
+
+**Assembled is the ranking key; no blind rating yet.** The numbers are automatic only: the validator decides valid and assembled, and the pick prefers an assembled asset over one that is not. No owner has rated the outputs blind, so no quality gain over best-of-3 is claimed; the blind rating stays an open owner decision (section 9).

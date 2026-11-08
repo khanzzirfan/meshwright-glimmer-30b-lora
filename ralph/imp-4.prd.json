@@ -1,7 +1,7 @@
 {
   "name": "GLB improvement 4: one-command generator (adaptive best-of-N plus repair)",
-  "branchName": "ralph/imp-4",
   "description": "Package what the numbers support into the product: one command that turns a text prompt into a GLB. It samples the frozen v3 prompt until a candidate is valid and assembled (at most 3 seeds, imp-ops-3: 1.375 samples and 84.5 s per brief, 100% valid, 93.8% assembled on fresh seeds), tries one error repair when nothing valid exists, and records every attempt. Offline: tests use a fake Ollama server and a fake validator.",
+  "branchName": "ralph/imp-4",
   "userStories": [
     {
       "id": "US-001",
@@ -21,9 +21,10 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "",
-      "dependsOn": []
+      "dependsOn": [],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-002",
@@ -42,11 +43,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-001"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-003",
@@ -64,11 +66,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-002"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-004",
@@ -85,11 +88,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-003"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     }
   ],
   "metadata": {
@@ -141,6 +145,7 @@
       "Owner reviews and commits the imp-4 diff",
       "Owner tries it on a few of their own prompts and rates the output blind before anyone calls it better than best-of-3",
       "Owner decides on the phase 2 LoRA (docs/14 sections 8 and 9); Ralph never creates pods"
-    ]
+    ],
+    "updatedAt": "2026-11-08T09:46:22.121Z"
   }
 }

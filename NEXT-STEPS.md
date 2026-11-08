@@ -10,6 +10,7 @@ decisions with a date. Map of files: [INDEX.md](INDEX.md).
 - [ ] Follow-up ops: `ralph/imp-ops-2.prd.json` (4 stories) — assembly repair on v3 seed 1 and seed 3 plus the adaptive cost, all through `scripts/imp_ops.sh`.
 - [ ] Adaptive build: `ralph/imp-3.prd.json` (4 stories) — the `--ids-file` brief filter in the generator and bench, `glb_adaptive_ids.py` and the assembly-repair report fix. Spec: [docs/14-glb-improvement.md](docs/14-glb-improvement.md) sections 3 and 6.
 - [ ] Adaptive ops: `ralph/imp-ops-3.prd.json` (6 stories) — fresh seeds 4-6 (seeds 5 and 6 only on the briefs still lacking a valid, assembled candidate), then the pick and blind sheet, through `scripts/imp_ops.sh start ad4`/`ad5`/`ad6`.
+- [ ] Product build: `ralph/imp-4.prd.json` (4 stories) — the one-command generator `scripts/glb_generate.py`: sample the frozen prompt until a candidate is valid and assembled, one repair turn, batch mode with a per-run summary, then the evidence section and index wiring. Spec: [docs/14-glb-improvement.md](docs/14-glb-improvement.md) section 11.
 - [ ] Manual gate: owner reviews the imp-1 diff, then approves the phase 2 LoRA spend (docs/14 section 8).
 
 ## Now (7 Nov 2026): GLB code benchmark

@@ -22,6 +22,7 @@ opencode only when Command Code credit runs out.
 | 11 | `imp-ops-2.prd.json` | 4 | **GLB improvement ops 2 (local only):** assembly repair on v3 seed 1 and seed 3, adaptive best-of-N cost and the result reports, all through `scripts/imp_ops.sh` | rate a blind sample of the repaired assets before claiming a quality gain (docs/14 section 8) |
 | 12 | `imp-3.prd.json` | 4 | **GLB improvement 3 (offline):** the `--ids-file` brief filter in the generator and bench, `glb_adaptive_ids.py` to list briefs still lacking a valid, assembled candidate, and the assembly-repair report fix | review the imp-3 diff, then run `imp-ops-3.prd.json` locally |
 | 13 | `imp-ops-3.prd.json` | 6 | **GLB improvement ops 3 (local only):** fresh seeds 4-6 through `scripts/imp_ops.sh` (`start ad4`/`ad5`/`ad6`, seeds 5 and 6 on the remaining briefs only), the best pick, a blind sheet and RESULTS3 | rate the adaptive sheet blind and record the live numbers (docs/14 section 10) |
+| 14 | `imp-4.prd.json` | 4 | **GLB improvement 4 (offline):** the one-command `scripts/glb_generate.py` — sample the frozen prompt until valid and assembled, one repair turn, batch mode with a per-run summary, then the docs and index wiring | review the imp-4 diff, then rate the generated assets blind before claiming better than best-of-3 (docs/14 sections 9 and 11) |
 
 PRDs 5 and 6 are the mesh track (docs/08-mesh-track.md). PRD 6 needs PRD 5 finished first because it edits
 `caption_meshes.py` and `build_mesh_dataset.py`. PRDs 1 to 4 are the Three.js-code track and can wait.
