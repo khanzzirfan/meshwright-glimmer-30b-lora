@@ -132,6 +132,8 @@ def test_dry_run_prints_the_real_job_commands(tmp_path):
         "repair-v3": ".venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3 --model-row glimmer-v3",
         "repair-asm-v3": ".venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3 --model-row glimmer-v3 --mode assembly",
         "repair-asm-v3s3": ".venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3-s3 --model-row glimmer-v3 --mode assembly",
+        "distill-smoke": ".venv/bin/python scripts/glb_generate.py --briefs bench/glb/dev_briefs.jsonl --limit 2 --out-dir runs/imp/distill_smoke",
+        "distill": ".venv/bin/python scripts/glb_generate.py --briefs bench/distill/briefs.jsonl --out-dir runs/imp/distill",
     }
     for job, command in expected.items():
         r = ops(env, "start", job)
@@ -183,3 +185,25 @@ def test_adaptive_job_total_is_the_ids_file_line_count(env, tmp_path):
     done = ops(env, "wait", "ad5", "30")
     # the fake bench writes 2 raw files; job_total is the 3-line ids file, not the 48 fallback
     assert done.returncode == 0 and "raw 2/3" in done.stdout
+
+
+def test_distill_jobs_count_result_json_files_and_brief_totals(env, tmp_path):
+    # raw progress is one result.json per finished brief (not the whole dir); job_total is the brief count.
+    distill = tmp_path / "imp"
+    env["IMP_OPS_DISTILL"] = str(distill)
+    for name, done in (("distill", 1), ("distill-smoke", 2)):
+        run = distill / ("distill_smoke" if name == "distill-smoke" else "distill")
+        for i in range(done):
+            (run / f"x{i:04d}").mkdir(parents=True)
+            (run / f"x{i:04d}" / "result.json").write_text("{}")
+        (run / "x9999").mkdir()  # a brief dir without a result.json is not counted yet
+    jobs = Path(env["_jobs"])
+    jobs.mkdir(parents=True, exist_ok=True)
+    for name in ("distill", "distill-smoke"):
+        (jobs / f"{name}.started").write_text("2026-01-01T00:00:00Z")
+
+    status = ops(env, "status")
+    total = len(ROOT.joinpath("bench/distill/briefs.jsonl").read_text().splitlines())
+    assert status.returncode == 0, status.stderr
+    assert f"distill: stopped, raw 1/{total}" in status.stdout
+    assert "distill-smoke: stopped, raw 2/2" in status.stdout

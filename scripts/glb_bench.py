@@ -143,7 +143,8 @@ def print_command(cmd):
     print("+ " + " ".join(shlex.quote(part) for part in cmd), flush=True)
 
 
-def main(argv=None):
+def build_parser():
+    """The argument parser, so a test can parse a command line without running anything."""
     ap = argparse.ArgumentParser(description="Run each enabled GLB model then validate its answers.")
     ap.add_argument("--out-root", required=True, help="output root, outside data/ and out/")
     ap.add_argument("--models", default="bench/glb/models.json")
@@ -159,6 +160,11 @@ def main(argv=None):
     ap.add_argument("--run-suffix", default="", help="appended to every run directory name: <out-root>/<name><suffix> (default: none)")
     ap.add_argument("--allow-paid", action="store_true", help="allow rows with paid true")
     ap.add_argument("--dry-run", action="store_true", help="print every command and run nothing")
+    return ap
+
+
+def main(argv=None):
+    ap = build_parser()
     a = ap.parse_args(argv)
 
     models = load_models(a.models)

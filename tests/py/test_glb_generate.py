@@ -1,5 +1,6 @@
 import http.server
 import json
+import struct
 import sys
 import threading
 from pathlib import Path
@@ -15,9 +16,50 @@ ROOT = Path(__file__).resolve().parents[2]
 GOOD = "<html>OK_ASSEMBLED</html>"   # valid and assembled -> the loop stops here
 FLAT = "<html>OK_FLAT</html>"        # valid but not assembled
 BIG = "<html>OK_BIG</html>"          # valid, not assembled, too many parts (ranking key 2 = 0)
+HOVER = "<html>OK_HOVER</html>"      # valid, not assembled; its real GLB hovers, so grounding fixes it
+BIGTRI = "<html>OK_BIGTRI</html>"    # valid and assembled, but over the triangle budget
 FAIL = "<html>FAIL</html>"           # not valid, a repairable js_error
 TRUNC = "<html>TRUNCATED</html>"     # not valid, not repairable (the answer was cut off)
 NOHTML = "<html>NO_HTML</html>"      # not valid, not repairable (no page was written)
+
+_MAGIC = 0x46546C67
+_JSON_CHUNK = 0x4E4F534A
+_BIN_CHUNK = 0x004E4942
+
+
+def make_glb(boxes):
+    """A minimal valid GLB: one mesh node per (min, max) box, each a POSITION box with min/max.
+
+    Enough for glb_check.mjs's assembly metric: one primitive per mesh, no indices, one triangle. The
+    HOVER fixture needs a *real* GLB (not the fake's b"glTF") so glb_ground.mjs can actually shift it.
+    """
+    bin_data = b""
+    buffer_views, accessors, meshes = [], [], []
+    for i, (lo, hi) in enumerate(boxes):
+        corners = [(x, y, z) for x in (lo[0], hi[0]) for y in (lo[1], hi[1]) for z in (lo[2], hi[2])]
+        data = struct.pack("<%df" % (len(corners) * 3), *[c for corner in corners for c in corner])
+        buffer_views.append({"buffer": 0, "byteOffset": len(bin_data), "byteLength": len(data), "target": 34962})
+        bin_data += data + b"\x00" * ((4 - len(data) % 4) % 4)
+        accessors.append({"bufferView": len(buffer_views) - 1, "componentType": 5126,
+                          "count": len(corners), "type": "VEC3", "min": list(lo), "max": list(hi)})
+        meshes.append({"name": f"m{i}", "primitives": [{"attributes": {"POSITION": len(accessors) - 1}}]})
+    nodes = [{"mesh": i, "name": f"n{i}"} for i in range(len(meshes))]
+    gltf = {"asset": {"version": "2.0", "generator": "test_glb_generate.py"}, "scene": 0,
+            "scenes": [{"nodes": list(range(len(nodes)))}], "nodes": nodes, "meshes": meshes,
+            "accessors": accessors, "bufferViews": buffer_views,
+            "buffers": [{"byteLength": len(bin_data)}]}
+    json_bytes = json.dumps(gltf).encode()
+    json_chunk = json_bytes + b" " * ((4 - len(json_bytes) % 4) % 4)
+    bin_chunk = bin_data + b"\x00" * ((4 - len(bin_data) % 4) % 4)
+    total = 12 + 8 + len(json_chunk) + 8 + len(bin_chunk)
+    out = bytearray(total)
+    struct.pack_into("<III", out, 0, _MAGIC, 2, total)
+    struct.pack_into("<II", out, 12, len(json_chunk), _JSON_CHUNK)
+    out[20:20 + len(json_chunk)] = json_chunk
+    off = 20 + len(json_chunk)
+    struct.pack_into("<II", out, off, len(bin_chunk), _BIN_CHUNK)
+    out[off + 8:off + 8 + len(bin_chunk)] = bin_chunk
+    return bytes(out)
 
 # A dependency-free stand-in for validate_scenes.mjs that reads the same --mode/--raw/--glb-dir/--report
 # flags and decides ok/assembled from a marker in each page. Written to a temp file and pointed at with
@@ -25,6 +67,7 @@ NOHTML = "<html>NO_HTML</html>"      # not valid, not repairable (no page was wr
 FAKE_VALIDATOR = '''
 import argparse
 import json
+import os
 from pathlib import Path
 
 ap = argparse.ArgumentParser()
@@ -46,8 +89,18 @@ for path in sorted(raw_dir.glob("*.json")):
     content = raw.get("content") or ""
     brief_id = raw.get("id") or path.stem
     error = None
+    triangles = 100
+    glb_bytes = b"glTF"
     if "OK_ASSEMBLED" in content:
         ok, assembled, parts, reasons = True, True, 10, []
+    elif "OK_HOVER" in content:
+        # Valid but not assembled; its GLB really hovers, so glb_ground.mjs lifts it to y = 0.
+        ok, assembled, parts, reasons = True, False, 10, []
+        glb_bytes = Path(os.environ["FAKE_GLB_HOVER"]).read_bytes()
+    elif "OK_BIGTRI" in content:
+        # Valid and assembled, but over the triangle budget, so the stop rule must not stop here.
+        ok, assembled, parts, reasons = True, True, 10, []
+        triangles = 6000
     elif "OK_FLAT" in content:
         ok, assembled, parts, reasons = True, False, 10, []
     elif "OK_BIG" in content:
@@ -63,11 +116,11 @@ for path in sorted(raw_dir.glob("*.json")):
     if error:
         row["stats"]["error"] = error
     if ok:
-        row["stats"]["glb"] = {"triangles": 100, "assembly": {
+        row["stats"]["glb"] = {"triangles": triangles, "assembly": {
             "parts": parts, "components": 1,
             "largest_share": 1.0 if assembled else 0.5,
             "floaters": 0, "min_y": 0, "ground_gap": 0, "tol": 0.1, "assembled": assembled}}
-        (glb_dir / (brief_id + ".glb")).write_bytes(b"glTF")
+        (glb_dir / (brief_id + ".glb")).write_bytes(glb_bytes)
     rows.append(row)
 Path(a.report).parent.mkdir(parents=True, exist_ok=True)
 Path(a.report).write_text(chr(10).join(json.dumps(r) for r in rows) + chr(10))
@@ -128,10 +181,17 @@ def ollama(monkeypatch):
 
 @pytest.fixture
 def fake_validator(tmp_path, monkeypatch):
-    """Install the fake validator via GLB_GENERATE_VALIDATOR and return its path."""
+    """Install the fake validator via GLB_GENERATE_VALIDATOR and return its path.
+
+    It also leaves the HOVER marker's real hovering GLB on disk (FAKE_GLB_HOVER), single box at y 1..2,
+    so glb_ground.mjs shifts it down by 1 to reach the ground.
+    """
     script = tmp_path / "fake_validator.py"
     script.write_text(FAKE_VALIDATOR)
+    hover = tmp_path / "hover.glb"
+    hover.write_bytes(make_glb([([0, 1, 0], [1, 2, 1])]))
     monkeypatch.setenv("GLB_GENERATE_VALIDATOR", str(script))
+    monkeypatch.setenv("FAKE_GLB_HOVER", str(hover))
     return script
 
 
@@ -196,21 +256,115 @@ def test_continues_after_an_unassembled_candidate(tmp_path, ollama, fake_validat
     result = read_result(tmp_path / "out")
     assert result["picked_seed"] == 2
     assert result["picked_assembled"] is True
+    assert result["assembly_repairs_used"] == 0  # the loop stopped at an assembled candidate
 
 
 def test_uses_all_samples_when_none_is_assembled_and_picks_by_ranking(tmp_path, ollama, fake_validator):
     models = write_models(tmp_path)
-    url, state = ollama([BIG, FLAT, FAIL])
+    url, state = ollama([BIG, FLAT, FAIL, FAIL])
 
     code = glb_generate.main(base_argv("Make a crate.", tmp_path / "out", models, url, "--max-samples", "3"))
 
-    assert len(state.requests) == 3  # max-samples: nothing assembled, so no early stop
+    # imp-5: three samples (nothing assembled, so no early stop), then the one assembly repair turn (the
+    # fourth reply is FAIL, so the repair does not recover). Updated from 3 requests for that turn.
+    assert len(state.requests) == 4
     assert code == 0
     result = read_result(tmp_path / "out")
     # BIG has 200 parts (out of the 8-60 band), FLAT has 10, so the ranking prefers FLAT at seed 2.
     assert result["picked_seed"] == 2
     assert result["picked_ok"] is True
     assert result["picked_assembled"] is False
+    assert result["assembly_repairs_used"] == 1
+
+
+# --- imp-5: grounding, the triangle budget and the assembly repair --------------------------------
+
+
+def test_a_hovering_candidate_is_accepted_after_grounding(tmp_path, ollama, fake_validator):
+    models = write_models(tmp_path)
+    url, state = ollama([HOVER, GOOD, FAIL])
+
+    code = glb_generate.main(base_argv("Make a crate.", tmp_path / "out", models, url, "--max-samples", "3"))
+
+    # The validator saw HOVER as valid but not assembled; grounding lifted it, so one request is enough.
+    assert len(state.requests) == 1
+    assert code == 0
+    result = read_result(tmp_path / "out")
+    assert result["picked_seed"] == 1
+    assert result["picked_assembled"] is True
+    attempt = result["attempts"][0]
+    assert attempt["assembled"] is True  # the grounding's assembly_after, not the validator's false
+    assert attempt["grounded_shift"] == pytest.approx(-1)  # the box hovered at y = 1
+    assert result["picked_within_budget"] is True
+    grounded = tmp_path / "out" / "attempts" / "1" / "glb" / "asset.grounded.glb"
+    assert grounded.exists()
+    assert (tmp_path / "out" / "asset.glb").read_bytes() == grounded.read_bytes()
+
+
+def test_an_over_budget_assembled_candidate_does_not_stop_the_loop(tmp_path, ollama, fake_validator):
+    models = write_models(tmp_path)
+    url, state = ollama([BIGTRI, GOOD, FAIL])
+
+    code = glb_generate.main(base_argv("Make a crate.", tmp_path / "out", models, url, "--max-samples", "3"))
+
+    # BIGTRI is valid and assembled but over the budget, so the loop spends one more request and stops.
+    assert len(state.requests) == 2
+    assert code == 0
+    result = read_result(tmp_path / "out")
+    assert result["picked_seed"] == 2
+    assert result["attempts"][0]["within_budget"] is False
+    assert result["attempts"][1]["within_budget"] is True
+    assert result["picked_within_budget"] is True
+
+
+def test_assembly_repair_runs_only_when_nothing_is_assembled(tmp_path, ollama, fake_validator):
+    models = write_models(tmp_path)
+    url, state = ollama([FLAT, FLAT, FLAT, GOOD])
+
+    code = glb_generate.main(base_argv("Make a crate.", tmp_path / "out", models, url, "--max-samples", "3"))
+
+    # Three valid but unassembled samples, then exactly one assembly repair turn (the GOOD reply).
+    assert len(state.requests) == 4
+    repair = state.requests[3]
+    assert [m["role"] for m in repair["messages"]] == ["system", "user", "assistant", "user"]
+    assert "not assembled" in repair["messages"][3]["content"]
+    assert code == 0
+    result = read_result(tmp_path / "out")
+    assert result["attempts"][-1]["repair"] == "assembly"
+    assert result["assembly_repairs_used"] == 1
+    assert result["picked_seed"] == 1  # the repaired sample's seed
+    assert result["picked_assembled"] is True
+    assert (tmp_path / "out" / "attempts" / "repair-asm" / "raw" / "asset.json").exists()
+
+
+def test_no_repair_also_disables_the_assembly_repair(tmp_path, ollama, fake_validator):
+    models = write_models(tmp_path)
+    url, state = ollama([FLAT, FLAT, FLAT, GOOD])
+
+    code = glb_generate.main(base_argv("Make a crate.", tmp_path / "out", models, url,
+                                       "--max-samples", "3", "--no-repair"))
+
+    assert len(state.requests) == 3  # --no-repair: the GOOD reply is never requested
+    assert code == 0  # a valid (unassembled) candidate is still picked
+    result = read_result(tmp_path / "out")
+    assert result["assembly_repairs_used"] == 0
+    assert not any(a.get("repair") for a in result["attempts"])
+    assert not (tmp_path / "out" / "attempts" / "repair-asm").exists()
+
+
+def test_tri_budget_overrides_the_default(tmp_path, ollama, fake_validator):
+    models = write_models(tmp_path)
+    url, state = ollama([GOOD, GOOD, GOOD])
+
+    code = glb_generate.main(base_argv("Make a crate.", tmp_path / "out", models, url,
+                                       "--max-samples", "3", "--tri-budget", "50"))
+
+    # Every GOOD has 100 triangles, over the 50 budget, so the loop never stops early.
+    assert len(state.requests) == 3
+    assert code == 0
+    result = read_result(tmp_path / "out")
+    assert all(a["within_budget"] is False for a in result["attempts"])
+    assert result["picked_within_budget"] is False
 
 
 # --- result.json and the attempt directory -------------------------------------------------------
@@ -223,20 +377,26 @@ def test_result_json_has_the_listed_fields(tmp_path, ollama, fake_validator):
     glb_generate.main(base_argv("Make a crate.", tmp_path / "out", models, url))
 
     result = read_result(tmp_path / "out")
+    # imp-5 adds picked_within_budget and assembly_repairs_used beside the imp-4 keys.
     assert set(result) == {"prompt", "kind", "attempts", "picked_seed", "picked_ok",
-                           "picked_assembled", "total_seconds", "system_sha256"}
+                           "picked_assembled", "picked_within_budget", "total_seconds",
+                           "system_sha256", "assembly_repairs_used"}
     assert result["prompt"] == "Make a crate."
     assert result["kind"] == "static"
     assert result["total_seconds"] == 1.0
     assert len(result["system_sha256"]) == 64
+    assert result["assembly_repairs_used"] == 0
     assert len(result["attempts"]) == 1
+    # imp-5: every attempt also records grounded_shift and within_budget.
     assert set(result["attempts"][0]) == {"seed", "ok", "reasons", "assembled", "parts",
-                                          "triangles", "seconds"}
+                                          "triangles", "seconds", "grounded_shift", "within_budget"}
     attempt = result["attempts"][0]
     assert attempt["seed"] == 1
     assert attempt["ok"] is True and attempt["assembled"] is True
     assert attempt["reasons"] == []
     assert attempt["parts"] == 10 and attempt["triangles"] == 100
+    assert attempt["grounded_shift"] is None  # the fake's b"glTF" is not a readable GLB, so no grounding
+    assert attempt["within_budget"] is True
 
 
 def test_attempt_files_are_written_under_the_seed(tmp_path, ollama, fake_validator):
@@ -351,7 +511,7 @@ def test_no_repair_disables_the_repair(tmp_path, ollama, fake_validator):
 
 def test_pick_is_imported_from_glb_best_of(tmp_path, ollama, fake_validator, monkeypatch):
     models = write_models(tmp_path)
-    url, _ = ollama([BIG, FLAT, FAIL])
+    url, _ = ollama([BIG, FLAT, FAIL, FAIL])
     calls = []
     real_pick = glb_best_of.pick
 
@@ -363,8 +523,10 @@ def test_pick_is_imported_from_glb_best_of(tmp_path, ollama, fake_validator, mon
 
     glb_generate.main(base_argv("Make a crate.", tmp_path / "out", models, url, "--max-samples", "3"))
 
-    assert len(calls) == 1
-    assert len(calls[0]) == 3  # every sampled attempt competes
+    assert calls  # the imported picker is used
+    # imp-5: it is also used once to choose the assembly repair's best ok attempt, so the last call is the
+    # final pick over every sampled attempt plus that repair turn (3 samples + 1 repair = 4).
+    assert len(calls[-1]) == 4
     assert read_result(tmp_path / "out")["picked_seed"] == 2
 
 
@@ -463,9 +625,11 @@ def test_batch_writes_summary_and_table(tmp_path, ollama, fake_validator, capsys
     assert len(state.requests) == 7
     assert code == 0
     summary = read_summary(tmp_path / "out")
-    # mean_samples (1, 2, 3) -> 2.0; mean_seconds (1.0, 2.0, 4.0) -> 2.3333; one repair (b3)
-    assert summary == {"briefs": 3, "picked_ok": 3, "picked_assembled": 3,
-                       "mean_samples": 2.0, "mean_seconds": 2.3333, "repairs_used": 1}
+    # mean_samples (1, 2, 3) -> 2.0; mean_seconds (1.0, 2.0, 4.0) -> 2.3333; one repair (b3).
+    # imp-5 adds picked_within_budget (all three picked 100 triangles) and assembly_repairs_used (none).
+    assert summary == {"briefs": 3, "picked_ok": 3, "picked_assembled": 3, "picked_within_budget": 3,
+                       "mean_samples": 2.0, "mean_seconds": 2.3333, "repairs_used": 1,
+                       "assembly_repairs_used": 0}
     for brief_id in ("b1", "b2", "b3"):
         assert (tmp_path / "out" / brief_id / "result.json").exists()
     printed = capsys.readouterr().out

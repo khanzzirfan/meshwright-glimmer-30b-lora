@@ -41,13 +41,16 @@ Planned by Ralph (do not exist yet): `docs/08-train-mlx.md`, `docs/09-train-gpu.
 | `scripts/glb_report.py` | GLB report | docs/13 section 5.3 metrics, Wilson intervals, head-to-head, blind ratings |
 | `scripts/glb_sheet.mjs` | GLB rating | renders exported GLBs to contact sheets and a blind `rating.csv` |
 | `scripts/glb_assembly.mjs` | GLB improvement | backfills `assembly.jsonl` for a run on disk (docs/14 section 4) |
+| `scripts/glb_ground.mjs` | GLB improvement | drops an exported GLB so its lowest point is at y = 0 (docs/14 section 4) |
 | `scripts/glb_repair.py` | GLB improvement | one-shot repair retry for failed GLB answers (docs/14 section 5) |
 | `scripts/glb_best_of.py` | GLB improvement | picks the best of several sampled candidates per brief (docs/14 section 6) |
 | `scripts/glb_adaptive_ids.py` | GLB improvement | lists the briefs with no valid and assembled candidate yet, to limit a later seed (docs/14 section 6) |
-| `scripts/glb_generate.py` | GLB improvement | one command: prompt to best GLB; samples until valid and assembled, then writes `asset.glb` and `result.json` (docs/14 section 6) |
+| `scripts/glb_generate.py` | GLB improvement | one command: prompt to best GLB; grounds each attempt, samples until valid, assembled and within the triangle budget, then writes `asset.glb` and `result.json` (docs/14 section 6) |
+| `scripts/glb_distill_briefs.py` | GLB improvement | turns `bench/distill/subjects.json` into `bench/distill/briefs.jsonl` (540 new, non-eval briefs across 12 domains) in the eval brief format (docs/14, imp-5) |
+| `scripts/glb_distill_prep.py` | GLB improvement | turns a `glb_generate.py` run into a self-distillation training set (`train.jsonl`, `val.jsonl`, `stats.json`) in the `ccore_prep.py` / `mesh_lora_hf.py` row format, eval-leak guarded (docs/14, imp-5) |
 | `scripts/ccore_prep.py` | GLB improvement | builds the phase 2 dataset from ccore's parquet, eval-leak guarded (docs/14 section 7) |
 | `scripts/glb_phase2_estimate.py` | GLB improvement | reads the phase 2 data and estimates steps, hours and cost (docs/14 section 8) |
-| `scripts/imp_ops.sh` | GLB improvement | operator wrapper for the local imp jobs: preflight, start, wait, status; bench jobs `v3s2`, `v3s3`, adaptive seeds `ad4`/`ad5`/`ad6` and the repair jobs |
+| `scripts/imp_ops.sh` | GLB improvement | operator wrapper for the local imp jobs: preflight, start, wait, status; bench jobs `v3s2`, `v3s3`, adaptive seeds `ad4`/`ad5`/`ad6`, the repair jobs, and the self-distillation jobs `distill-smoke`/`distill` |
 | `scripts/build_dataset.py` | 4. SFT files | prompt/completion JSONL, `--no-reasoning` |
 | `scripts/train_sft.py` | 5. training | TRL, LoRA or full; GPU box |
 | `scripts/export_gguf.sh` | 6. export | merge, GGUF, quantise, Modelfile |
@@ -62,6 +65,12 @@ Planned by Ralph (do not exist yet): `docs/08-train-mlx.md`, `docs/09-train-gpu.
 | [bench/glb/models.json](bench/glb/models.json) | the six model rows of docs/13 section 4.3 with prompt, sampling and enabled flags |
 | [prompts/system_glb.txt](prompts/system_glb.txt) | our pinned Three.js 0.160.0 system prompt for Glimmer and other non-ccore models |
 | [prompts/ccore_glb_system.txt](prompts/ccore_glb_system.txt) | the owner pastes ccore's verbatim system prompt here before running the bench |
+
+## Bench: distillation (imp-5)
+| File | What it is |
+|---|---|
+| [bench/distill/subjects.json](bench/distill/subjects.json) | new, non-eval subjects across all 12 domains (45 per domain, 27 static / 11 animated / 7 set per domain); the input to `glb_distill_briefs.py` |
+| [bench/distill/briefs.jsonl](bench/distill/briefs.jsonl) | the built briefs: 540 rows in the eval brief format, no eval subject phrase, id or title |
 
 ## Data (gitignored, owner's)
 | Folder / file | Contents |

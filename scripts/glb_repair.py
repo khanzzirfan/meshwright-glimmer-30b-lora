@@ -247,7 +247,8 @@ def assembly_lines(selected_ids, repair_rows, assembly_by_id, raw_dir):
     return lines
 
 
-def main(argv=None):
+def build_parser():
+    """The argument parser, so a test can parse a command line without running anything."""
     ap = argparse.ArgumentParser(description="Feed each repairable failure back to the model once (docs/14 section 5).")
     ap.add_argument("--run", required=True, help="model run directory with validation.jsonl and raw/")
     ap.add_argument("--model-row", required=True, help="model name from models.json")
@@ -258,6 +259,11 @@ def main(argv=None):
                     help="error: repair pages that failed (default); assembly: repair valid but unassembled pages")
     ap.add_argument("--no-validate", action="store_true", help="generate only; do not run validate_scenes.mjs")
     ap.add_argument("--allow-paid", action="store_true", help="allow a model row with paid true")
+    return ap
+
+
+def main(argv=None):
+    ap = build_parser()
     a = ap.parse_args(argv)
 
     try:

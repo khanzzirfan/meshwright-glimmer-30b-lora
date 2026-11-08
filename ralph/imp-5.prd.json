@@ -1,7 +1,7 @@
 {
   "name": "GLB improvement 5: generator fixes, stricter touch check, self-distillation data tooling",
-  "branchName": "ralph/imp-5",
   "description": "Offline tooling from the imp-4 review. (1) Drop each exported GLB onto the ground: 0 to 5 assets per v3 run fail assembly only because they hover. (2) Report an oriented-box touch check next to the existing one, because axis-aligned boxes of rotated parts overstate joins. (3) Generator: ground, stop only when valid, assembled and within the triangle budget, and fall back to the assembly repair. (4) Test every imp_ops.sh command against the real argument parsers (the --run-suffix bug passed its fake). (5) Author about 540 new non-eval briefs and (6) a prep script that turns the generator's picks into a training set in the existing prompt/completion format. No training.",
+  "branchName": "ralph/imp-5",
   "userStories": [
     {
       "id": "US-001",
@@ -20,9 +20,10 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "",
-      "dependsOn": []
+      "dependsOn": [],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-002",
@@ -41,11 +42,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-001"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-003",
@@ -65,11 +67,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-002"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-004",
@@ -88,11 +91,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-003"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-005",
@@ -111,11 +115,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-004"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-006",
@@ -134,11 +139,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "kept 540; dropped leak_phrase 0, leak_title 0, duplicate 0",
       "dependsOn": [
         "US-005"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-007",
@@ -156,11 +162,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-006"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     },
     {
       "id": "US-008",
@@ -179,11 +186,12 @@
         "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-007"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     }
   ],
   "metadata": {
@@ -247,6 +255,7 @@
       "Owner reviews and commits the imp-5 diff",
       "The overnight distillation run is started by the owner session through scripts/imp_ops.sh, not by Ralph",
       "Training on the distilled set needs the owner's explicit GPU approval; Ralph never creates pods"
-    ]
+    ],
+    "updatedAt": "2026-11-08T11:44:16.728Z"
   }
 }

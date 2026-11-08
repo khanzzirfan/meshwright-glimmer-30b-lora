@@ -143,9 +143,15 @@ node scripts/glb_sheet.mjs --root eval/glb_bench --out eval/glb_bench/sheet --se
 
 `scripts/glb_check.mjs` measures how well an exported GLB's parts fit together (docs/14 section 4). It exports
 `assembly(json, {kind = 'static', tolFrac = 0.02} = {})`, which walks the node tree, transforms each POSITION box
-into world space and returns `{parts, components, largest_share, floaters, min_y, ground_gap, tol, assembled}` —
-or `{parts: 0, assembled: false, error}` for malformed input, never throwing. `kind` is `static`, `animated` or
-`set`. `parseGlb` adds this as `assembly` to every ok result, without changing any of its other fields.
+into world space and returns `{parts, components, largest_share, components_obb, largest_share_obb, floaters,
+min_y, ground_gap, tol, assembled, assembled_obb}` — or `{parts: 0, assembled: false, assembled_obb: false,
+error}` for malformed input, never throwing. `kind` is `static`, `animated` or `set`. `parseGlb` adds this as
+`assembly` to every ok result, without changing any of its other fields. The `_obb` fields (imp-5 US-002) are a
+stricter join test: each mesh node's local POSITION box is transformed by its world matrix into an oriented box
+(centre, three axes, half extents), two parts touch when a separating-axis test over the 15 axes finds no gap
+larger than `tol`, and `assembled_obb` applies the same kind-aware rule to `largest_share_obb` with the existing
+`floaters` and ground rules. `assembled` and every other field keep their exact meaning, so past numbers stay
+comparable; `assembled_obb` exists because axis-aligned boxes of rotated parts overlap even when the parts do not.
 
 `tests/js/glb_util.mjs` `makeGlb` gained optional `boxes` (`[{min, max}]` per mesh), `nodes`
 (`{mesh, translation, rotation, scale, matrix, children}`) and `scene` (root node indices) so tests can place unit
@@ -156,6 +162,26 @@ row's brief (`raw.brief.kind`) or the optional `validate_scenes.mjs --briefs FIL
 exports `glbJson(buf)` (the glTF JSON of a GLB, or `null`). `scripts/glb_assembly.mjs --run RUN_DIR --briefs FILE
 [--tol-frac 0.02]` backfills `RUN_DIR/assembly.jsonl` (`{id, kind, assembly}`, `null` for a non-ok row) for a run
 already on disk, printing `assembled X of Y valid` and leaving `validation.jsonl` untouched.
+
+## Ground drop (glb_ground.mjs)
+
+`scripts/glb_ground.mjs` drops an exported GLB onto the ground (docs/14 section 4, imp-5), because a hovering
+or sunk asset fails assembly even when its parts fit together (`assembled` requires `ground_gap <= tol`). It
+exports `groundGlb(buf, {kind = 'static', tolFrac = 0.02})` -> `{buf, shift, assembly_before, assembly_after}`
+and reuses `glb_check.mjs`'s `assembly`/`glbJson` (never copies them). When `|min_y| > tol` it appends ONE node
+`{name: 'ground_offset', translation: [0, -min_y, 0], children: <the scene's old roots>}` and makes it the
+scene's only root, so existing node indices (and animation channels and skins) stay valid; the JSON chunk is
+re-encoded and space-padded to 4 bytes, the BIN chunk is copied byte for byte, and the total length is rewritten.
+When `|min_y| <= tol`, or the GLB is unreadable, the input buffer is returned unchanged with `shift` 0.
+
+```bash
+node scripts/glb_ground.mjs --in asset.glb --out asset.grounded.glb --kind static
+```
+
+- `--in FILE` and `--out FILE` (both required); `--kind static|animated|set` (default `static`) and
+  `--tol-frac 0.02` set the assembly rule. It prints one JSON line `{shift, assembly_before, assembly_after}`.
+- `tests/js/glb_ground.test.mjs` asserts the hover, sunk, unchanged and animated cases and that `parseGlb`
+  reports `ok` with the same triangle count afterwards.
 
 ## Repair retry (glb_repair.py)
 
@@ -269,7 +295,8 @@ runs sampled so far, so the next seed can be limited to them (docs/14 section 6)
 ## One-command generator (glb_generate.py)
 
 `scripts/glb_generate.py` is the imp-4 product: one command that turns a prompt into a GLB (docs/14). It
-samples the frozen prompt until a candidate is valid **and** assembled, then writes the winner.
+samples the frozen prompt, grounds each candidate and stops at the first one that is valid, assembled and
+within the triangle budget, then writes the winner.
 
 ```bash
 .venv/bin/python scripts/glb_generate.py "a low-poly treasure chest" --out-dir runs/imp/gen/chest
@@ -278,8 +305,9 @@ samples the frozen prompt until a candidate is valid **and** assembled, then wri
 - A single positional PROMPT is the brief; `--kind static|animated|set` (default `static`) sets the
   assembly rule the validator applies.
 - `--max-samples N` (default 3) caps the samples and `--seed-start N` (default 1) is the first seed, so
-  the seeds are `seed-start .. seed-start+max-samples-1`. The loop stops at the first candidate that is
-  both `ok` and assembled: a good first sample costs one request.
+  the seeds are `seed-start .. seed-start+max-samples-1`. `--tri-budget N` (default 5000) is the triangle
+  ceiling the stop rule uses. The loop stops at the first candidate that is `ok`, assembled and at or under
+  the budget, so a good first sample costs one request and an over-budget candidate never stops it.
 - `--model-row NAME` (default `glimmer-v3`) selects the row from `--models` (default
   `bench/glb/models.json`) and `--ollama-url URL` (default `http://localhost:11434`) is the generation
   server. A row marked `paid` is refused unless `--allow-paid` is given.
@@ -290,29 +318,97 @@ samples the frozen prompt until a candidate is valid **and** assembled, then wri
 - Unless `--no-validate` is given, every attempt is validated with `node scripts/validate_scenes.mjs
   --mode glb --allow-addons` in the bench's directory layout. Point `GLB_GENERATE_VALIDATOR` at a script
   to swap the validator (the offline tests use a small fake).
+- After validation each attempt is dropped onto the ground with `node scripts/glb_ground.mjs`
+  (docs/14 section 4, imp-5), because a hovering asset fails assembly for free. The grounding's
+  `assembly_after` decides that attempt's `assembled` value and its `glb/asset.grounded.glb` becomes the
+  attempt's GLB, so a hovering sample is accepted without another request. When the GLB is missing or
+  cannot be read the validator's `assembled` value stands and `grounded_shift` is `null`.
 - When no sample is assembled it spends every sample and picks a winner with `glb_best_of.py`'s ranking
   (imported, never copied).
 - When every sample failed and one failed for a reason `glb_repair.py` can fix, it spends **one repair
   turn** (docs/14 section 5): `glb_repair.py`'s four-message builder and fix message are imported, never
-  copied. The repaired answer is written to `<out-dir>/attempts/repair/`, validated like a sample and
-  competes in the ranking; its record carries `repair: true`. `truncated`, `no_html` and `external_dep`
-  are never repaired, and `--no-repair` turns the turn off.
+  copied. The repaired answer is written to `<out-dir>/attempts/repair/`, validated and grounded like a
+  sample and competes in the ranking; its record carries `repair: true`. `truncated`, `no_html` and
+  `external_dep` are never repaired. When samples are valid but none is assembled, it instead spends one
+  **assembly repair turn** on the best valid sample: `glb_repair.py`'s assembly fix message is imported,
+  the answer goes to `<out-dir>/attempts/repair-asm/`, and its record carries `repair: "assembly"`.
+  `--no-repair` turns both turns off.
 - It writes `<out-dir>/result.json` with `{prompt, kind, attempts: [{seed, ok, reasons, assembled, parts,
-  triangles, seconds}], picked_seed, picked_ok, picked_assembled, total_seconds, system_sha256}` and exits
-  0 when the picked candidate is valid, else 2. The one repair entry adds `repair: true`.
+  triangles, seconds, grounded_shift, within_budget}], picked_seed, picked_ok, picked_assembled,
+  picked_within_budget, total_seconds, system_sha256, assembly_repairs_used}` and exits 0 when the picked
+  candidate is valid, else 2. `grounded_shift` is the vertical shift the grounding applied (`null` when
+  there was none) and `within_budget` says whether the attempt is at or under `--tri-budget`. A repair
+  entry adds `repair: true` (error) or `repair: "assembly"`.
 - `--briefs FILE` runs the loop for every brief in the file (each row `{id, brief, kind}`) into
   `<out-dir>/<id>/`, using that brief's `kind`. `--ids-file FILE` keeps only the listed ids (one per
   line, blank lines and `#` comments ignored) and `--limit N` keeps the first `N` after that. A brief
   whose `<out-dir>/<id>/result.json` already exists is skipped, so a rerun resumes and makes no request.
   `--briefs` and a positional PROMPT are mutually exclusive (give one or the other).
-- In batch mode it writes `<out-dir>/summary.json` `{briefs, picked_ok, picked_assembled, mean_samples,
-  mean_seconds, repairs_used}` over every brief's `result.json` and prints a one-screen table.
-  `mean_samples` is the mean number of generation samples per brief (the repair turn is counted separately
-  in `repairs_used`). It exits 0 when every brief's pick is valid, else 2.
+- In batch mode it writes `<out-dir>/summary.json` `{briefs, picked_ok, picked_assembled,
+  picked_within_budget, mean_samples, mean_seconds, repairs_used, assembly_repairs_used}` over every
+  brief's `result.json` and prints a one-screen table. `mean_samples` is the mean number of generation
+  samples per brief (the repair turns are counted separately in `repairs_used` and
+  `assembly_repairs_used`). It exits 0 when every brief's pick is valid, else 2.
 
 ```bash
 .venv/bin/python scripts/glb_generate.py --briefs bench/glb/briefs.jsonl --limit 3 --out-dir runs/imp/gen
 ```
+
+## Distillation briefs (glb_distill_briefs.py)
+
+`scripts/glb_distill_briefs.py` turns an authored subjects file into new, non-eval briefs for a
+self-distillation set (docs/14, imp-5 US-005/US-006). `bench/distill/subjects.json` is
+`{domain: [{title, brief, kind}, ...]}` covering all 12 domains, 45 entries per domain and a
+27 static / 11 animated / 7 set split; the briefs are new, not the 48 eval briefs. The built
+`bench/distill/briefs.jsonl` holds 540 rows (`kept 540; dropped leak_phrase 0, leak_title 0, duplicate 0`).
+
+```bash
+.venv/bin/python scripts/glb_distill_briefs.py --subjects bench/distill/subjects.json \
+  --eval-briefs bench/glb/briefs.jsonl --leak-file bench/glb/eval_subjects.json \
+  --out bench/distill/briefs.jsonl
+```
+
+- `--subjects FILE` (default `bench/distill/subjects.json`), `--eval-briefs FILE` (default
+  `bench/glb/briefs.jsonl`) and `--leak-file FILE` (default `bench/glb/eval_subjects.json`) are the inputs;
+  `--out FILE` (default `bench/distill/briefs.jsonl`) must be outside `data/`, `out/` and `eval/`.
+- Each kept row is written in the eval brief field format (`bench/glb/briefs.jsonl`):
+  `{id, title, brief, domain, level, style, kind}`. Ids are `x0001`, `x0002`, ... in domain order; the level
+  is 1-3 by brief length (`<= 70` characters is 1, `<= 120` is 2, else 3) and `style` is always `low-poly`.
+- An entry is dropped as `leak_phrase` when its title or brief contains an eval subject phrase (whole word,
+  case-insensitive), as `leak_title` when its title equals an eval title (case-insensitive), and as
+  `duplicate` when its title was already kept. The kept count and the per-reason dropped counts are printed.
+
+## Self-distillation set (glb_distill_prep.py)
+
+`scripts/glb_distill_prep.py` turns the generator's good picks into a training set in the same
+prompt/completion row format as the ccore set (docs/14, imp-5 US-007), so the model can be trained on its own
+best GLBs:
+
+```bash
+.venv/bin/python scripts/glb_distill_prep.py --run runs/imp/distill \
+  --briefs bench/distill/briefs.jsonl --out runs/imp/distill/sft --system prompts/system_glb_v3.txt
+.venv/bin/python scripts/mesh_lora_hf.py --data runs/imp/distill/sft --dry-run
+```
+
+- `--run DIR` (required) is a `glb_generate.py` batch run (one `DIR/<id>/result.json` per brief) and
+  `--out DIR` (required) receives `train.jsonl`, `val.jsonl` and `stats.json`; `--out` must be outside
+  `data/`, `out/` and `eval/`.
+- `--briefs FILE` (default `bench/distill/briefs.jsonl`) is the briefs file the run was generated from, used
+  for the brief text, domain and kind; `--system FILE` (default `prompts/system_glb_v3.txt`) is written
+  verbatim into every row's prompt.
+- A brief is kept only when its `result.json` reports `picked_ok`, `picked_assembled` and
+  `picked_within_budget`; with `--require-obb` the picked attempt's `stats.glb.assembly.assembled_obb` must
+  also be true. The completion is the picked attempt's raw `content` (answer only, no reasoning) and the
+  prompt is `[system, user = the brief]`, i.e. the `ccore_prep.py` row shape `{id, domain, title, prompt,
+  completion}` that `mesh_lora_hf.py` reads. A repair turn shares its source seed, so the same-seed attempt
+  with the best automatic signals is the picked one (its directory is `attempts/repair` or
+  `attempts/repair-asm`, not `attempts/<seed>`).
+- Ids in the eval namespace are refused: a `g` prefix (`eval_id`), or an id or title found in
+  `bench/glb/briefs.jsonl` (`eval_title`). A brief with no `result.json` drops as `missing`, and the keep
+  rule's failures drop as `not_ok`, `unassembled`, `over_budget`, `no_content` or `not_obb`.
+- The train/val split is a stable hash of the id (`--val-frac`, default 0.1, is the val share), so a rerun
+  splits the same rows the same way. `stats.json` holds `{kept, train, val, dropped_by_reason,
+  completion_chars median/max, by_domain, by_kind}` plus the input paths and the system sha256.
 
 ## Phase 2 data (ccore_prep.py)
 
@@ -366,7 +462,7 @@ runs a raw bench or repair command. Jobs run detached and are resumable, and one
 
 ```bash
 bash scripts/imp_ops.sh preflight        # Ollama up/down, running job, v3 hash check, imp-1 status
-bash scripts/imp_ops.sh start v3s2       # or v3s3, repair-v3, repair-asm-v3, repair-asm-v3s3, ad4, ad5, ad6
+bash scripts/imp_ops.sh start v3s2       # or v3s3, repair-v3, repair-asm-v3, repair-asm-v3s3, ad4, ad5, ad6, distill-smoke, distill
 bash scripts/imp_ops.sh wait v3s2        # wait up to 540 s; exit 0 finished, 2 still running, 1 failed
 bash scripts/imp_ops.sh status
 ```
@@ -380,6 +476,12 @@ bash scripts/imp_ops.sh status
   the briefs that still lack a valid, assembled candidate (`glb_adaptive_ids.py`, docs/14 section 6). `start ad5` /
   `ad6` refuses when its ids file is missing and prints `nothing to do` (exit 0) when the file is empty; its job
   total is the ids file's line count (48 when the file is absent).
+- `distill-smoke` and `distill` run the one-command generator (section above) as a batch for the self-distillation
+  set (docs/14 section 12): `distill-smoke` uses `--briefs bench/glb/dev_briefs.jsonl --limit 2 --out-dir
+  runs/imp/distill_smoke`, `distill` uses `--briefs bench/distill/briefs.jsonl --out-dir runs/imp/distill`. The job
+  is resumable (`glb_generate.py` skips a brief whose `result.json` exists), so progress is counted as
+  `result.json` files under the out-dir and the job total is the brief count (2, and the line count of
+  `bench/distill/briefs.jsonl`). Build the training set from the finished run with `glb_distill_prep.py`.
 - `start` refuses unless `runs/glb_v3/PROMPT_FROZEN.json` exists and its `sha256` equals the SHA-256 of
   `prompts/system_glb_v3.txt`, and it refuses a second job while one is alive. Jobs have pid/exit/log/started files
   under `runs/imp/jobs/`.
@@ -387,8 +489,14 @@ bash scripts/imp_ops.sh status
 - `IMP_OPS_DRY=1 start JOB` prints the command instead of running it.
 - Overrides for tests: `IMP_OPS_RUNS` (run root, default `runs/glb_v3`), `IMP_OPS_JOBS` (job state, default
   `runs/imp/jobs`), `IMP_OPS_BENCH` (bench command), `IMP_OPS_PROMPT` (default `prompts/system_glb_v3.txt`),
-  `IMP_OPS_POLL` (default 10 s), `IMP_OPS_ADAPTIVE` (the adaptive ids directory, default `runs/imp/adaptive`) and
-  `IMP_OPS_SKIP_CHECKS` (skip the Ollama check in preflight).
+  `IMP_OPS_POLL` (default 10 s), `IMP_OPS_ADAPTIVE` (the adaptive ids directory, default `runs/imp/adaptive`),
+  `IMP_OPS_DISTILL` (the distill out-dir parent, default `runs/imp`) and `IMP_OPS_SKIP_CHECKS` (skip the Ollama
+  check in preflight).
+- `tests/py/test_imp_ops_parsers.py` guards the wrapper against the parsers drifting: it reads the job names from
+  `job_cmd()`, prints each job's command with `IMP_OPS_DRY=1` and parses it with that script's own argument parser
+  (`glb_bench.build_parser()`, `glb_repair.build_parser()`, `glb_generate.build_parser()` — the parsers `main`
+  also uses). A job added to the `case` is covered automatically; passing a suffix as a separate token
+  (`--run-suffix -s2`) is a case that must fail to parse, so the test asserts it does.
 
 ## Tests
 

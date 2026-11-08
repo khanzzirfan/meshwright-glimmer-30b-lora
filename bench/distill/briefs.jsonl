@@ -1,0 +1,540 @@
+{"id": "x0001", "title": "Timber cabin", "brief": "A timber cabin with a steep shingled roof, a stone chimney and a small porch on two posts.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0002", "title": "Stone watchtower", "brief": "A round stone watchtower with narrow windows and a battlement top.", "domain": "buildings", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0003", "title": "Brick chimney", "brief": "A tall brick chimney stack with a banded cap and a soot-dark rim.", "domain": "buildings", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0004", "title": "Beach hut", "brief": "A small blue beach hut with a striped awning and a lifebuoy on the wall.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0005", "title": "Garden gazebo", "brief": "An open wooden gazebo with six posts, a low railing and a peaked roof.", "domain": "buildings", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0006", "title": "Red barn", "brief": "A red timber barn with double doors, a hayloft window and a weather vane on the roof.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0007", "title": "Watchtower on stilts", "brief": "A square wooden watchtower raised on stilts, with a ladder and a railed platform.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0008", "title": "Bus shelter", "brief": "A glass and metal bus shelter with a wooden bench and a small route sign.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0009", "title": "Brick shop front", "brief": "A narrow brick shop front with a painted sign board and two long windows.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0010", "title": "Stone arch bridge", "brief": "A stone arch bridge with a low parapet and three round arches.", "domain": "buildings", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0011", "title": "Wooden pier", "brief": "A wooden pier on tall posts with a railing and a ladder down to the water.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0012", "title": "Market kiosk", "brief": "A small market kiosk with a tilted panel roof, a counter and two stools.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0013", "title": "Stone chapel", "brief": "A stone chapel with a pointed roof, an arched door and a small bell in an open tower.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0014", "title": "Corner shop", "brief": "A corner shop with a wide window, a striped awning and a doorway step.", "domain": "buildings", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0015", "title": "Grain silo", "brief": "Two steel grain silos joined by a walkway, each with a domed cap.", "domain": "buildings", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0016", "title": "Fire lookout", "brief": "A fire lookout tower with a glazed cabin, a railed deck and a steep ladder.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0017", "title": "Brick schoolhouse", "brief": "A brick schoolhouse with a bell gable, four tall windows and a wide entrance.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0018", "title": "Mountain chalet", "brief": "A mountain chalet with a wide overhanging roof, shutters and a stone base.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0019", "title": "Boat house", "brief": "A low boat house with an open slipway and a corrugated roof.", "domain": "buildings", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0020", "title": "Stone ruin", "brief": "A broken stone wall with a fallen arch, a stub tower and scattered blocks.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0021", "title": "Town hall", "brief": "A town hall with a columned porch, a clock face and a flagpole on the flat roof.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0022", "title": "Farm house", "brief": "A long farm house with a tiled roof, two dormers and a wide front step.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0023", "title": "Stone steps", "brief": "A flight of stone steps up to a landing with two low side walls.", "domain": "buildings", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0024", "title": "Water tower", "brief": "A water tower on four legs with a rounded tank and a ladder up the side.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0025", "title": "Log store", "brief": "A lean-to log store open at the front, packed with stacked firewood.", "domain": "buildings", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0026", "title": "Brick warehouse", "brief": "A long brick warehouse with skylights, loading doors and a rail siding.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0027", "title": "Lakeside pavilion", "brief": "A lakeside pavilion with slender posts, a curved roof and a small landing.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0028", "title": "Turning weather vane", "brief": "A rooftop weather vane with a cockerel that turns slowly in a loop above a small cupola.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "animated"}
+{"id": "x0029", "title": "Swinging shop sign", "brief": "A painted shop sign on an iron bracket that swings gently back and forth in a loop.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "animated"}
+{"id": "x0030", "title": "Spinning chimney fan", "brief": "A chimney fan on a brick roof that spins steadily in a loop, blades catching the light.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "animated"}
+{"id": "x0031", "title": "Rippling flag", "brief": "A long flag on a tall pole that ripples and waves in a slow loop.", "domain": "buildings", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0032", "title": "Flapping awning", "brief": "A striped canvas awning that flaps gently up and down in a repeating loop.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "animated"}
+{"id": "x0033", "title": "Revolving door", "brief": "A revolving glass door that turns steadily in a loop inside a brass drum.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "animated"}
+{"id": "x0034", "title": "Bobbing harbour light", "brief": "A small harbour light on a floating buoy that bobs up and down in a loop.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "animated"}
+{"id": "x0035", "title": "Swaying rope bridge", "brief": "A rope bridge whose planks and cables sway gently side to side in a loop.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "animated"}
+{"id": "x0036", "title": "Turning mill gear", "brief": "A spur gear bolted to a stone wall that rotates steadily in a loop.", "domain": "buildings", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0037", "title": "Sweeping clock hands", "brief": "A stone clock tower whose two hands sweep around the face in a loop.", "domain": "buildings", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0038", "title": "Drifting stack smoke", "brief": "A factory stack with a plume of smoke that curls and drifts upward in a loop.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "animated"}
+{"id": "x0039", "title": "Street furniture set", "brief": "A street furniture set laid out in a row: a bench, a litter bin, a bollard and a street lamp.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0040", "title": "Village set", "brief": "A village set arranged side by side: two timber houses, a red barn and a low stone wall.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0041", "title": "Market row set", "brief": "A market row set out in a line: three striped stalls with hanging cloth awnings, a stack of tied sacks and a tower of small wooden boxes.", "domain": "buildings", "level": 3, "style": "low-poly", "kind": "set"}
+{"id": "x0042", "title": "Building site set", "brief": "A building site set: a half-built brick wall, a cement mixer, a plank pile and a tall ladder.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0043", "title": "Harbour set", "brief": "A harbour set laid out in a row: a stone quay with iron rings, a tall loading crane, three mooring bollards and a lifebuoy post on a rail.", "domain": "buildings", "level": 3, "style": "low-poly", "kind": "set"}
+{"id": "x0044", "title": "Farmyard set", "brief": "A farmyard set side by side: a timber barn, a steel silo, a water trough and a wide gate.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0045", "title": "Campsite set", "brief": "A campsite set arranged apart: a wooden lodge, a picnic table, a stone fire ring and a small lamp post.", "domain": "buildings", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0046", "title": "Pirate captain", "brief": "A pirate captain in a long coat and a tricorn hat, one hand on a cutlass.", "domain": "characters", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0047", "title": "Village wizard", "brief": "A wizard in a tall pointed hat and a flowing robe holding a gnarled wand.", "domain": "characters", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0048", "title": "Viking warrior", "brief": "A viking warrior with a round helm, a thick beard and a broad-shouldered cloak.", "domain": "characters", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0049", "title": "Shadow ninja", "brief": "A ninja in dark wraps with a face mask and crossed arms.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0050", "title": "Jungle explorer", "brief": "An explorer in a pith helmet and khaki shirt with a coiled climbing rope.", "domain": "characters", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0051", "title": "Hay farmer", "brief": "A farmer in dungarees and a straw hat holding a wooden pitchfork.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0052", "title": "Post carrier", "brief": "A post carrier in a blue uniform cap holding a stack of letters.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0053", "title": "Firefighter", "brief": "A firefighter in a reflective suit and helmet holding a coiled hose.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0054", "title": "Astronaut", "brief": "An astronaut in a bulky white suit with a round visor and a chest pack.", "domain": "characters", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0055", "title": "Trench detective", "brief": "A detective in a long trench coat and brimmed hat holding a small notebook.", "domain": "characters", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0056", "title": "Stage singer", "brief": "A singer on a small stage holding a microphone with the mouth open.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0057", "title": "Deep diver", "brief": "A diver in a wetsuit, mask and fins with a small tank on the back.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0058", "title": "Downhill skier", "brief": "A skier in a bright jacket leaning forward on two long skis.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0059", "title": "Wave surfer", "brief": "A surfer balanced on a board with both arms out wide.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0060", "title": "Cliff climber", "brief": "A climber in a harness reaching up with a rope over one shoulder.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0061", "title": "Bread baker", "brief": "A baker in a flour-dusted apron holding a round loaf.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0062", "title": "Gardener", "brief": "A gardener in a broad hat holding a watering can and a trowel.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0063", "title": "Site builder", "brief": "A builder in a hard hat and tool belt holding a floating trowel.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0064", "title": "Studio painter", "brief": "A painter in splattered overalls holding a wide brush and a palette.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0065", "title": "Coffee barista", "brief": "A barista in an apron holding a small cup on a saucer.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0066", "title": "Street musician", "brief": "A musician seated with a round-bodied lute resting on one knee.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0067", "title": "Dancer", "brief": "A dancer mid-pose with one arm raised and a flowing skirt.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0068", "title": "Lab scientist", "brief": "A scientist in a white coat holding a clipboard and a small flask.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0069", "title": "Aviator pilot", "brief": "A pilot in a flight suit, goggles and a leather cap with one hand raised.", "domain": "characters", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0070", "title": "Stone sculptor", "brief": "A sculptor with a chisel and mallet beside a half-formed bust.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0071", "title": "Stage magician", "brief": "A magician in a cape and top hat holding a fanned deck of cards.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0072", "title": "Sightseer tourist", "brief": "A tourist with a backpack, sun hat and a camera held up.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0073", "title": "Waving villager", "brief": "A villager who raises one arm and waves in a friendly loop.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0074", "title": "Cheering crowd", "brief": "A small crowd of three villagers who bounce and cheer in a loop.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0075", "title": "Running messenger", "brief": "A messenger who runs with swinging arms and legs in a loop.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0076", "title": "Juggler", "brief": "A juggler who tosses three coloured balls in a steady loop.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0077", "title": "Dancing pair", "brief": "Two dancers who spin and step together in a repeating loop.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0078", "title": "Rowing figure", "brief": "A seated figure who rows with both arms in a slow loop.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0079", "title": "Hammering smith", "brief": "A smith who swings a hammer down onto an anvil in a loop.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0080", "title": "Nodding scholar", "brief": "A seated scholar who nods over an open book in a slow loop.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0081", "title": "Floating mage", "brief": "A mage who floats with robes swaying gently in a loop.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0082", "title": "Marching guard", "brief": "A guard who marches on the spot with swinging arms in a loop.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0083", "title": "Cheering mascot", "brief": "A mascot who jumps and claps with both hands in a loop.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0084", "title": "Adventuring party", "brief": "An adventuring party of three stood together: a warrior with a round helm, an archer with a full pack and a hooded mage with a glowing orb.", "domain": "characters", "level": 3, "style": "low-poly", "kind": "set"}
+{"id": "x0085", "title": "Village folk", "brief": "Three village folk side by side: a farmer, a baker and a gardener.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0086", "title": "Ship crew", "brief": "A ship's crew lined up: a captain, a navigator and two deck hands.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0087", "title": "Stage band", "brief": "A small stage band arranged together: a drummer, a lute player and a singer.", "domain": "characters", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0088", "title": "Football team", "brief": "Four players lined up in a row in matching striped kits.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0089", "title": "Musician row", "brief": "A row of four musicians with a drum, a lute, a flute and a horn.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0090", "title": "Quest group", "brief": "A quest group of three posed together: a scout, a healer and a guard.", "domain": "characters", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0091", "title": "Honey bee", "brief": "A chunky bee with a striped body, two round wings and a small stinger.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0092", "title": "Perched owl", "brief": "A perched owl with a rounded body, big round eyes and folded wings.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0093", "title": "Green turtle", "brief": "A green turtle with a domed shell, four stubby flippers and a small head.", "domain": "creatures", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0094", "title": "Sitting rabbit", "brief": "A rabbit sitting up with long ears, a round tail and two big feet.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0095", "title": "Hedgehog", "brief": "A hedgehog with a spiny back, a pointed snout and four short legs.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0096", "title": "Squirrel", "brief": "A squirrel with a bushy curled tail holding a large nut.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0097", "title": "Pond frog", "brief": "A green frog crouched with wide eyes and long folded hind legs.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0098", "title": "Garden snail", "brief": "A snail with a spiral shell, a soft body and two eye stalks.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0099", "title": "Stag beetle", "brief": "A stag beetle with a glossy shell, six legs and two curved jaws.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0100", "title": "Butterfly", "brief": "A butterfly with four flat wings and a thin curled antenna body.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0101", "title": "Field mouse", "brief": "A small mouse with round ears, a pointed nose and a long thin tail.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0102", "title": "Badger", "brief": "A badger standing with a striped face and a low round body.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0103", "title": "Forest deer", "brief": "A standing deer with branching antlers, slim legs and a short tail.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0104", "title": "Wild boar", "brief": "A stocky boar with a ridged snout, two small tusks and short legs.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0105", "title": "Harbour seal", "brief": "A plump seal lying on its belly with flippers out to the sides.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0106", "title": "Emperor penguin", "brief": "An upright penguin with a black back, a white belly and an orange beak.", "domain": "creatures", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0107", "title": "Parrot", "brief": "A perched parrot with a curved beak and a long tail of bright feathers.", "domain": "creatures", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0108", "title": "Hanging bat", "brief": "A hanging bat with folded wings, wide ears and tiny feet.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0109", "title": "Shore crab", "brief": "A red crab with a wide flat shell, two big claws and six legs.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0110", "title": "Octopus", "brief": "An octopus with a bulbous head and eight curling arms.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0111", "title": "Blue whale", "brief": "A blue whale with a wide tail fluke, a rounded head and two side fins.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0112", "title": "Weasel", "brief": "A slim weasel in a running pose with a long body and short legs.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0113", "title": "Mountain goat", "brief": "A mountain goat with curved horns, a shaggy coat and neat hooves.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0114", "title": "Ram", "brief": "A ram with two curled horns, a thick fleece and sturdy legs.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0115", "title": "Camel", "brief": "A camel with two humps, a long neck and knobbly knees.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0116", "title": "Elephant", "brief": "An elephant with a long trunk, wide ears and a short tufted tail.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0117", "title": "Crouching dragon", "brief": "A small dragon crouched with folded wings, a horned head and a spiked tail.", "domain": "creatures", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0118", "title": "Hopping rabbit", "brief": "A rabbit that hops forward in place in a repeating loop.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0119", "title": "Gliding bird", "brief": "A bird that flaps its wings and then glides in a steady loop.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0120", "title": "Paddling turtle", "brief": "A turtle that paddles its flippers and drifts forward in a loop.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0121", "title": "Wagging dog", "brief": "A dog that wags its tail and tilts its head in a loop.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0122", "title": "Pouncing cat", "brief": "A cat that pounces up and down in a springy loop.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0123", "title": "Crawling beetle", "brief": "A beetle that crawls forward with all six legs in a loop.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0124", "title": "Swaying snake", "brief": "A snake that sways from side to side in a slow loop.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0125", "title": "Paddling duck", "brief": "A duck that paddles its feet and bobs on the water in a loop.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0126", "title": "Flapping butterfly", "brief": "A butterfly that flaps its wings gently in a loop.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0127", "title": "Nibbling squirrel", "brief": "A squirrel that nibbles at a nut with quick motions in a loop.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0128", "title": "Bouncing toad", "brief": "A toad that hops in small quick bounces in a loop.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0129", "title": "Woodland group", "brief": "Woodland creatures spaced apart: a deer, a rabbit, an owl and a hedgehog.", "domain": "creatures", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0130", "title": "Pond life set", "brief": "A pond scene set out: a frog, a snail, a turtle and a dragonfly.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0131", "title": "Farm animals", "brief": "Farm animals lined up: a goat, a ram, a pig and a hen.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0132", "title": "Safari set", "brief": "A safari group arranged apart: an elephant, a camel, a zebra and a lion.", "domain": "creatures", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0133", "title": "Sea life set", "brief": "Sea creatures laid out: an octopus, a crab, a whale and a sea star.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0134", "title": "Garden insects", "brief": "Garden insects in a row: a bee, a beetle, a butterfly and a snail.", "domain": "creatures", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0135", "title": "Mythic beasts", "brief": "Mythic creatures posed together: a fire dragon with folded wings, a golden griffin, a silver unicorn and a phoenix with spread tail feathers.", "domain": "creatures", "level": 3, "style": "low-poly", "kind": "set"}
+{"id": "x0136", "title": "Banner standard", "brief": "A tall banner on a crossbar with a fringed edge and a lion motif.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0137", "title": "Iron candelabra", "brief": "An iron candelabra with three arms holding tall dripping candles.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0138", "title": "Carved round table", "brief": "A heavy round table with carved legs and a spread of scrolls on top.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0139", "title": "Carved throne", "brief": "A carved wooden throne with a high back and padded armrests.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0140", "title": "Alchemy bench", "brief": "An alchemy bench with flasks, a bubbling pot and hanging herbs.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0141", "title": "Armour stand", "brief": "An armour stand holding a dented plate breastplate and a plumed helmet.", "domain": "fantasy_medieval", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0142", "title": "Torch bracket", "brief": "An iron torch bracket with a burning torch casting a small flame.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0143", "title": "Small anvil", "brief": "A small blacksmith's anvil on a rough wooden stump.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0144", "title": "Grindstone", "brief": "A round grindstone on a wooden frame with a foot treadle.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0145", "title": "Cart wheel", "brief": "A large wooden cart wheel leaning against a plain post.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0146", "title": "Wheelbarrow", "brief": "A wooden wheelbarrow with a single front wheel and two long handles.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0147", "title": "Washing line", "brief": "A line of tunics and cloths hanging from a rope between two posts.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0148", "title": "Water trough", "brief": "A long wooden water trough with iron bands on two sturdy feet.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0149", "title": "Sack pile", "brief": "A pile of tied sacks beside a short stack of small boxes.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0150", "title": "Iron gate", "brief": "An iron gate with vertical bars and a pointed lock plate.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0151", "title": "Stone statue", "brief": "A weathered stone statue of a hooded figure on a square plinth.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0152", "title": "Rope coil", "brief": "A coil of thick rope hanging on a wooden peg.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0153", "title": "Lamp post", "brief": "A tall iron post with a hooked arm and a hanging glass lamp.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0154", "title": "Wall trophies", "brief": "A wall display of crossed spears and a carved boar crest.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0155", "title": "Herb bundle", "brief": "A bundle of dried herbs hanging from a beam on twine.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0156", "title": "Clay jug", "brief": "A large clay jug with a rope handle and a cork stopper.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0157", "title": "Wooden signpost", "brief": "A wooden signpost with two arrow boards pointing apart.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0158", "title": "Supply cart", "brief": "A two-wheeled supply cart stacked with sacks and a folded canvas cover.", "domain": "fantasy_medieval", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0159", "title": "Guard post", "brief": "A small stone guard post with a slit window and a wooden bench.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0160", "title": "Brazier", "brief": "A metal brazier on three legs with glowing coals inside.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0161", "title": "Weapon rack", "brief": "A wooden rack holding three long spears and a round helm.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0162", "title": "Stone font", "brief": "A carved stone basin on a short column with water in it.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0163", "title": "Spinning wheel", "brief": "A spinning wheel whose wheel and spindle turn in a steady loop.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0164", "title": "Swinging chandelier", "brief": "A chandelier of candles that swings gently on a chain in a loop.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0165", "title": "Turning pennant", "brief": "A long pennant on a pole that turns and flaps in a loop.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0166", "title": "Bubbling cauldron", "brief": "A small cauldron with bubbles that rise and pop in a loop.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0167", "title": "Turning millstone", "brief": "A round millstone that rotates steadily on its base in a loop.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0168", "title": "Swaying plank bridge", "brief": "A rope bridge whose planks sway side to side in a loop.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0169", "title": "Roasting spit", "brief": "A spit over glowing coals that rotates slowly in a loop.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0170", "title": "Hovering spell orb", "brief": "A glowing spell orb that floats and pulses in a loop.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0171", "title": "Rippling banner", "brief": "A banner on a keep wall that ripples in the wind in a loop.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0172", "title": "Circling rooks", "brief": "Two rooks that flap in a circle around a small tower in a loop.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0173", "title": "Rotating runes", "brief": "A ring of carved runes that rotates slowly in a loop.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0174", "title": "Tavern corner", "brief": "A tavern corner laid out: a long table, two benches and a hanging lamp.", "domain": "fantasy_medieval", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0175", "title": "Market square", "brief": "A market square set out: a stall row, a notice board and a water butt.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0176", "title": "Blacksmith corner", "brief": "A blacksmith corner arranged: an anvil, a forge hood and a tool rack.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0177", "title": "Stable set", "brief": "A stable set in a row: three stalls, a hay rack and a water trough.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0178", "title": "Camp set", "brief": "A camp set apart: a canvas tent, a roll mat, a cook pot and a small stool.", "domain": "fantasy_medieval", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0179", "title": "Alchemy set", "brief": "An alchemy set laid out: a flask rack, a mortar and a pile of scrolls.", "domain": "fantasy_medieval", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0180", "title": "Siege set", "brief": "A siege set arranged on a slope: a tall leaning ladder, a battering log on chains and a two-wheeled supply cart loaded with sacks.", "domain": "fantasy_medieval", "level": 3, "style": "low-poly", "kind": "set"}
+{"id": "x0181", "title": "Bread loaf", "brief": "A crusty round bread loaf with a cross scored on the top.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0182", "title": "Cheese wedge", "brief": "A wedge of yellow cheese with a rind and three round holes.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0183", "title": "Watermelon", "brief": "A whole watermelon with dark stripes and one small cut slice.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0184", "title": "Grape bunch", "brief": "A bunch of purple grapes on a short stem with one green leaf.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0185", "title": "Banana bunch", "brief": "A bunch of three bananas with brown tips.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0186", "title": "Pumpkin", "brief": "An orange pumpkin with ribbed sides and a coiled green stalk.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0187", "title": "Carrot bunch", "brief": "A bunch of three carrots with leafy green tops tied together.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0188", "title": "Mushrooms", "brief": "Three brown mushrooms with rounded caps and pale stems.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0189", "title": "Pizza slice", "brief": "A single pizza slice with melted cheese, tomato and a folded tip.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0190", "title": "Sandwich", "brief": "A stacked sandwich with bread, lettuce, tomato and a small toothpick.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0191", "title": "Bowl of soup", "brief": "A bowl of soup with a swirl of cream and a floating herb leaf.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0192", "title": "Fried eggs", "brief": "Two fried eggs on a round plate with a sprig of parsley.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0193", "title": "Ice cream cone", "brief": "An ice cream cone with two scoops and a chocolate flake on top.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0194", "title": "Donut stack", "brief": "A stack of three donuts with pink icing and coloured sprinkles.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0195", "title": "Pancake stack", "brief": "A stack of pancakes on a plate with syrup running down the side.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0196", "title": "Pretzel", "brief": "A twisted pretzel with coarse salt and a glossy brown crust.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0197", "title": "Lattice pie", "brief": "A round pie with a woven lattice top and a crimped edge.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0198", "title": "Croissant", "brief": "A flaky croissant with a rolled centre on a small plate.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0199", "title": "Bread rolls", "brief": "Three round bread rolls with a light dusting of flour.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0200", "title": "Hot chocolate", "brief": "A mug of hot chocolate with whipped cream and a swirl of sauce.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0201", "title": "Lemonade jug", "brief": "A glass jug of lemonade with ice cubes and a mint sprig.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0202", "title": "Fruit bowl", "brief": "A bowl of mixed fruit: a pear, a plum and a peach.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0203", "title": "Tea set", "brief": "A small tea set with a pot, two cups and a sugar dish.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0204", "title": "Honey jar", "brief": "A glass honey jar with a wooden dipper and a cloth lid.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0205", "title": "Corn cob", "brief": "A corn cob with peeled husk leaves and a small pat of butter.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0206", "title": "Steak plate", "brief": "A plate with a thick steak, a tomato half and a sprig of parsley.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0207", "title": "Sushi row", "brief": "A row of six sushi pieces on a small board with a soy dish.", "domain": "food", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0208", "title": "Steaming bowl", "brief": "A bowl of hot soup with steam that rises and fades in a loop.", "domain": "food", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0209", "title": "Spinning donut", "brief": "A donut that spins slowly on its plate in a loop.", "domain": "food", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0210", "title": "Dripping honey", "brief": "A honey dipper with syrup that drips slowly in a loop.", "domain": "food", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0211", "title": "Bubbling stew", "brief": "A pot of stew whose bubbles rise and burst in a loop.", "domain": "food", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0212", "title": "Rotating produce rack", "brief": "A rotating rack whose tiers of produce turn in a slow loop.", "domain": "food", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0213", "title": "Flipping pancake", "brief": "A pancake that flips up and lands back on the pan in a loop.", "domain": "food", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0214", "title": "Sizzling grill", "brief": "A grill whose sausages turn slowly over glowing coals in a loop.", "domain": "food", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0215", "title": "Boiling kettle", "brief": "A kettle whose spout sputters and shakes gently in a loop.", "domain": "food", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0216", "title": "Spinning pizza", "brief": "A pizza on a paddle that rotates in a slow loop.", "domain": "food", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0217", "title": "Pouring teapot", "brief": "A teapot that tilts and pours a small stream in a loop.", "domain": "food", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0218", "title": "Toasting bread", "brief": "Two slices of bread that pop up from a toaster in a loop.", "domain": "food", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0219", "title": "Breakfast set", "brief": "A breakfast set laid out: a plate of eggs, a mug, a jam pot and a slice of bread.", "domain": "food", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0220", "title": "Picnic set", "brief": "A picnic set arranged: a blanket, a basket of rolls, a jug and two cups.", "domain": "food", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0221", "title": "Bakery tray", "brief": "A bakery tray set out: a loaf, two rolls, a pie and a croissant.", "domain": "food", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0222", "title": "Party platter", "brief": "A party platter arranged: cheese wedges, grapes, crackers and a dip bowl.", "domain": "food", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0223", "title": "Kitchen counter set", "brief": "A kitchen counter set: a board of vegetables, a simmering pot and a jug.", "domain": "food", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0224", "title": "Dinner spread", "brief": "A dinner spread laid out: a roast, a bowl of greens and three plates.", "domain": "food", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0225", "title": "Snack basket", "brief": "A snack basket set with three bread rolls, a wedge of cheese, a ripe pear, a small jar of preserves and a folded cloth.", "domain": "food", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0226", "title": "Oak table", "brief": "A sturdy oak table with four turned legs and a plank top.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0227", "title": "Round stool", "brief": "A round wooden stool with three splayed legs and a woven seat.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0228", "title": "Pine bench", "brief": "A long pine bench with a slatted seat and two trestle ends.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0229", "title": "Wardrobe", "brief": "A tall wardrobe with two panelled doors and a brass handle.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0230", "title": "Chest of drawers", "brief": "A chest of drawers with four wide drawers and round wooden knobs.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0231", "title": "Nightstand", "brief": "A small nightstand with one drawer and a lower open shelf.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0232", "title": "Dining table", "brief": "A long dining table with six matching seats tucked around it.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0233", "title": "Side cabinet", "brief": "A low side cabinet with two sliding doors and short tapered legs.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0234", "title": "Coffee table", "brief": "A round coffee table with a glass top and a metal ring base.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0235", "title": "Corner shelf", "brief": "A corner shelf unit with five triangular tiers on a slim pole.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0236", "title": "Sofa", "brief": "A three-seat sofa with rounded arms, a back cushion roll and short legs.", "domain": "furniture", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0237", "title": "Lounge seat", "brief": "A deep lounge seat with a curved back and a thick seat cushion.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0238", "title": "Ottoman", "brief": "A square ottoman with buttoned upholstery and four small wheeled feet.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0239", "title": "Writing bureau", "brief": "A writing bureau with a sloped lid and small inner pigeonholes.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0240", "title": "Hall table", "brief": "A narrow hall table with a single drawer and four slender legs.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0241", "title": "Standing mirror", "brief": "A tall standing mirror in a plain wooden frame on a swivel base.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0242", "title": "Coat rack", "brief": "A wooden coat rack with four hooks on a broad round base.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0243", "title": "Book stand", "brief": "An open book stand with two slanted shelves and a small back panel.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0244", "title": "Footstool", "brief": "A small footstool with a padded top and four short tapered legs.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0245", "title": "Dressing table", "brief": "A dressing table with a three-panel mirror and two small drawers.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0246", "title": "Bunk frame", "brief": "A wooden bunk frame with two stacked levels and a safety rail.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0247", "title": "Bar cart", "brief": "A rolling bar cart with two trays, a bottle rail and four castors.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0248", "title": "High shelf", "brief": "A wall-mounted high shelf with three planks and two hidden brackets.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0249", "title": "Gliding seat", "brief": "A gliding seat on a curved rail with a cushioned back and armrests.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0250", "title": "Shoe cabinet", "brief": "A low shoe cabinet with slatted doors and a short top shelf.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0251", "title": "Vanity stool", "brief": "A small vanity stool with a round padded top and three slim legs.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0252", "title": "Hanging rail", "brief": "A wall rail with five hangers spaced along it and a top shelf.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0253", "title": "Pendulum seat", "brief": "A curved pendulum seat whose frame tilts back and forth in a loop.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0254", "title": "Spinning stool", "brief": "A round stool that spins slowly on its centre post in a loop.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0255", "title": "Ceiling fan", "brief": "A wooden ceiling fan with four blades that turn steadily in a loop.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0256", "title": "Swinging doors", "brief": "A cabinet whose two doors swing open and shut in a repeating loop.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0257", "title": "Sliding drawer", "brief": "A chest drawer that slides open and closed in a slow loop.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0258", "title": "Rotating display", "brief": "A rotating display stand on a turntable that turns in a loop.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0259", "title": "Swinging lamp", "brief": "A pendant lamp that swings gently on its cord in a loop.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0260", "title": "Lifting hatch", "brief": "A low table with a hatch lid that lifts and closes in a loop.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0261", "title": "Sliding shelf", "brief": "A wall shelf that slides slowly up and down in a loop.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0262", "title": "Tilting mirror", "brief": "A standing mirror that tilts gently forward and back in a loop.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0263", "title": "Turning coat rack", "brief": "A coat rack that rotates slowly on its base in a loop.", "domain": "furniture", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0264", "title": "Living room set", "brief": "A living room set laid out together: a sofa, a coffee table, a rug and a floor lamp.", "domain": "furniture", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0265", "title": "Dining set", "brief": "A dining set arranged in place: a long table, six seats, a rug and a hanging lamp.", "domain": "furniture", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0266", "title": "Study set", "brief": "A study set side by side: a writing bureau, a slanted shelf and a low stool.", "domain": "furniture", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0267", "title": "Entryway set", "brief": "An entryway set in a row: a hall table, a coat rack, a shoe cabinet and a rug.", "domain": "furniture", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0268", "title": "Outdoor set", "brief": "An outdoor set laid out on a deck: a round table with a parasol slot, four cushioned lounge seats and a folded parasol leaning against the rail.", "domain": "furniture", "level": 3, "style": "low-poly", "kind": "set"}
+{"id": "x0269", "title": "Storage set", "brief": "A storage set in a row: a low cabinet, a shelf unit and two stacked boxes.", "domain": "furniture", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0270", "title": "Vanity set", "brief": "A vanity set arranged together: a dressing table, a stool and a standing mirror.", "domain": "furniture", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0271", "title": "Pipe section kit", "brief": "Straight, elbow and tee pipe sections with flanged ends.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0272", "title": "Railing kit", "brief": "A straight railing run, a corner post and a rounded end cap.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0273", "title": "Stair kit", "brief": "A straight stair flight, a landing and a short handrail.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0274", "title": "Ramp kit", "brief": "A shallow ramp, a steep ramp and two side rails.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0275", "title": "Tunnel ring kit", "brief": "Straight and curved tunnel rings with a ribbed lining.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0276", "title": "Roof section kit", "brief": "Gable, hip and flat roof sections with ridge caps.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0277", "title": "Floor panel kit", "brief": "Three square floor panels joined edge to edge with trim strips.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0278", "title": "Column kit", "brief": "A round column, a square pier and a fluted capital.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0279", "title": "Arch kit", "brief": "A small arch, a tall arch and a square pier.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0280", "title": "Scaffold kit", "brief": "A frame bay, a plank deck and a diagonal brace.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0281", "title": "Ladder kit", "brief": "A straight ladder, a step ladder and a small top landing.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0282", "title": "Gate kit", "brief": "A hinged gate, a sliding gate and two square posts.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0283", "title": "Footbridge kit", "brief": "A span, a support pier and a length of railing.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0284", "title": "Brick pieces kit", "brief": "Straight brick runs, a corner turn and a pillar cap.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0285", "title": "Corridor kit", "brief": "A straight hall, a corner turn and a three-way junction.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0286", "title": "Rail track kit", "brief": "A straight rail, a curved rail and a switch.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0287", "title": "Chute kit", "brief": "A straight chute, a bend and a hopper mouth.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0288", "title": "Duct kit", "brief": "A straight duct, an elbow and a vent grille.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0289", "title": "Conveyor kit", "brief": "A straight belt, a curve and a short incline.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0290", "title": "Pallet rack kit", "brief": "An upright frame, a shelf beam and a deck board.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0291", "title": "Bracket kit", "brief": "A wall bracket, a shelf bracket and a corner brace.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0292", "title": "Steps kit", "brief": "A low step block, a tall step block and a corner step.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0293", "title": "Palisade kit", "brief": "Three pointed stake panels and a strapped join.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0294", "title": "Balustrade kit", "brief": "A straight balustrade, a corner return and a newel post.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0295", "title": "Signage kit", "brief": "A flat sign board, a post and a hanging bracket.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0296", "title": "Beam kit", "brief": "A straight beam, a corner beam and a joist hanger.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0297", "title": "Trench kit", "brief": "A straight trench section, a corner and a cover plate.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0298", "title": "Opening gate", "brief": "A sliding gate that opens and closes in a loop.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0299", "title": "Rising barrier", "brief": "A barrier bar that lifts and lowers in a loop.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0300", "title": "Turning turnstile", "brief": "A turnstile that rotates on its post in a loop.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0301", "title": "Lifting drawbridge", "brief": "A drawbridge span that lifts and lowers in a loop.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0302", "title": "Sliding panel kit", "brief": "Two sliding panels that part and meet in a loop.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0303", "title": "Rotating sign post", "brief": "A sign post that turns slowly on its base in a loop.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0304", "title": "Pivoting gate", "brief": "A pivoting gate that swings open and shut in a loop.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0305", "title": "Extending ladder", "brief": "A ladder whose upper section slides up and down in a loop.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0306", "title": "Rotating beacon", "brief": "A beacon that spins on its mast in a loop.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0307", "title": "Scrolling conveyor", "brief": "A conveyor belt whose surface scrolls along in a loop.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0308", "title": "Flicking switch", "brief": "A lever switch that flips back and forth in a loop.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0309", "title": "Street corner kit", "brief": "A street corner kit: a railing run, a lamp post and a paving panel.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0310", "title": "Stairwell kit", "brief": "A stairwell kit: two flights, a landing and a railing.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0311", "title": "Rooftop kit", "brief": "A rooftop kit: a parapet run, a vent duct and a hatch.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0312", "title": "Bridge crossing kit", "brief": "A bridge crossing kit: a span, two piers and a railing run.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0313", "title": "Rail yard kit", "brief": "A rail yard kit: a straight rail, a switch and a buffer stop.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0314", "title": "Pipe run kit", "brief": "A pipe run kit: a straight pipe, an elbow and a valve.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0315", "title": "Tunnel kit", "brief": "A tunnel kit: a portal ring, a straight ring and a curved ring.", "domain": "modular_kits", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0316", "title": "Broadleaf tree", "brief": "A broad tree with a thick trunk, three branch forks and a rounded crown.", "domain": "nature", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0317", "title": "Birch tree", "brief": "A slender birch with pale bark, light leaves and two low branches.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0318", "title": "Willow tree", "brief": "A willow with drooping branches and a split trunk.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0319", "title": "Ancient oak", "brief": "A gnarled oak with a wide trunk, twisted limbs and a thick canopy.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0320", "title": "Young sapling", "brief": "A young sapling with a thin stem and a few green leaves.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0321", "title": "Tree stump", "brief": "A cut tree stump with a ringed top and two side roots.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0322", "title": "Fallen log", "brief": "A fallen log with broken branches and a patch of moss.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0323", "title": "Mossy stone", "brief": "A rounded stone with lichen patches and a mossy top.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0324", "title": "Stone pile", "brief": "A small pile of three grey stones beside a tuft of grass.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0325", "title": "Cliff face", "brief": "A jagged cliff face with ledges and a small cave mouth.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0326", "title": "Rolling hill", "brief": "A rolling hill with a grassy slope and a few wildflowers.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0327", "title": "Grassy mound", "brief": "A low grassy mound with a bare patch and a scatter of pebbles.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0328", "title": "Reed clump", "brief": "A clump of tall reeds on a muddy bank.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0329", "title": "Cattail clump", "brief": "A group of cattails with brown tips beside a marshy pool.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0330", "title": "Fern cluster", "brief": "A cluster of ferns with arching fronds and dark soil.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0331", "title": "Berry bush", "brief": "A low bush heavy with red berries and small leaves.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0332", "title": "Bramble patch", "brief": "A tangled bramble patch with thorny stems and a few blackberries.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0333", "title": "Round cactus", "brief": "A round cactus with ribs, two arms and pale spines.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0334", "title": "Rosette succulent", "brief": "A rosette succulent with thick pointed leaves.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0335", "title": "Shelf mushrooms", "brief": "A cluster of shelf mushrooms on a slab of bark.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0336", "title": "Red toadstool", "brief": "A red toadstool with white spots and a pale stalk.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0337", "title": "Moss patch", "brief": "A patch of moss with tiny stalks on a flat stone.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0338", "title": "Ivy on brick", "brief": "Ivy climbing a brick face with trailing green strands.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0339", "title": "Log pile", "brief": "A pile of cut logs stacked between two upright posts.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0340", "title": "Pebble beach", "brief": "A pebble beach with a driftwood branch and a line of small stones.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0341", "title": "Desert dune", "brief": "A curved desert dune with a rippled crest.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0342", "title": "Ice block", "brief": "A chunky block of ice with frosted edges and a wet base.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0343", "title": "Swaying willow", "brief": "A willow whose drooping branches sway softly in a loop.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0344", "title": "Rustling bush", "brief": "A bush whose leaves rustle and shift in a loop.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0345", "title": "Trembling fern", "brief": "A fern whose fronds tremble in a light breeze in a loop.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0346", "title": "Drifting cloud", "brief": "A low cloud that drifts slowly across the sky in a loop.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0347", "title": "Falling leaves", "brief": "A tree that drops leaves which drift and settle in a loop.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0348", "title": "Rippling reeds", "brief": "Reeds that ripple and bend together in a loop.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0349", "title": "Turning sunflower", "brief": "A sunflower whose head turns slowly to follow the sun in a loop.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0350", "title": "Swirling pool", "brief": "A small pool whose water swirls gently in a loop.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0351", "title": "Bending grass", "brief": "A patch of tall grass that bends and springs back in a loop.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0352", "title": "Creeping vine", "brief": "A vine that creeps upward with a slow curling motion in a loop.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0353", "title": "Bobbing lily pad", "brief": "A lily pad that bobs gently on the water in a loop.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0354", "title": "Woodland patch", "brief": "A woodland patch: a broad tree, a stump, a berry bush and a mossy stone.", "domain": "nature", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0355", "title": "Pond cluster", "brief": "A pond cluster: a reed clump, a lily pad, a cattail and a low bank.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0356", "title": "Stone outcrop set", "brief": "A stone outcrop set: three stacked slabs, a ledge and a mossy patch.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0357", "title": "Forest clearing set", "brief": "A forest clearing set: a fallen log, a toadstool, a fern and a stump.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0358", "title": "Desert set", "brief": "A desert set: a dune, a cactus, a dead bush and a sun-baked stone.", "domain": "nature", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0359", "title": "Garden border set", "brief": "A garden border set: a shrub, a sapling, a leafy plant and a stone edging.", "domain": "nature", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0360", "title": "Marsh set", "brief": "A marsh set: a reed clump, a lily pad, a mud bank and a driftwood branch.", "domain": "nature", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0361", "title": "Wooden box", "brief": "A plain wooden box with plank sides, corner braces and a loose lid.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0362", "title": "Metal bucket", "brief": "A galvanised bucket with a folding handle and a rolled rim.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0363", "title": "Watering can", "brief": "A metal watering can with a long spout and a rose head.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0364", "title": "Hand trowel", "brief": "A small hand trowel with a wooden grip and a pointed steel blade.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0365", "title": "Garden spade", "brief": "A garden spade with a flat blade and a D-shaped handle.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0366", "title": "Hand cart", "brief": "A two-wheeled hand cart with a tall load box and two grips.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0367", "title": "Tool hook board", "brief": "A wall board with pegs holding a saw and a pair of pliers.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0368", "title": "Hammer and nails", "brief": "A claw hammer beside a small tin of nails.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0369", "title": "Saw horse", "brief": "A folding saw horse with crossed legs and a top beam.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0370", "title": "Folding stepladder", "brief": "A folding stepladder with three steps and a top tray.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0371", "title": "Oil can", "brief": "A metal oil can with a long bent spout.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0372", "title": "Paint tin", "brief": "A paint tin with a wire handle and a lid smeared with paint.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0373", "title": "Paint brush", "brief": "A wide paint brush with a wooden handle and dark bristles.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0374", "title": "Storm light", "brief": "A caged storm light with a wire guard and a ring handle.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0375", "title": "Candle holder", "brief": "A simple candle holder with a drip tray and a loop handle.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0376", "title": "Bucket and mop", "brief": "A bucket with a wringer beside a long-handled mop.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0377", "title": "Straw broom", "brief": "A straw broom with a bound head and a straight handle.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0378", "title": "Pitchfork", "brief": "A pitchfork with four tines and a long wooden shaft.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0379", "title": "Rope hook", "brief": "A coiled rope hanging from a wall hook.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0380", "title": "Camp axe", "brief": "A camp axe with a wooden haft and a leather head cover.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0381", "title": "Hand saw", "brief": "A hand saw with a wooden grip and a toothed steel blade.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0382", "title": "Chisel roll", "brief": "A canvas tool roll holding four chisels of different widths.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0383", "title": "Measuring tape", "brief": "A retractable measuring tape with a yellow case and a metal clip.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0384", "title": "Wrench set", "brief": "Three open-ended wrenches laid side by side on a shop rag.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0385", "title": "Screwdriver set", "brief": "A row of screwdrivers with coloured handles in a small stand.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0386", "title": "Work bench", "brief": "A sturdy work bench with a vice, a lower shelf and two drawers.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0387", "title": "Sandpaper stack", "brief": "A stack of sandpaper sheets beside a sanding block.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0388", "title": "Spinning drill", "brief": "A hand drill whose crank and bit spin in a loop.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0389", "title": "Swinging bell", "brief": "A hand bell that swings and rings in a loop.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0390", "title": "Turning winch", "brief": "A wall winch whose drum and handle turn in a loop.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0391", "title": "Ratchet turning", "brief": "A ratchet handle that clicks and turns in a loop.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0392", "title": "Pumping bellows", "brief": "A pair of bellows that pump open and shut in a loop.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0393", "title": "Bobbing float", "brief": "A wooden float that bobs on the water in a loop.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0394", "title": "Flipping coin", "brief": "A coin that flips up and lands flat in a loop.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0395", "title": "Pouring jug", "brief": "A jug that tilts and pours a short stream in a loop.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0396", "title": "Turning key", "brief": "A large key that turns in a lock plate in a loop.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0397", "title": "Swinging hook", "brief": "A hook that swings gently on its bracket in a loop.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0398", "title": "Steaming pot", "brief": "A small pot with a lid that lifts and vents steam in a loop.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0399", "title": "Tool shed set", "brief": "A tool shed set: a work bench, a tool rack, a shelf of tins and a stack of planks.", "domain": "props_and_tools", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0400", "title": "Gardening set", "brief": "A gardening set: a spade, a watering can, a bucket and a pair of boots.", "domain": "props_and_tools", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0401", "title": "Cleaning set", "brief": "A cleaning set: a bucket, a mop, a broom and a stack of cloths.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0402", "title": "Camp tools set", "brief": "A camp tools set: an axe, a saw, a rope coil and a small pot.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0403", "title": "Repair set", "brief": "A repair set: a hammer, a wrench, a box of nails and a plank.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0404", "title": "Painting set", "brief": "A painting set: a paint tin, two brushes, a roller and a drop cloth.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0405", "title": "Peg board set", "brief": "A peg board set: a board of hooks holding a saw, a square and a level.", "domain": "props_and_tools", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0406", "title": "Star cruiser", "brief": "A sleek star cruiser with swept wings and two glowing engines.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0407", "title": "Cargo hauler", "brief": "A bulky cargo hauler with stacked containers and side thrusters.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0408", "title": "Shuttle craft", "brief": "A small shuttle craft with a blunt nose and two stubby fins.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0409", "title": "Escape pod", "brief": "A rounded escape pod with a hatch and a ring of small windows.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0410", "title": "Landing pad", "brief": "A circular landing pad with corner lights and a painted ring.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0411", "title": "Fuel tank", "brief": "A tall fuel tank with a domed top and a side ladder.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0412", "title": "Antenna array", "brief": "A dish antenna on a small frame with a counterweight.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0413", "title": "Comm tower", "brief": "A slim comm tower with three stacked dishes and a red light.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0414", "title": "Cryo chamber", "brief": "A vertical cryo chamber with a glass door and round gauges.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0415", "title": "Med pod", "brief": "A white med pod with a hinged lid and a row of lights.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0416", "title": "Server rack", "brief": "A server rack with stacked modules and a tangle of cables.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0417", "title": "Control panel", "brief": "A slanted control panel with buttons, dials and a small screen.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0418", "title": "Data core", "brief": "A glowing data core held in a metal frame with ribbed fins.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0419", "title": "Reactor unit", "brief": "A small reactor unit with glowing rings and a steel housing.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0420", "title": "Ion thruster", "brief": "A cylindrical thruster with a glowing blue nozzle.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0421", "title": "Hover bike", "brief": "A futuristic hover bike with a long seat and two side fans.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0422", "title": "Mech walker", "brief": "A two-legged mech walker with a cockpit, an arm cannon and heavy feet.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0423", "title": "Defence turret", "brief": "A defence turret with a rotating base and twin barrels.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0424", "title": "Force pylon", "brief": "A force pylon with a rounded emitter and a ribbed base.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0425", "title": "Teleporter pad", "brief": "A teleporter pad with a ring of emitters and a glowing floor.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0426", "title": "Comms satellite", "brief": "A boxy satellite with two solar wings and a dish.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0427", "title": "Surface rover", "brief": "A six-wheeled rover with a mast camera and a flat deck.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0428", "title": "Service arm", "brief": "An articulated service arm with three joints and a gripper.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0429", "title": "Solar panel", "brief": "A tilted solar panel on a strut with a junction box.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0430", "title": "Scanner unit", "brief": "A tripod scanner with a glass lens and a swivel head.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0431", "title": "Coolant radiator", "brief": "A ribbed coolant radiator with two pipe ports.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0432", "title": "Holo pedestal", "brief": "A holo pedestal with a ring projector and a glowing band.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0433", "title": "Spinning radar", "brief": "A radar dish that turns steadily on its mast in a loop.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0434", "title": "Pulsing thrusters", "brief": "Twin thrusters that pulse with glowing jets in a loop.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0435", "title": "Marching mech", "brief": "A mech walker that steps in place with swaying arms in a loop.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0436", "title": "Opening hatch", "brief": "A round hatch whose door slides open and shut in a loop.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0437", "title": "Pulsing core", "brief": "A data core that pulses with rings of light in a loop.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0438", "title": "Sweeping turret", "brief": "A turret that sweeps its barrels side to side in a loop.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0439", "title": "Floating probe", "brief": "A small floating probe that drifts up and down in a loop.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0440", "title": "Blinking beacon", "brief": "A beacon that flashes bright and dim in a loop.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0441", "title": "Blast door", "brief": "A pair of blast doors that slide apart and close in a loop.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0442", "title": "Hovering satellite", "brief": "A satellite that bobs and rotates slowly in a loop.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0443", "title": "Loading arm", "brief": "A service arm that swings out and retracts in a loop.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0444", "title": "Hangar set", "brief": "A hangar set: a shuttle craft, a fuel tank, a service arm and a stack of boxes.", "domain": "sci_fi", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0445", "title": "Bridge deck set", "brief": "A bridge deck set: a helm panel, a nav seat, two control panels and a glowing map table.", "domain": "sci_fi", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0446", "title": "Outpost set", "brief": "An outpost set: a comm tower, a solar panel, a fuel tank and a small shelter.", "domain": "sci_fi", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0447", "title": "Lab set", "brief": "A lab set: a work bench, a microscope, a rack of samples and a stool.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0448", "title": "Engine room set", "brief": "An engine room set: a reactor unit, two pipes, a valve wheel and a coiled hose.", "domain": "sci_fi", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0449", "title": "Cargo bay set", "brief": "A cargo bay set: stacked containers, a loading arm and a pallet.", "domain": "sci_fi", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0450", "title": "Planetary set", "brief": "A planetary set: a rover, a scanner unit, a solar panel and a soil sample box.", "domain": "sci_fi", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0451", "title": "City sedan", "brief": "A four-door city sedan with round headlights and a plain grille.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0452", "title": "Sports coupe", "brief": "A low sports coupe with a long bonnet and a rear spoiler.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0453", "title": "Delivery van", "brief": "A boxy delivery van with a sliding side door and roof vents.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0454", "title": "Box truck", "brief": "A box truck with a tall cargo box and twin rear wheels.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0455", "title": "Fire engine", "brief": "A fire engine with a ladder, a red body and flashing lights.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0456", "title": "City bus", "brief": "A long city bus with two doors, a roof rack and wide windows.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0457", "title": "Electric tram", "brief": "An electric tram on a short rail with a pantograph and three windows.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0458", "title": "Steam locomotive", "brief": "A steam locomotive with a funnel, a round boiler and a cowcatcher.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0459", "title": "Freight wagon", "brief": "A boxy freight wagon on four wheels with sliding doors.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0460", "title": "Sailboat", "brief": "A single-masted sailboat with a white sail and a small cabin.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0461", "title": "Fishing trawler", "brief": "A sturdy trawler with a wheelhouse, a net drum and a tall mast.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0462", "title": "Tugboat", "brief": "A squat tugboat with tyre fenders and a raised wheelhouse.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0463", "title": "Cargo ship", "brief": "A long cargo ship with stacked containers and a stern bridge.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0464", "title": "Submarine", "brief": "A rounded submarine with a conning tower and a tail fin.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0465", "title": "Life raft", "brief": "A round life raft with a low rim and a small canopy.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0466", "title": "Hot air balloon", "brief": "A striped hot air balloon with a wicker basket and two ropes.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0467", "title": "Glider", "brief": "A slim glider with long wings and a bubble canopy.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0468", "title": "Helicopter", "brief": "A helicopter with a four-blade rotor, a tail rotor and landing skids.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0469", "title": "Jet airliner", "brief": "A jet airliner with swept wings, two engines and a tail fin.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0470", "title": "Cargo plane", "brief": "A cargo plane with a high wing, four engines and a boxy nose.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0471", "title": "Bicycle", "brief": "A bicycle with two spoked wheels, a curved frame and a handlebar basket.", "domain": "vehicles", "level": 2, "style": "low-poly", "kind": "static"}
+{"id": "x0472", "title": "Motorbike", "brief": "A motorbike with a chrome tank, two wheels and a headlight.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0473", "title": "Motor scooter", "brief": "A small motor scooter with a step-through frame and a rear box.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0474", "title": "Go-kart", "brief": "A low go-kart with a roll bar and a small engine at the back.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0475", "title": "Bulldozer", "brief": "A bulldozer with a wide blade, tracks and a roll cage.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0476", "title": "Excavator", "brief": "An excavator with a tracked base, a cab and a long bucket arm.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0477", "title": "Farm tractor", "brief": "A farm tractor with big rear wheels, a cab and a front grille.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0478", "title": "Rolling tram", "brief": "A tram that rolls along a straight rail in a loop.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0479", "title": "Spinning propeller", "brief": "A two-blade propeller that spins steadily in a loop.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0480", "title": "Turning ship wheel", "brief": "A ship's wheel that turns slowly on its binnacle in a loop.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0481", "title": "Flapping sail", "brief": "A sail on a mast that flaps and fills in a loop.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0482", "title": "Rising balloon", "brief": "A hot air balloon that rises and drifts in a loop.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0483", "title": "Bobbing lifeboat", "brief": "A lifeboat that bobs gently on the water in a loop.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0484", "title": "Whirling rotor", "brief": "A helicopter rotor that spins steadily in a loop.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0485", "title": "Riding bicycle", "brief": "A bicycle whose wheels and pedals turn in a loop.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0486", "title": "Digging excavator", "brief": "An excavator whose arm digs and lifts in a loop.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0487", "title": "Chuffing locomotive", "brief": "A locomotive whose wheels and connecting rods turn in a loop.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0488", "title": "Sailing ship", "brief": "A sailing ship whose sails and flag ripple in the wind in a loop.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0489", "title": "Traffic set", "brief": "A traffic set: a bus, a van, a hatchback and a signal post.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0490", "title": "Marina set", "brief": "A marina set: a sailboat, a tugboat, a life raft and a mooring post.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0491", "title": "Airfield set", "brief": "An airfield set: a glider, a helicopter, a baggage cart and a windsock.", "domain": "vehicles", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0492", "title": "Farm vehicles set", "brief": "A farm vehicles set: a tractor, a trailer, a plough and a seed drill.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0493", "title": "Construction set", "brief": "A construction set: a bulldozer, an excavator, a dumper and a cement mixer.", "domain": "vehicles", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0494", "title": "Racing set", "brief": "A racing set: a sports coupe, a go-kart, a motorbike and a chequered flag.", "domain": "vehicles", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0495", "title": "Rescue set", "brief": "A rescue set: a fire engine, an ambulance, a dinghy and a stretcher.", "domain": "vehicles", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0496", "title": "Steel dagger", "brief": "A slim steel dagger with a crossguard and a wrapped grip.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0497", "title": "Curved sabre", "brief": "A curved sabre with a gold hilt and a scabbard.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0498", "title": "Twin hand axes", "brief": "Two hand axes laid crossed with wooden hafts.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0499", "title": "Spiked mace", "brief": "A flanged mace with a leather grip and a wrist loop.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0500", "title": "Long spear", "brief": "A long spear with a leaf-shaped head and a bound shaft.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0501", "title": "Halberd", "brief": "A halberd with an axe head, a spike and a hooked beak.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0502", "title": "Warhammer", "brief": "A heavy warhammer with a square head and a studded haft.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0503", "title": "Crossbow", "brief": "A wooden crossbow with a steel prod and a short stock.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0504", "title": "Arrow bundle", "brief": "A bundle of arrows with feathered ends tied with twine.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0505", "title": "Round buckler", "brief": "A round metal buckler with a central boss and a riveted rim.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0506", "title": "Tall targe", "brief": "A tall targe with a painted border and iron studs.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0507", "title": "Standing pavise", "brief": "A tall standing pavise with a painted crest and iron feet.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0508", "title": "Plumed helm", "brief": "A steel helm with a plume holder and a riveted visor.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0509", "title": "Face visor", "brief": "A hinged face visor with narrow eye slits and a breath grille.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0510", "title": "Steel breastplate", "brief": "A curved breastplate with riveted lames and shoulder straps.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0511", "title": "Layered pauldron", "brief": "A layered pauldron with three overlapping plates.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0512", "title": "Steel gauntlet", "brief": "A steel gauntlet with jointed fingers and a leather cuff.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0513", "title": "Knee greaves", "brief": "A pair of greaves with knee caps and strap buckles.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0514", "title": "Chainmail shirt", "brief": "A chainmail shirt with a hood and a split hem.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0515", "title": "Banded cuirass", "brief": "A banded cuirass with horizontal lames and side buckles.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0516", "title": "Horse barding", "brief": "Horse barding with a chest plate and a head crest.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0517", "title": "Weapon belt", "brief": "A leather belt with a hanging scabbard and a small pouch.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0518", "title": "Bolt pouch", "brief": "A leather pouch holding a bundle of crossbow bolts.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0519", "title": "Armoury rack", "brief": "A wooden rack holding three spears and a halberd.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0520", "title": "Honing stone", "brief": "A honing stone on a wooden block with a leather strop.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0521", "title": "Powder horn", "brief": "A curved powder horn with a carved stopper and a leather strap.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0522", "title": "Spiked flail", "brief": "A spiked flail with a chained head and a wooden grip.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "static"}
+{"id": "x0523", "title": "Blade wheel", "brief": "A ring of blades that spins steadily in a loop.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0524", "title": "Pendulum axe", "brief": "A pendulum axe that swings across a stone plinth in a loop.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0525", "title": "Rising portcullis", "brief": "A portcullis that rises and drops in a loop.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0526", "title": "Spinning dummy", "brief": "A training dummy that spins on its post in a loop.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0527", "title": "Floating rune blade", "brief": "A rune-etched blade that floats and turns slowly in a loop.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0528", "title": "Dropping spike bar", "brief": "A spike bar that drops and retracts in a loop.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0529", "title": "Whirling flail", "brief": "A flail whose head whirls in a circle in a loop.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0530", "title": "Sparring pair", "brief": "Two training figures that spar and step in a loop.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0531", "title": "Nodding helm", "brief": "A plumed helm on a stand that tilts gently in a loop.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0532", "title": "Twirling spear", "brief": "A spear that twirls upright on its tip in a loop.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0533", "title": "Pulsing ward", "brief": "A glowing ward ring that pulses around a small plinth in a loop.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "animated"}
+{"id": "x0534", "title": "Armoury set", "brief": "An armoury set: a rack of spears, a bench of helms and a stack of blades.", "domain": "weapons_and_armour", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0535", "title": "Training yard set", "brief": "A training yard set: a dummy, a palisade, a rack of practice blades and a bench.", "domain": "weapons_and_armour", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0536", "title": "Heraldry set", "brief": "A heraldry set: a war banner, a painted targe, a plumed helm and a drum.", "domain": "weapons_and_armour", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0537", "title": "Campaign kit", "brief": "A campaign kit: a spear, a mace, an arrow bundle and a belt pouch.", "domain": "weapons_and_armour", "level": 1, "style": "low-poly", "kind": "set"}
+{"id": "x0538", "title": "Forge display set", "brief": "A forge display set: a warhammer, a honing stone, a pair of gauntlets and a pail.", "domain": "weapons_and_armour", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0539", "title": "Guard loadout set", "brief": "A guard loadout set: a halberd, a breastplate, a plumed helm and a key ring.", "domain": "weapons_and_armour", "level": 2, "style": "low-poly", "kind": "set"}
+{"id": "x0540", "title": "Relic set", "brief": "A relic set: a rune blade, a gilded targe, a plumed helm and a small idol.", "domain": "weapons_and_armour", "level": 2, "style": "low-poly", "kind": "set"}

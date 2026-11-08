@@ -3,11 +3,11 @@
 # checks the long local jobs instead of running raw bench/repair commands. One job runs at a time, and the v3 prompt
 # hash must match the frozen file before any job starts. Jobs run detached and are resumable.
 #   scripts/imp_ops.sh preflight            Ollama up/down, the running job if any, the v3 hash check, imp-1 status
-#   scripts/imp_ops.sh start v3s2|v3s3|repair-v3|repair-asm-v3|repair-asm-v3s3|ad4|ad5|ad6
+#   scripts/imp_ops.sh start v3s2|v3s3|repair-v3|repair-asm-v3|repair-asm-v3s3|ad4|ad5|ad6|distill-smoke|distill
 #   scripts/imp_ops.sh wait JOB [SECONDS]   wait up to 540 s; exit 0 finished, 2 still running, 1 failed or never started
 #   scripts/imp_ops.sh status [JOB]
 # IMP_OPS_DRY=1 start JOB prints the real command instead of running it.
-# Overrides for tests: IMP_OPS_RUNS, IMP_OPS_JOBS, IMP_OPS_BENCH, IMP_OPS_PROMPT, IMP_OPS_POLL, IMP_OPS_SKIP_CHECKS, IMP_OPS_ADAPTIVE.
+# Overrides for tests: IMP_OPS_RUNS, IMP_OPS_JOBS, IMP_OPS_BENCH, IMP_OPS_PROMPT, IMP_OPS_POLL, IMP_OPS_SKIP_CHECKS, IMP_OPS_ADAPTIVE, IMP_OPS_DISTILL.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 RUNS="${IMP_OPS_RUNS:-runs/glb_v3}"
@@ -16,6 +16,10 @@ BENCH="${IMP_OPS_BENCH:-.venv/bin/python scripts/glb_bench.py}"
 PROMPT="${IMP_OPS_PROMPT:-prompts/system_glb_v3.txt}"
 POLL="${IMP_OPS_POLL:-10}"
 ADAPTIVE="${IMP_OPS_ADAPTIVE:-runs/imp/adaptive}"
+# the parent of the distill run dirs (out-dir root for the self-distillation jobs); bench/glb/dev_briefs.jsonl is the smoke set
+DISTILL="${IMP_OPS_DISTILL:-runs/imp}"
+BRIEFS_DISTILL="bench/distill/briefs.jsonl"
+BRIEFS_SMOKE="bench/glb/dev_briefs.jsonl"
 FROZEN="$RUNS/PROMPT_FROZEN.json"
 [ -n "${IMP_OPS_DRY:-}" ] || mkdir -p "$JOBS"
 
@@ -40,10 +44,17 @@ job_cmd() {
     repair-v3) echo ".venv/bin/python scripts/glb_repair.py --run $RUNS/glimmer-v3 --model-row glimmer-v3" ;;
     repair-asm-v3) echo ".venv/bin/python scripts/glb_repair.py --run $RUNS/glimmer-v3 --model-row glimmer-v3 --mode assembly" ;;
     repair-asm-v3s3) echo ".venv/bin/python scripts/glb_repair.py --run $RUNS/glimmer-v3-s3 --model-row glimmer-v3 --mode assembly" ;;
+    # the self-distillation generation jobs (docs/14, imp-5): one glb_generate.py batch into its own out-dir
+    distill-smoke) echo ".venv/bin/python scripts/glb_generate.py --briefs $BRIEFS_SMOKE --limit 2 --out-dir $DISTILL/distill_smoke" ;;
+    distill) echo ".venv/bin/python scripts/glb_generate.py --briefs $BRIEFS_DISTILL --out-dir $DISTILL/distill" ;;
     *) return 1 ;;
   esac
 }
 job_total() {
+  case "$1" in
+    distill-smoke) echo 2; return ;;
+    distill) wc -l < "$BRIEFS_DISTILL" | tr -d ' '; return ;;
+  esac
   f=$(job_ids "$1" 2>/dev/null) || f=""
   if [ -n "$f" ] && [ -f "$f" ]; then wc -l < "$f" | tr -d ' '; else echo 48; fi
 }
@@ -57,11 +68,19 @@ job_raw() {
     repair-v3) echo "$RUNS/glimmer-v3/repair/raw" ;;
     repair-asm-v3) echo "$RUNS/glimmer-v3/repair-asm/raw" ;;
     repair-asm-v3s3) echo "$RUNS/glimmer-v3-s3/repair-asm/raw" ;;
+    # a distill brief is finished when its own result.json appears, so the dir is counted by that glob (raw_count)
+    distill-smoke) echo "$DISTILL/distill_smoke" ;;
+    distill) echo "$DISTILL/distill" ;;
   esac
 }
 job_alive() { [ -f "$JOBS/$1.pid" ] && kill -0 "$(cat "$JOBS/$1.pid")" 2>/dev/null; }
 any_alive() { for p in "$JOBS"/*.pid; do [ -f "$p" ] && job_alive "$(basename "$p" .pid)" && { basename "$p" .pid; return 0; }; done; return 1; }
-raw_count() { ls "$(job_raw "$1")" 2>/dev/null | wc -l | tr -d ' '; }
+raw_count() {
+  case "$1" in
+    distill|distill-smoke) ls "$(job_raw "$1")"/*/result.json 2>/dev/null | wc -l | tr -d ' ' ;;
+    *) ls "$(job_raw "$1")" 2>/dev/null | wc -l | tr -d ' ' ;;
+  esac
+}
 hash_ok() { [ -f "$FROZEN" ] && [ "$(frozen_sha)" = "$(sha)" ]; }
 
 require_freeze() {
@@ -88,7 +107,7 @@ cmd_preflight() {
 }
 
 cmd_start() {
-  job="${1:-}"; cmd=$(job_cmd "$job") || { echo "unknown job '$job' (v3s2, v3s3, repair-v3, repair-asm-v3, repair-asm-v3s3, ad4, ad5, ad6)"; exit 1; }
+  job="${1:-}"; cmd=$(job_cmd "$job") || { echo "unknown job '$job' (v3s2, v3s3, repair-v3, repair-asm-v3, repair-asm-v3s3, ad4, ad5, ad6, distill-smoke, distill)"; exit 1; }
   [ -n "${IMP_OPS_DRY:-}" ] && { echo "$cmd"; exit 0; }
   if [ -f "$JOBS/$job.exit" ]; then
     if [ "$(cat "$JOBS/$job.exit")" = 0 ]; then echo "job $job already finished OK; not starting it again"; exit 0; fi

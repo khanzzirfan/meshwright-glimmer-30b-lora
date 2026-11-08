@@ -140,8 +140,96 @@ function transformBox(m, box) {
 // Signed separation between two 1D intervals: 0 when they overlap, positive gap otherwise.
 const axisGap = (aMin, aMax, bMin, bMax) => Math.max(aMin - bMax, bMin - aMax, 0);
 
-// The world boxes of the mesh nodes, walking the node tree from the scene roots.
-function worldBoxes(json) {
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+
+// A mesh node's local POSITION box scaled, rotated and translated by its world matrix: a centre, three
+// orthonormal axes and a half extent along each. A zero-length transformed axis (a zero scale) falls back
+// to a canonical direction with half extent 0, so a degenerate box never yields NaN (imp-5 US-002).
+function obbFromBox(m, box) {
+  const center = matApply(m, [
+    (box.min[0] + box.max[0]) / 2,
+    (box.min[1] + box.max[1]) / 2,
+    (box.min[2] + box.max[2]) / 2,
+  ]);
+  const half = [(box.max[0] - box.min[0]) / 2, (box.max[1] - box.min[1]) / 2, (box.max[2] - box.min[2]) / 2];
+  const axes = [];
+  const halfExtents = [];
+  for (let c = 0; c < 3; c++) {
+    const v = [m[c * 4], m[c * 4 + 1], m[c * 4 + 2]];
+    const len = Math.hypot(v[0], v[1], v[2]);
+    if (len > 0) {
+      axes.push([v[0] / len, v[1] / len, v[2] / len]);
+      halfExtents.push(half[c] * len);
+    } else {
+      axes.push([c === 0 ? 1 : 0, c === 1 ? 1 : 0, c === 2 ? 1 : 0]);
+      halfExtents.push(0);
+    }
+  }
+  return { center, axes, half: halfExtents };
+}
+
+// The projected radius of an oriented box onto a unit axis.
+const obbRadius = (o, n) =>
+  o.half[0] * Math.abs(dot(o.axes[0], n)) + o.half[1] * Math.abs(dot(o.axes[1], n)) + o.half[2] * Math.abs(dot(o.axes[2], n));
+
+// Separating-axis test over the 15 candidate axes: the 3 axes of each box and the 9 cross products. Two
+// boxes touch when no axis separates them by more than tol. Near-zero cross products (parallel edges) are
+// skipped. Axis-aligned boxes of rotated parts can overlap while the parts do not, which is why this is
+// stricter than the box test (docs/14 section 4, imp-5 US-002).
+function obbTouches(A, B, tol) {
+  const axes = [A.axes[0], A.axes[1], A.axes[2], B.axes[0], B.axes[1], B.axes[2]];
+  for (const a of A.axes) for (const b of B.axes) axes.push(cross(a, b));
+  for (const raw of axes) {
+    const len = Math.hypot(raw[0], raw[1], raw[2]);
+    if (!(len > 1e-9)) continue;
+    const n = [raw[0] / len, raw[1] / len, raw[2] / len];
+    const ca = dot(A.center, n);
+    const cb = dot(B.center, n);
+    const gap = axisGap(ca - obbRadius(A, n), ca + obbRadius(A, n), cb - obbRadius(B, n), cb + obbRadius(B, n));
+    if (gap > tol) return false;
+  }
+  return true;
+}
+
+// The axis-aligned test the original metric uses: two world boxes touch when neither axis separates them.
+const boxTouches = (A, B, tol) => {
+  for (let i = 0; i < 3; i++) if (axisGap(A.min[i], A.max[i], B.min[i], B.max[i]) > tol) return false;
+  return true;
+};
+
+// Connected components of a touch graph on n parts. Returns the component count, the largest component's
+// part count and share, and the union-find root lookup (used by the floater rule).
+function componentOf(n, touches) {
+  const parent = Array.from({ length: n }, (_, i) => i);
+  const find = (i) => {
+    while (parent[i] !== i) {
+      parent[i] = parent[parent[i]];
+      i = parent[i];
+    }
+    return i;
+  };
+  const join = (a, b) => {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) parent[ra] = rb;
+  };
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) if (touches(i, j)) join(i, j);
+  }
+  const sizes = new Map();
+  for (let i = 0; i < n; i++) {
+    const r = find(i);
+    sizes.set(r, (sizes.get(r) || 0) + 1);
+  }
+  let largest = 0;
+  for (const s of sizes.values()) largest = Math.max(largest, s);
+  return { components: sizes.size, largest, largest_share: n ? largest / n : 0, sizes, find };
+}
+
+// The world axis-aligned boxes and oriented boxes of the mesh nodes, walking the node tree from the scene
+// roots. The two lists are parallel: entry i of each belongs to the same mesh node.
+function walkBoxes(json) {
   const accessors = Array.isArray(json.accessors) ? json.accessors : [];
   const meshes = Array.isArray(json.meshes) ? json.meshes : [];
   const nodes = Array.isArray(json.nodes) ? json.nodes : [];
@@ -152,6 +240,7 @@ function worldBoxes(json) {
   const roots = scene && Array.isArray(scene.nodes) ? scene.nodes : nodes.map((_, i) => i);
 
   const boxes = [];
+  const obbs = [];
   const visited = new Set();
   const walk = (index, parentMatrix) => {
     const node = nodes[index];
@@ -161,21 +250,26 @@ function worldBoxes(json) {
     const world = matMul(parentMatrix, nodeMatrix(node));
     if (Number.isInteger(node.mesh) && meshes[node.mesh]) {
       let box = null;
+      let local = null;
       const prims = Array.isArray(meshes[node.mesh].primitives) ? meshes[node.mesh].primitives : [];
       for (const prim of prims) {
         const pos = accessors[prim?.attributes?.POSITION];
         if (!Array.isArray(pos?.min) || !Array.isArray(pos?.max)) continue;
-        const local = { min: pos.min.slice(0, 3).map(Number), max: pos.max.slice(0, 3).map(Number) };
-        if (![...local.min, ...local.max].every(Number.isFinite)) continue;
-        const world2 = transformBox(world, local);
+        const partLocal = { min: pos.min.slice(0, 3).map(Number), max: pos.max.slice(0, 3).map(Number) };
+        if (![...partLocal.min, ...partLocal.max].every(Number.isFinite)) continue;
+        const world2 = transformBox(world, partLocal);
         box = box ? unionBox(box, world2) : world2;
+        local = local ? unionBox(local, partLocal) : partLocal;
       }
-      if (box) boxes.push(box);
+      if (box) {
+        boxes.push(box);
+        obbs.push(obbFromBox(world, local));
+      }
     }
     if (Array.isArray(node.children)) for (const c of node.children) walk(c, world);
   };
   for (const r of roots) walk(r, IDENTITY);
-  return boxes;
+  return { boxes, obbs };
 }
 
 export function assembly(json, { kind = 'static', tolFrac = 0.02 } = {}) {
@@ -183,7 +277,7 @@ export function assembly(json, { kind = 'static', tolFrac = 0.02 } = {}) {
     if (json === null || typeof json !== 'object' || Array.isArray(json)) {
       return { parts: 0, assembled: false, error: 'not_an_object' };
     }
-    const parts = worldBoxes(json);
+    const { boxes: parts, obbs } = walkBoxes(json);
     const n = parts.length;
 
     let union = null;
@@ -192,38 +286,11 @@ export function assembly(json, { kind = 'static', tolFrac = 0.02 } = {}) {
       ? tolFrac * Math.hypot(union.max[0] - union.min[0], union.max[1] - union.min[1], union.max[2] - union.min[2])
       : 0;
 
-    const parent = Array.from({ length: n }, (_, i) => i);
-    const find = (i) => {
-      while (parent[i] !== i) {
-        parent[i] = parent[parent[i]];
-        i = parent[i];
-      }
-      return i;
-    };
-    const join = (a, b) => {
-      const ra = find(a);
-      const rb = find(b);
-      if (ra !== rb) parent[ra] = rb;
-    };
-    const touches = (A, B) => {
-      for (let i = 0; i < 3; i++) {
-        if (axisGap(A.min[i], A.max[i], B.min[i], B.max[i]) > tol) return false;
-      }
-      return true;
-    };
-    for (let i = 0; i < n; i++) {
-      for (let j = i + 1; j < n; j++) if (touches(parts[i], parts[j])) join(i, j);
-    }
-
-    const sizes = new Map();
-    for (let i = 0; i < n; i++) {
-      const r = find(i);
-      sizes.set(r, (sizes.get(r) || 0) + 1);
-    }
-    let largest = 0;
-    for (const s of sizes.values()) largest = Math.max(largest, s);
-    const components = sizes.size;
-    const largest_share = n ? largest / n : 0;
+    const aabb = componentOf(n, (i, j) => boxTouches(parts[i], parts[j], tol));
+    const obb = componentOf(n, (i, j) => obbTouches(obbs[i], obbs[j], tol));
+    const { components, largest_share, sizes, find } = aabb;
+    const components_obb = obb.components;
+    const largest_share_obb = obb.largest_share;
 
     const min_y = n ? parts.reduce((m, b) => Math.min(m, b.min[1]), Infinity) : null;
     const ground_gap = min_y === null ? null : Math.max(0, min_y);
@@ -248,10 +315,24 @@ export function assembly(json, { kind = 'static', tolFrac = 0.02 } = {}) {
 
     const grounded = ground_gap !== null && ground_gap <= tol;
     const assembled = kind === 'set' ? floaters === 0 && grounded : largest_share >= 0.9 && floaters === 0 && grounded;
+    const assembled_obb =
+      kind === 'set' ? floaters === 0 && grounded : largest_share_obb >= 0.9 && floaters === 0 && grounded;
 
-    return { parts: n, components, largest_share, floaters, min_y, ground_gap, tol, assembled };
+    return {
+      parts: n,
+      components,
+      largest_share,
+      components_obb,
+      largest_share_obb,
+      floaters,
+      min_y,
+      ground_gap,
+      tol,
+      assembled,
+      assembled_obb,
+    };
   } catch (e) {
-    return { parts: 0, assembled: false, error: String((e && e.message) || e).slice(0, 80) };
+    return { parts: 0, assembled: false, assembled_obb: false, error: String((e && e.message) || e).slice(0, 80) };
   }
 }
 
