@@ -14,6 +14,7 @@ while [ $# -gt 0 ]; do case "$1" in
   --out-root) out="$2"; shift 2 ;;
   --only) only="$2"; shift 2 ;;
   --run-suffix) suffix="$2"; shift 2 ;;
+  --run-suffix=*) suffix="${1#--run-suffix=}"; shift ;;
   *) shift ;;
 esac; done
 sleep "${FAKE_SLEEP:-1}"
@@ -79,6 +80,14 @@ def test_start_refuses_the_frozen_prompt_when_the_hash_does_not_match(env):
     assert not (Path(env["_jobs"]) / "v3s2.pid").exists()
 
 
+def test_start_refuses_the_assembly_jobs_when_the_hash_does_not_match(env):
+    write_frozen(env, "0" * 64)
+    for job in ("repair-asm-v3", "repair-asm-v3s3"):
+        r = ops(env, "start", job)
+        assert r.returncode == 1 and "REFUSED" in r.stdout
+        assert not (Path(env["_jobs"]) / f"{job}.pid").exists()
+
+
 def test_start_refuses_when_there_is_no_frozen_file(env):
     r = ops(env, "start", "v3s2")
     assert r.returncode == 1 and "REFUSED" in r.stdout
@@ -115,9 +124,11 @@ def test_wait_on_a_job_that_never_started_fails(env):
 def test_dry_run_prints_the_real_job_commands(tmp_path):
     env = dict(os.environ, IMP_OPS_DRY="1", IMP_OPS_JOBS=str(tmp_path / "jobs"))
     expected = {
-        "v3s2": ".venv/bin/python scripts/glb_bench.py --out-root runs/glb_v3 --only glimmer-v3 --seed 2 --run-suffix -s2",
-        "v3s3": ".venv/bin/python scripts/glb_bench.py --out-root runs/glb_v3 --only glimmer-v3 --seed 3 --run-suffix -s3",
+        "v3s2": ".venv/bin/python scripts/glb_bench.py --out-root runs/glb_v3 --only glimmer-v3 --seed 2 --run-suffix=-s2",
+        "v3s3": ".venv/bin/python scripts/glb_bench.py --out-root runs/glb_v3 --only glimmer-v3 --seed 3 --run-suffix=-s3",
         "repair-v3": ".venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3 --model-row glimmer-v3",
+        "repair-asm-v3": ".venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3 --model-row glimmer-v3 --mode assembly",
+        "repair-asm-v3s3": ".venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3-s3 --model-row glimmer-v3 --mode assembly",
     }
     for job, command in expected.items():
         r = ops(env, "start", job)

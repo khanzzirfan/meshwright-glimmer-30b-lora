@@ -1,7 +1,7 @@
 {
   "name": "GLB improvement ops: assembly backfill, repair, best of 3, phase 2 data (local only)",
-  "branchName": "ralph/imp-ops",
   "description": "Operator PRD for docs/14-glb-improvement.md, run after ralph/imp-1 passes. Backfill the assembly metric on the existing v2, v3 and ccore runs, try the one-shot repair on v3's failures, generate two more v3 seeds and pick the best of 3, then build the phase 2 dataset from ccore's downloaded parquet files. Everything runs on this Mac against the local Ollama. Training is not part of this PRD.",
+  "branchName": "ralph/imp-ops",
   "userStories": [
     {
       "id": "US-001",
@@ -19,7 +19,7 @@
         "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": []
     },
@@ -38,7 +38,7 @@
         "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-001"
@@ -60,7 +60,7 @@
         "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-002"
@@ -80,7 +80,7 @@
         "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-003"
@@ -101,8 +101,8 @@
         "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Reset by owner session: US-005 was marked complete while seed 2 was still running (false pass). Redo: wait for v3s2 exit 0, copy the pass-rate line, start v3s3.",
       "dependsOn": [
         "US-004"
       ]
@@ -121,8 +121,8 @@
         "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Reset: false pass (harness matched the completion tag typed inside a refusal sentence). Redo once v3s3 exits 0.",
       "dependsOn": [
         "US-005"
       ]
@@ -145,7 +145,7 @@
         "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-006"
@@ -167,11 +167,12 @@
         "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": "",
       "dependsOn": [
         "US-007"
-      ]
+      ],
+      "completionNotes": "Completed by agent"
     }
   ],
   "metadata": {
@@ -199,7 +200,7 @@
       "One story per iteration. Never run two jobs at once; scripts/imp_ops.sh refuses and you must not work around it.",
       "A foreground command may run for at most about 9 minutes (scripts/imp_ops.sh wait caps itself at 540 seconds). Do not poll in a loop or call sleep yourself.",
       "Never read or use runs/glb_v3/claude_ratings_unblinded.csv or any rating.csv to choose, filter or pick outputs; ratings are only compared after the fact in US-002.",
-      "Do not output the completion promise unless every acceptance criterion holds. If a criterion cannot hold yet, say why in notes and stop.",
+      "The completion tag is matched literally by the harness. Write it only when every acceptance criterion holds. When a criterion cannot hold yet, never type the tag, not even inside a sentence that says you are not using it; say 'no completion signal this iteration' instead. If a criterion cannot hold yet, say why in notes and stop.",
       "Record only real results: copy numbers from command output; where unknown write 'not measured'."
     ],
     "qualityGates": {
@@ -212,6 +213,7 @@
     },
     "manualGates": [
       "Owner rates runs/imp/best3 sheet (or a sample) and decides on the phase 2 LoRA spend (docs/14 sections 8 and 9)"
-    ]
+    ],
+    "updatedAt": "2026-11-08T05:00:20.795Z"
   }
 }

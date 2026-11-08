@@ -1,0 +1,92 @@
+{
+  "name": "GLB improvement ops 2: assembly repair and adaptive cost (local only)",
+  "branchName": "ralph/imp-ops-2",
+  "description": "Operator PRD run after imp-2 passes. Run the assembly repair on v3 seed 1 and seed 3, simulate adaptive best-of-N cost from the three v3 samples, and write the numbers into runs/imp/RESULTS2.md and docs/14 section 10. Local Ollama only. No code edits, no training.",
+  "standingRule": "Operator PRD, to be approved by the owner before it runs: starting local jobs through scripts/imp_ops.sh and waiting for them is allowed here, and it overrides the 'no long jobs' line in AGENTS.md for this PRD only. Run exactly the commands in the story. One story per iteration. A wait story that finds the job still running ends without finishing and is run again later. If a result is missing or a command fails, write the exact output in notes and stop. Never edit prompts/ or the PRDs.",
+  "universalGates": [
+    "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
+  ],
+  "guardrails": [
+    "You are an operator, not a developer. Run only the commands named in the story. Do not edit any file in scripts/, prompts/, bench/, tests/, ralph/ or .ralph-tui/config.toml, and nothing under data/, out/, eval/, .env or .venv. The only files you may write are under runs/imp/ and the section 10 table of docs/14-glb-improvement.md.",
+    "Never commit, push, tag or publish.",
+    "No network and no cloud: never run runpodctl, never train, never call Baseten, Hugging Face or any remote model. The scripts talk only to the local Ollama at localhost:11434.",
+    "Never kill processes or delete files under runs/. Long jobs start and stop only through scripts/imp_ops.sh.",
+    "One story per iteration. Never run two jobs at once; scripts/imp_ops.sh refuses and you must not work around it.",
+    "A foreground command may run for at most about 9 minutes (scripts/imp_ops.sh wait caps itself at 540 seconds). Do not poll in a loop or call sleep yourself.",
+    "Never read or use runs/glb_v3/claude_ratings_unblinded.csv or any rating.csv to choose, filter or pick outputs; ratings are only compared after the fact in US-002.",
+    "The completion tag is matched literally by the harness. Write it only when every acceptance criterion holds. When a criterion cannot hold yet, never type the tag, not even inside a sentence that says you are not using it; say 'no completion signal this iteration' instead. If a criterion cannot hold yet, say why in notes and stop.",
+    "Record only real results: copy numbers from command output; where unknown write 'not measured'."
+  ],
+  "specs": [
+    "docs/14-glb-improvement.md"
+  ],
+  "readFirst": [
+    "docs/14-glb-improvement.md (sections 3-7 and the section 10 results table)",
+    "scripts/imp_ops.sh (preflight, start, wait, status)",
+    "ralph/imp-1.prd.json notes (what was built)"
+  ],
+  "requires": [
+    "ralph/imp-2.prd.json: all 4 stories passing",
+    "ralph/imp-ops.prd.json: US-007 passing"
+  ],
+  "owns": [
+    "runs/imp/",
+    "docs/14-glb-improvement.md section 10"
+  ],
+  "manualGates": [
+    "Owner rates a blind sample of the repaired assets before anyone claims a quality gain"
+  ],
+  "stories": [
+    {
+      "title": "Preflight",
+      "description": "As the owner, I want the gate and the jobs checked first.",
+      "steps": [
+        "Run `bash scripts/imp_ops.sh preflight` and copy the output into notes.",
+        "Run `python3 ralph/build_prds.py --status | grep imp` and copy it.",
+        "Run `bash scripts/check.sh` and copy the last line."
+      ],
+      "criteria": [
+        "preflight reports Ollama up, no job running and the prompt hash match",
+        "imp-2 shows 4/4 in the status output"
+      ]
+    },
+    {
+      "title": "Assembly repair on v3 seed 1",
+      "description": "As the owner, I want to know how many unassembled but valid v3 assets one assembly repair turn fixes.",
+      "steps": [
+        "Run `bash scripts/imp_ops.sh start repair-asm-v3`.",
+        "Run `bash scripts/imp_ops.sh wait repair-asm-v3` (repeat in later iterations while it is running; if still running, end the iteration with no completion signal).",
+        "When it has exited 0, copy runs/glb_v3/glimmer-v3/repair-asm/summary.json into notes and add the row 'assembly repair on v3 seed 1 | repaired X of Y, assembled after Z' to docs/14 section 10."
+      ],
+      "criteria": [
+        "summary.json exists, exit file shows 0, and its numbers are copied verbatim",
+        "`wc -l` of runs/glb_v3/glimmer-v3/repair-asm/validation.jsonl equals summary.json attempted"
+      ]
+    },
+    {
+      "title": "Assembly repair on v3 seed 3",
+      "description": "As the owner, I want the same measurement on a second sample, because 15 assets is a small sample.",
+      "steps": [
+        "Run `bash scripts/imp_ops.sh start repair-asm-v3s3` then wait as in the previous story.",
+        "Copy runs/glb_v3/glimmer-v3-s3/repair-asm/summary.json into notes and add the row to docs/14 section 10."
+      ],
+      "criteria": [
+        "summary.json exists with exit 0 and its numbers are copied verbatim",
+        "`bash scripts/imp_ops.sh status` shows no job running"
+      ]
+    },
+    {
+      "title": "Adaptive best-of-N cost and reports",
+      "description": "As the owner, I want the time saved by stopping at the first assembled sample.",
+      "steps": [
+        "Run `.venv/bin/python scripts/glb_best_of_cost.py --runs runs/glb_v3/glimmer-v3 runs/glb_v3/glimmer-v3-s2 runs/glb_v3/glimmer-v3-s3 --briefs bench/glb/briefs.jsonl --out runs/imp/adaptive_cost.json` (use the briefs path glb_bench.py uses by default if different) and copy the printed table into notes.",
+        "Regenerate the report with the two repair-asm directories as --extra-runs into runs/imp/report_asm_repair.md (command from docs/14 section 3).",
+        "Write runs/imp/RESULTS2.md: the repair rows, the adaptive cost table versus always-3, and a plain statement of what is not measured (no blind rating yet, ratings of repaired assets not collected, best-of picks use assembled so its assembled rate is partly by construction)."
+      ],
+      "criteria": [
+        "runs/imp/adaptive_cost.json and RESULTS2.md exist and every number in RESULTS2.md appears in a command output in notes",
+        "RESULTS2.md contains a 'Not measured' section"
+      ]
+    }
+  ]
+}

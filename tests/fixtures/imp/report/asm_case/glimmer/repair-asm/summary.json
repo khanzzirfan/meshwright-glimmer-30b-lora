@@ -1,0 +1,13 @@
+{
+  "mode": "assembly",
+  "selected": 2,
+  "attempted": 2,
+  "repaired": 2,
+  "ids_repaired": [
+    "c2",
+    "c4"
+  ],
+  "model": "glimmer",
+  "system_file": "prompts/system_glb_v3.txt",
+  "system_sha256": "0"
+}

@@ -14,7 +14,7 @@
     "One story per iteration. Never run two jobs at once; scripts/imp_ops.sh refuses and you must not work around it.",
     "A foreground command may run for at most about 9 minutes (scripts/imp_ops.sh wait caps itself at 540 seconds). Do not poll in a loop or call sleep yourself.",
     "Never read or use runs/glb_v3/claude_ratings_unblinded.csv or any rating.csv to choose, filter or pick outputs; ratings are only compared after the fact in US-002.",
-    "Do not output the completion promise unless every acceptance criterion holds. If a criterion cannot hold yet, say why in notes and stop.",
+    "The completion tag is matched literally by the harness. Write it only when every acceptance criterion holds. When a criterion cannot hold yet, never type the tag, not even inside a sentence that says you are not using it; say 'no completion signal this iteration' instead. If a criterion cannot hold yet, say why in notes and stop.",
     "Record only real results: copy numbers from command output; where unknown write 'not measured'."
   ],
   "specs": [

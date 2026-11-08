@@ -8,7 +8,7 @@ Map of everything in muse-threejs. Status and the to-do list live in [NEXT-STEPS
 | [NEXT-STEPS.md](NEXT-STEPS.md) | Tracker: where we are, what to do next, decisions, results log |
 | [docs/HANDOVER.md](docs/HANDOVER.md) | **Read first if you are taking over:** live paid resources, what is running, next steps in order |
 | [README.md](README.md) | What the project is, the pipeline, quickstart |
-| [ralph/README.md](ralph/README.md) | How to run the 4 Ralph PRDs one after another |
+| [ralph/README.md](ralph/README.md) | How to run the Ralph PRDs one after another (the GLB improvement pairs: `imp-1`+`imp-ops`, then `imp-2`+`imp-ops-2`) |
 
 ## Docs
 | # | Doc | Read when |

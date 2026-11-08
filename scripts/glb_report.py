@@ -249,11 +249,60 @@ def merge_assembly_rows(base_lines, repair_lines):
     return [by_id[brief_id] for brief_id in order]
 
 
+def merge_by_ids(base_items, repair_items, ids):
+    """Base rows or assembly lines with the repaired item substituted for each id in `ids` (imp-2).
+
+    Only the ids the assembly repair was applied to (`summary.json` `ids_repaired`) take the repaired
+    ok/assembly values; every other brief keeps the original run's item.
+    """
+    replaced = set(ids)
+    repair_by_id = {item["id"]: item for item in repair_items or []}
+    merged = []
+    seen = set()
+    for item in base_items or []:
+        brief_id = item["id"]
+        merged.append(repair_by_id[brief_id] if brief_id in replaced and brief_id in repair_by_id else item)
+        seen.add(brief_id)
+    for item in repair_items or []:
+        if item["id"] in replaced and item["id"] not in seen:
+            merged.append(item)
+            seen.add(item["id"])
+    return merged
+
+
+def repaired_ids(directory, repair_rows):
+    """The ids an assembly repair was applied to: `summary.json` `ids_repaired`, else the repair rows."""
+    summary_file = Path(directory) / "summary.json"
+    if summary_file.exists():
+        ids = json.loads(summary_file.read_text()).get("ids_repaired")
+        if ids is not None:
+            return ids
+    return [row["id"] for row in repair_rows]
+
+
 def load_extra_run(name, directory):
-    """Load one --extra-runs entry. A `repair` directory becomes '<model> after 1 repair', merged
-    with its parent run so its pass count is the original ok ids plus the repaired ids."""
+    """Load one --extra-runs entry.
+
+    A `repair` directory becomes '<model> after 1 repair', merged with its parent run so its pass
+    count is the original ok ids plus the repaired ids. A `repair-asm` directory becomes '<model>
+    after assembly repair': the ids in its `summary.json` `ids_repaired` take the repaired ok and
+    assembled values, every other brief keeps the original run's (imp-2 US-003).
+    """
     directory = Path(directory)
     parent = directory.parent
+    if directory.name == "repair-asm" and (parent / "validation.jsonl").exists():
+        base = load_model(parent)
+        repair = load_model(directory)
+        ids = repaired_ids(directory, repair["rows"])
+        loaded = {
+            "rows": merge_by_ids(base["rows"], repair["rows"], ids),
+            "raws": {**base["raws"], **repair["raws"]},
+            "assembly": (
+                None if base["assembly"] is None and repair["assembly"] is None
+                else merge_by_ids(base["assembly"], repair["assembly"], ids)
+            ),
+        }
+        return f"{parent.name} after assembly repair", loaded
     if directory.name == "repair" and (parent / "validation.jsonl").exists():
         base = load_model(parent)
         repair = load_model(directory)
@@ -326,7 +375,8 @@ def render_markdown(report):
         "Model", "Pass (95% Wilson)", "Export", "Animated pass", "Median triangles",
         "Max triangles", "Share <= 5000 tris", "Recognisable", "Median tokens",
         "Median seconds", "Total seconds",
-        "Assembled (of valid)", "Median parts", "Good (rated 2), secondary",
+        "Assembled (of valid)", "Assembled (of all briefs)", "Median parts",
+        "Good (rated 2), secondary",
     ]
     lines.append("| " + " | ".join(header) + " |")
     lines.append("|" + "|".join("---" for _ in header) + "|")
@@ -335,9 +385,14 @@ def render_markdown(report):
         low, high = m["wilson"]
         assembly = m.get("assembly")
         assembled_cell = "not computed"
+        assembled_all_cell = "not computed"
         parts_cell = "not computed"
         if assembly:
             assembled_cell = f"{assembly['assembled']}/{assembly['valid']} ({_percent(assembly['share'])})"
+            share_all = assembly["assembled"] / report["briefs"] if report["briefs"] else None
+            assembled_all_cell = (
+                f"{assembly['assembled']}/{report['briefs']} ({_percent(share_all)})"
+            )
             parts_cell = _number(assembly["median_parts"])
         lines.append("| " + " | ".join([
             name,
@@ -352,6 +407,7 @@ def render_markdown(report):
             _number(m["cost"]["median_seconds"]),
             _number(m["cost"]["total_seconds"]),
             assembled_cell,
+            assembled_all_cell,
             parts_cell,
             _percent(m.get("good_rate")) if "good_rate" in m else "not rated",
         ]) + " |")
@@ -401,7 +457,8 @@ def main(argv=None):
     ap.add_argument(
         "--extra-runs", action="append", default=[], metavar="NAME=DIR",
         help="add a derived run as an extra row (repeatable); a repair directory is labelled "
-             "'<model> after 1 repair' and merges its parent's passes",
+             "'<model> after 1 repair' and merges its parent's passes, and a repair-asm directory is "
+             "labelled '<model> after assembly repair' and takes the repaired ids from its summary.json",
     )
     a = ap.parse_args(argv)
 

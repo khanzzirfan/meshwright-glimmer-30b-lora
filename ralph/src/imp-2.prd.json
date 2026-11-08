@@ -1,0 +1,98 @@
+{
+  "name": "GLB improvement 2: assembly repair and adaptive best-of-N",
+  "branchName": "ralph/imp-2",
+  "description": "Offline tooling that targets the main weakness the imp-ops numbers show: single-shot v3 assets are valid (about 90%) but only about 65% assembled, while best-of-3 reaches 100% valid and 87.5% assembled at 3x the time. Add (1) an assembly repair turn that tells the model which parts float or are disconnected, (2) a sequential best-of-N cost simulator that stops sampling at the first assembled valid candidate, (3) report columns over all briefs, (4) imp_ops.sh jobs for the follow-up.",
+  "standingRule": "Offline-only PRD. Build and test with fixtures, fake HTTP servers on localhost and temp dirs. Never call the real Ollama, never run the benchmark, never read or write runs/, data/, out/ or eval/, never edit briefs, bench/glb/eval_subjects.json or prompts/. Never commit. Assembly stays a quality signal, never a validity failure reason. Never type the literal completion tag except when every criterion holds.",
+  "specs": [
+    "docs/14-glb-improvement.md",
+    "docs/13-glb-code-track.md"
+  ],
+  "readFirst": [
+    "docs/14-glb-improvement.md sections 4-6 and 10",
+    "scripts/glb_repair.py and tests/py/test_glb_repair.py (the existing repair, reuse its chat helper and fake-server test pattern)",
+    "scripts/glb_best_of.py (ranking rules)",
+    "scripts/glb_check.mjs assembly() output fields"
+  ],
+  "owns": [
+    "scripts/glb_repair.py",
+    "scripts/glb_best_of_cost.py",
+    "scripts/glb_report.py",
+    "scripts/imp_ops.sh",
+    "tests/py/test_glb_repair.py",
+    "tests/py/test_glb_best_of_cost.py",
+    "tests/py/test_glb_report.py",
+    "tests/py/test_imp_ops.py",
+    "docs/14-glb-improvement.md",
+    "README.md",
+    "INDEX.md",
+    "NEXT-STEPS.md",
+    "ralph/README.md"
+  ],
+  "manualGates": [
+    "Owner reviews the imp-2 diff and commits it",
+    "Owner runs ralph/imp-ops-2.prd.json (local only)",
+    "Owner approves any rented-GPU spend; Ralph never creates pods"
+  ],
+  "stories": [
+    {
+      "title": "Assembly repair mode in glb_repair.py",
+      "description": "As a product user, I want a valid but badly assembled asset fed back once with what is wrong, because floating and disconnected parts are the main quality failure (docs/14 section 2).",
+      "steps": [
+        "Add `--mode assembly` to scripts/glb_repair.py (default stays `error`, existing behaviour unchanged). Selection: rows in RUN_DIR/validation.jsonl with ok == true whose RUN_DIR/assembly.jsonl entry has assembly.assembled == false; skip rows with parts < 3.",
+        "Fix message: 'Your page works, but the exported model is not assembled: it has N separate groups of parts (largest group holds P% of the parts), F parts float in the air and the lowest point is G above the ground. Reply with the complete corrected HTML file in one ```html block. Keep the same design and parts; only move or resize parts so they touch their neighbours, sit on the ground (lowest y = 0), and keep it in one THREE.Group named \"asset\".' Numbers come from the assembly stats (percent and metres rounded to 2 decimals).",
+        "Outputs go to RUN_DIR/repair-asm/ (raw, glb, shots, validation.jsonl, summary.json {mode, selected, attempted, repaired, assembled_after, ids_repaired}). `repaired` counts rows that are still ok after repair; `assembled_after` counts those also assembled (read from the new validation rows' stats.glb.assembly). Resumable.",
+        "Tests: fake Ollama server; assert the 4-message order, the fix text contains the three numbers, rows with assembled true / not ok / parts < 3 are skipped, error mode selection is unchanged (existing tests still pass), re-run makes no new requests."
+      ],
+      "criteria": [
+        "Fake-server test asserts the assembly fix message text with the group, percent, floater and ground numbers",
+        "Existing error-mode tests in tests/py/test_glb_repair.py still pass unchanged",
+        "Re-running makes no new HTTP requests for ids already written (asserted)"
+      ]
+    },
+    {
+      "title": "Sequential best-of-N cost simulator (glb_best_of_cost.py)",
+      "description": "As the owner, I want to know how much of best-of-3's time an adaptive rule would save, using samples I already have.",
+      "steps": [
+        "Create scripts/glb_best_of_cost.py --runs DIR [DIR ...] --briefs FILE [--out FILE.json]. Each run dir has validation.jsonl, assembly.jsonl (optional) and raw/<id>.json with a seconds field (use the same field glb_report.py reads for Median seconds).",
+        "Rule: for each brief walk the runs in the given order; stop at the first candidate that is ok and assembled (kind-aware assembly from assembly.jsonl); otherwise continue to the last run and pick with the same ranking glb_best_of.py uses (import it, do not copy it). Report: mean samples used per brief, mean and median seconds per brief, share ok, share assembled, versus always-3 (samples 3.0, seconds sum of all three).",
+        "Print a short table and write the JSON. Tests with tiny fixture runs (3 runs, 4 briefs) checking each number by hand: one brief stops at sample 1, one at 2, one never assembles (uses all 3, picks by ranking), one has no ok candidate."
+      ],
+      "criteria": [
+        "Hand-computed expected values for the 4-brief fixture are asserted (samples used, seconds, shares)",
+        "The picker ranking is imported from glb_best_of.py, not duplicated (asserted by a test that monkeypatches it)",
+        "Missing assembly.jsonl for a run is handled: those rows count as not assembled, with a printed warning"
+      ]
+    },
+    {
+      "title": "Report columns over all briefs",
+      "description": "As the owner, I want assembly shown against all 48 briefs, not only the valid ones, so a model cannot look better by failing more.",
+      "steps": [
+        "In scripts/glb_report.py add a column 'Assembled (of all briefs)' = assembled count / brief count next to the existing 'Assembled (of valid)'. Keep column order otherwise; update tests/py/test_glb_report.py with a fixture where the two denominators differ.",
+        "Support `--extra-runs NAME=DIR` where DIR is a `repair-asm` directory: label it '<model> after assembly repair'; its ok and assembled counts take the repaired rows' values where the repair was applied and the original rows elsewhere (ids from summary.json ids_repaired and the original run).",
+        "Document both in docs/14 section 3 in two sentences."
+      ],
+      "criteria": [
+        "A fixture with 4 briefs, 3 ok, 2 assembled shows 2/3 of valid and 2/4 of all briefs (asserted)",
+        "The after-assembly-repair row merges original and repaired rows by id (asserted on a fixture)",
+        "bash scripts/check.sh passes"
+      ]
+    },
+    {
+      "title": "imp_ops.sh jobs for the follow-up",
+      "description": "As an operator agent, I want fixed commands for the follow-up runs.",
+      "steps": [
+        "Add jobs to scripts/imp_ops.sh: `repair-asm-v3` runs `.venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3 --model-row glimmer-v3 --mode assembly` and `repair-asm-v3s3` the same for runs/glb_v3/glimmer-v3-s3. Same prompt-hash refusal, one-job-at-a-time and IMP_OPS_DRY behaviour as the existing jobs. Use the `--flag=value` form for any value that may start with a dash.",
+        "Extend tests/py/test_imp_ops.py with the two new commands in the dry-run table.",
+        "Document the jobs in docs/14 section 3 and add imp-2 and imp-ops-2 to ralph/README.md, INDEX.md and NEXT-STEPS.md (tests/py/test_docs_imp.py style checks if present)."
+      ],
+      "criteria": [
+        "`IMP_OPS_DRY=1 start repair-asm-v3` prints the exact command above (asserted)",
+        "The prompt-hash refusal applies to the new jobs (asserted)",
+        "bash scripts/check.sh passes"
+      ]
+    }
+  ],
+  "requires": [
+    "ralph/imp-ops.prd.json: US-007 passing (best-of-3 report exists)"
+  ]
+}

@@ -6,6 +6,8 @@ decisions with a date. Map of files: [INDEX.md](INDEX.md).
 ## Imp track (8 Nov 2026): GLB improvement
 - [ ] Offline build: `ralph/imp-1.prd.json` (8 stories) — assembly metric, repair retry, best-of-N picker, phase 2 data from ccore's set, cost estimate and docs wiring. Spec: [docs/14-glb-improvement.md](docs/14-glb-improvement.md).
 - [ ] Local ops: `ralph/imp-ops.prd.json` (8 stories) — assembly backfill, repair on v3's failures, two more v3 seeds and the best of 3, then the phase 2 dataset build. Every job runs through `scripts/imp_ops.sh`.
+- [ ] Follow-up build: `ralph/imp-2.prd.json` (4 stories) — assembly repair mode, an adaptive best-of-N cost simulator, the `Assembled (of all briefs)` report column and the `imp_ops.sh` assembly-repair jobs. Spec: [docs/14-glb-improvement.md](docs/14-glb-improvement.md).
+- [ ] Follow-up ops: `ralph/imp-ops-2.prd.json` (4 stories) — assembly repair on v3 seed 1 and seed 3 plus the adaptive cost, all through `scripts/imp_ops.sh`.
 - [ ] Manual gate: owner reviews the imp-1 diff, then approves the phase 2 LoRA spend (docs/14 section 8).
 
 ## Now (7 Nov 2026): GLB code benchmark

@@ -37,9 +37,9 @@ ccore's training set (`ccore/ThreeJS-3D-GLB-Assets`, MIT, 3,501 train and 417 va
 
 B and C are product features. The benchmark's primary number stays single-shot pass and recognisable rate, as frozen in docs/13. Report B and C as separate rows ("pass after 1 repair", "best of 3"), never in place of the single-shot row.
 
-`glb_report.py` carries this: `Assembled (of valid)` and `Median parts` are appended from `assembly.jsonl` (or `stats.glb.assembly` in the validation rows; `not computed` when a model has neither), and `Good (rated 2), secondary` is the share of briefs rated exactly 2 next to the recognisable rate. `--extra-runs NAME=DIR` (repeatable) adds a derived run as an extra row; a repair directory (`<model>/repair`, section 5) is labelled `<model> after 1 repair` and its pass count is the original ok ids plus the repaired ids, so single-shot, repair and best-of-3 sit side by side.
+`glb_report.py` carries this: `Assembled (of valid)`, `Assembled (of all briefs)` and `Median parts` are appended from `assembly.jsonl` (or `stats.glb.assembly` in the validation rows; `not computed` when a model has neither) and `Good (rated 2), secondary` is the share of briefs rated exactly 2 next to the recognisable rate; `Assembled (of valid)` is the assembled count over the measured rows while `Assembled (of all briefs)` divides the same count by every brief, so a model cannot look better by failing more. `--extra-runs NAME=DIR` (repeatable) adds a derived run as an extra row: a repair directory (`<model>/repair`, section 5) is labelled `<model> after 1 repair` and its pass count is the original ok ids plus the repaired ids, and a `repair-asm` directory (section 5) is labelled `<model> after assembly repair`, taking the repaired ok and assembled values for the ids in its `summary.json` `ids_repaired` and the original run's values elsewhere, so single-shot, repair and best-of-3 sit side by side.
 
-`scripts/imp_ops.sh` is the only way the imp-ops PRD starts the long local jobs, so an operator agent never runs a raw bench or repair command. It runs one job at a time, detached and resumable: `bash scripts/imp_ops.sh preflight`, `start JOB`, `wait JOB [SECONDS]` (540 s cap) and `status`. `start v3s2` runs `.venv/bin/python scripts/glb_bench.py --out-root runs/glb_v3 --only glimmer-v3 --seed 2 --run-suffix -s2`, `start v3s3` is the same with `--seed 3 --run-suffix -s3`, and `start repair-v3` runs `.venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3 --model-row glimmer-v3`. `start` refuses unless `runs/glb_v3/PROMPT_FROZEN.json` matches `prompts/system_glb_v3.txt` and refuses a second job while one is alive; `IMP_OPS_DRY=1 start JOB` prints the command instead.
+`scripts/imp_ops.sh` is the only way the imp-ops PRD starts the long local jobs, so an operator agent never runs a raw bench or repair command. It runs one job at a time, detached and resumable: `bash scripts/imp_ops.sh preflight`, `start JOB`, `wait JOB [SECONDS]` (540 s cap) and `status`. `start v3s2` runs `.venv/bin/python scripts/glb_bench.py --out-root runs/glb_v3 --only glimmer-v3 --seed 2 --run-suffix=-s2`, `start v3s3` is the same with `--seed 3 --run-suffix=-s3`, and `start repair-v3` runs `.venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3 --model-row glimmer-v3`. The assembly repair of section 5 is two more jobs: `start repair-asm-v3` runs `.venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3 --model-row glimmer-v3 --mode assembly` and `start repair-asm-v3s3` is the same on `runs/glb_v3/glimmer-v3-s3` (same `--model-row glimmer-v3`). `start` refuses unless `runs/glb_v3/PROMPT_FROZEN.json` matches `prompts/system_glb_v3.txt` and refuses a second job while one is alive; `IMP_OPS_DRY=1 start JOB` prints the command instead.
 
 ## 4. Assembly metric (A)
 
@@ -70,6 +70,8 @@ Thresholds are first guesses. imp-ops US-002 compares `assembled` with the unbli
 - **Summary:** it prints `repaired X of Y` and writes `RUN_DIR/repair/summary.json`.
 - **Resumable:** an existing raw file is skipped.
 
+`--mode assembly` (imp-2) repairs the other measured failure: a page that is valid but whose asset is not assembled. It selects the ok rows whose `assembly.jsonl` entry has `assembled: false` and at least 3 parts; the fix message quotes the components, the largest component's share (percent, 2 decimals), the floaters and the ground gap (metres, 2 decimals) and asks the model to move or resize parts so they touch, rest on the ground with the lowest y = 0, and stay in one `THREE.Group` named `asset`. Output goes to `RUN_DIR/repair-asm/` (same layout) and `repair-asm/summary.json` adds `mode` and `assembled_after` (the repaired rows that are also assembled). Error mode stays the default and is unchanged.
+
 ## 6. Seeds and best-of-N (C)
 
 - `teacher_generate.py --seed N`: passed as `options.seed` on the Ollama native route. It is recorded in each raw row and changes nothing when absent.
@@ -83,6 +85,8 @@ Thresholds are first guesses. imp-ops US-002 compares `assembled` with the unbli
   6. the run order given on the command line, as the tie-break
 
   The ranking uses only automatic signals, never the eval ratings.
+
+`scripts/glb_best_of_cost.py --runs DIR [DIR ...] --briefs FILE [--out FILE.json]` replays samples already on disk to price an adaptive best-of-N rule (imp-2 US-002): per brief it stops at the first candidate that is `ok` and assembled, falling through to `glb_best_of.py`'s ranking otherwise, and reports mean samples, mean/median seconds and the ok/assembled shares of the picks against the always-N baseline; seconds are `raw/<id>.json` `usage.seconds`, a run without `assembly.jsonl` warns and its rows count as not assembled, and `--out` (the report JSON) must be outside `data/`, `out/` and `eval/`.
 
 ## 7. Phase 2 data (D)
 
@@ -121,8 +125,10 @@ The owner approves the spend first. Starting points, all of them estimates, not 
 | Date | Step | Result |
 |---|---|---|
 | 8 Nov 2026 | ccore data sample check | 299 of 300 valid (99.7%) |
-| | assembly backfill vs ratings | not run |
-| | repair on v3 failures | not run |
-| | best of 3 (v3) | not run |
-| | phase 2 data build | not run |
+| | assembly backfill vs ratings | assembled 26/44 (v2), 36/45 (v2-think), 26/30 (ccore-q8), 28/43 (v3); of rated-2 assets, assembled 5/11 (v2), 9/13 (v3), 21/24 (ccore) |
+| | repair on v3 failures | repaired 4 of 5 |
+| | best of 3 (v3) | valid 48/48, assembled 42/48 |
+| | assembly repair on v3 seed 1 | repaired 15 of 15, assembled after 11 |
+| | assembly repair on v3 seed 3 | repaired 14 of 14, assembled after 5 |
+| | phase 2 data build | train 541, val 86 |
 | | phase 2 LoRA | not run |

@@ -81,7 +81,7 @@ resumable: saved raw answers are skipped, so rerunning the same command continue
 - `--models`, `--briefs`, `--num-ctx` (default 49152) and `--max-tokens` (default 40000) override the defaults.
 - `--only NAME` (repeatable) selects rows by name, including disabled ones; `--limit N` stops after N briefs.
 - `--seed N` is forwarded to `teacher_generate.py` (`options.seed`) and `--run-suffix S` appends `S` to every run
-  directory (`<out-root>/<name><S>`, e.g. `--run-suffix -s2` for a second sample). Both are omitted by default, so
+  directory (`<out-root>/<name><S>`, e.g. `--run-suffix=-s2` for a second sample). Both are omitted by default, so
   the commands for a plain run are byte-identical to before.
 - `--allow-paid` is required for rows marked `paid`, and `--dry-run` prints every command without running it.
 - The script refuses to run a model whose system file is missing or still contains the ccore placeholder, and a
@@ -91,10 +91,11 @@ resumable: saved raw answers are skipped, so rerunning the same command continue
 interval, export rate, animated pass (pass **and** `stats.glb.animations > 0`), triangle median/max and the share of
 passes at or under 5,000 triangles, failures per reason, cost, passes by domain, head-to-head counts and, when
 ratings exist, the recognisable rate. Every brief in `--briefs` counts: one a model never validated is a failure
-with the reason `missing`. Three columns are appended for docs/14: `Assembled (of valid)` and `Median parts` (from
-`assembly.jsonl`, else `stats.glb.assembly`; `not computed` when a model has neither) and `Good (rated 2),
-secondary`, the share of briefs rated exactly 2. The docs/14 section 3 product rows stay separate from the frozen
-single-shot row.
+with the reason `missing`. Four columns are appended for docs/14: `Assembled (of valid)`, `Assembled (of all
+briefs)` and `Median parts` (from `assembly.jsonl`, else `stats.glb.assembly`; `not computed` when a model has
+neither) and `Good (rated 2), secondary`, the share of briefs rated exactly 2. `Assembled (of valid)` divides by
+the measured rows and `Assembled (of all briefs)` by every brief, so a model cannot look better by failing more.
+The docs/14 section 3 product rows stay separate from the frozen single-shot row.
 
 ```bash
 .venv/bin/python scripts/glb_report.py --root eval/glb_bench --briefs bench/glb/briefs.jsonl
@@ -110,7 +111,9 @@ single-shot row.
   Without `--ratings` the recognisable and good columns say `not rated`.
 - `--extra-runs NAME=DIR` (repeatable) adds a derived run as an extra row; `NAME` is the label. A repair directory
   (a `repair/` folder under the model run, docs/14 section 5) is labelled `<model> after 1 repair` and its pass
-  count is the original ok ids plus the repaired ids.
+  count is the original ok ids plus the repaired ids. A `repair-asm/` folder (section 5) is labelled `<model> after
+  assembly repair`: the ids in its `summary.json` `ids_repaired` take the repaired ok and assembled values, every
+  other brief keeps the original run's.
 - It writes `<root>/report.json` and `<root>/report.md`; the markdown has one row per model plus failures, domain and
   head-to-head tables.
 
@@ -175,8 +178,21 @@ already on disk, printing `assembled X of Y valid` and leaving `validation.jsonl
   --mode glb --allow-addons` with the bench's directory layout. `--no-validate` generates without
   validating.
 - It prints `repaired X of Y` and writes `repair/summary.json`
-  (`{selected, attempted, repaired, ids_repaired, model, system_file, system_sha256}`). An existing
+  (`{mode, selected, attempted, repaired, ids_repaired, model, system_file, system_sha256}`). An existing
   `repair/raw/<id>.json` is skipped, so a rerun makes no new requests for ids already written.
+
+`--mode assembly` (imp-2) targets the other failure the validator measures: a valid page whose exported
+asset has floating or disconnected parts (docs/14 section 2). It selects the ok rows whose `assembly.jsonl`
+entry has `assembled: false` and at least 3 parts, and the fix message quotes the assembly numbers — the
+separate groups of parts, the largest group's share as a percent, the floating parts and the ground gap in
+metres, both rounded to 2 decimals — asking the model to move or resize parts so they touch, sit on the
+ground (lowest y = 0) and stay in one `THREE.Group` named `"asset"`. Output goes under `DIR/repair-asm/`,
+and `repair-asm/summary.json` adds `mode` and `assembled_after` (the repaired rows that are ok and assembled).
+Error mode stays the default and is unchanged.
+
+```bash
+.venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3 --model-row glimmer-v3 --mode assembly
+```
 
 ## Best-of-N picker (glb_best_of.py)
 
@@ -201,6 +217,29 @@ best candidate automatically (docs/14 section 6), using only automatic signals:
   `glb_report.py ... --extra-runs best-of-3=<out>` reports it. `--out/assembly.jsonl` and
   `--out/picks.json` (`{id: {picked_from, rank_keys}}`, `null` for a brief with no candidate) are written too, and
   it prints `picked X of Y briefs`.
+
+## Adaptive best-of-N cost (glb_best_of_cost.py)
+
+`scripts/glb_best_of_cost.py` replays samples a set of runs already holds and reports what an adaptive
+best-of-N rule would have spent, so best-of-3's 3x time can be sized against an early-exit rule
+(docs/14 section 6):
+
+```bash
+.venv/bin/python scripts/glb_best_of_cost.py \
+  --runs runs/glb_v3/glimmer-v3 runs/glb_v3/glimmer-v3-s2 runs/glb_v3/glimmer-v3-s3 \
+  --briefs bench/glb/briefs.jsonl --out runs/imp/best3/glimmer-v3-cost.json
+```
+
+- For each brief it walks the runs in the given order and stops at the first candidate that is both `ok` and
+  assembled (the kind-aware `assembled` boolean in `assembly.jsonl`), spending only the samples up to that point.
+  A brief with no such candidate falls through to the whole list and is picked with `glb_best_of.py`'s ranking
+  (imported, not copied).
+- It prints a short table and, with `--out FILE.json`, writes the report: the adaptive rule's mean samples used
+  per brief, mean and median seconds per brief, and the `ok`/`assembled` shares of the picks, next to the always-N
+  baseline (every run, all samples spent). Seconds come from the same field `glb_report.py` reads for `Median
+  seconds` (`raw/<id>.json` `usage.seconds`, `0.0` when absent).
+- A run without `assembly.jsonl` prints `warning: <run> has no assembly.jsonl; its rows count as not assembled`
+  and its rows never stop the walk. `--out` must be outside `data/`, `out/` and `eval/`.
 
 ## Phase 2 data (ccore_prep.py)
 
@@ -254,14 +293,15 @@ runs a raw bench or repair command. Jobs run detached and are resumable, and one
 
 ```bash
 bash scripts/imp_ops.sh preflight        # Ollama up/down, running job, v3 hash check, imp-1 status
-bash scripts/imp_ops.sh start v3s2       # or v3s3, repair-v3
+bash scripts/imp_ops.sh start v3s2       # or v3s3, repair-v3, repair-asm-v3, repair-asm-v3s3
 bash scripts/imp_ops.sh wait v3s2        # wait up to 540 s; exit 0 finished, 2 still running, 1 failed
 bash scripts/imp_ops.sh status
 ```
 
 - `v3s2` / `v3s3` run `.venv/bin/python scripts/glb_bench.py --out-root runs/glb_v3 --only glimmer-v3 --seed 2|3
-  --run-suffix -s2|-s3`; `repair-v3` runs `.venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3
-  --model-row glimmer-v3`.
+  --run-suffix=-s2|-s3`; `repair-v3` runs `.venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3
+  --model-row glimmer-v3`. `repair-asm-v3` adds `--mode assembly` (docs/14 section 5) to the same run, and
+  `repair-asm-v3s3` is the same on `runs/glb_v3/glimmer-v3-s3` (same `--model-row glimmer-v3`).
 - `start` refuses unless `runs/glb_v3/PROMPT_FROZEN.json` exists and its `sha256` equals the SHA-256 of
   `prompts/system_glb_v3.txt`, and it refuses a second job while one is alive. Jobs have pid/exit/log/started files
   under `runs/imp/jobs/`.

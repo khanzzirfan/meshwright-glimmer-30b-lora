@@ -161,7 +161,10 @@ def test_old_fixtures_keep_the_existing_columns_and_append_new_ones(tmp_path):
         "Total seconds |"
     )
     assert header.startswith(old_header)
-    assert header.endswith("| Assembled (of valid) | Median parts | Good (rated 2), secondary |")
+    assert header.endswith(
+        "| Assembled (of valid) | Assembled (of all briefs) | Median parts | "
+        "Good (rated 2), secondary |"
+    )
 
     row = next(line for line in lines if line.startswith("| m_a |"))
     old_row = (
@@ -169,7 +172,7 @@ def test_old_fixtures_keep_the_existing_columns_and_append_new_ones(tmp_path):
         "300 | 3 | 15 |"
     )
     assert row.startswith(old_row)
-    assert row.endswith("| not computed | not computed | 33.3% |")
+    assert row.endswith("| not computed | not computed | not computed | 33.3% |")
 
 
 def test_assembly_summary_from_assembly_jsonl():
@@ -225,9 +228,24 @@ def test_report_has_assembled_and_secondary_good_columns():
     assert report["models"]["m_no_assembly"]["assembly"] is None
 
     markdown = glb_report.render_markdown(report)
-    assert "| Assembled (of valid) | Median parts | Good (rated 2), secondary |" in markdown
-    assert "| 2/3 (66.7%) | 3 | 25.0% |" in markdown
+    assert (
+        "| Assembled (of valid) | Assembled (of all briefs) | Median parts | "
+        "Good (rated 2), secondary |" in markdown
+    )
+    assert "| 2/3 (66.7%) | 2/4 (50.0%) | 3 | 25.0% |" in markdown
     assert "not computed" in markdown
+
+
+def test_assembly_of_all_briefs_divides_by_every_brief_not_only_valid():
+    """The 4-brief fixture is 3 ok and 2 assembled: 2/3 of valid and 2/4 of all briefs."""
+    report = glb_report.build_report(IMP, IMP_BRIEFS)
+    assembly = report["models"]["m_as"]["assembly"]
+
+    assert report["briefs"] == 4
+    assert report["models"]["m_as"]["pass"] == 3
+    assert (assembly["assembled"], assembly["valid"], assembly["share"]) == (2, 3, 2 / 3)
+    assert assembly["assembled"] / report["briefs"] == 2 / 4
+    assert "| 2/3 (66.7%) | 2/4 (50.0%) |" in glb_report.render_markdown(report)
 
 
 def test_extra_runs_labels_a_repair_row_and_merges_passes():
@@ -268,3 +286,72 @@ def test_cli_extra_runs_writes_the_row(tmp_path):
     report = json.loads((root / "report.json").read_text())
     assert "glimmer after 1 repair" in report["models"]
     assert "glimmer after 1 repair" in (root / "report.md").read_text()
+
+
+# --- imp-2 US-003: assembled-of-all-briefs column and the repair-asm --extra-runs row ------------
+
+ASM = IMP / "asm_case" / "glimmer" / "repair-asm"
+
+
+def test_assembly_repair_extra_run_merges_original_and_repaired_rows_by_id():
+    report = glb_report.build_report(
+        IMP, IMP_BRIEFS, None, None, extra_runs=[("repair-asm", ASM)]
+    )
+    merged = report["models"]["glimmer after assembly repair"]
+
+    # original glimmer: 3 ok (c1, c2, c4) and 1 assembled (c1); the repaired c2 becomes assembled
+    assert merged["pass"] == 3
+    assert merged["assembly"] == {"valid": 3, "assembled": 2, "share": 2 / 3, "median_parts": 3}
+    assert merged["assembly"]["assembled"] / report["briefs"] == 2 / 4
+    assert "glimmer after assembly repair" in glb_report.render_markdown(report)
+
+
+def test_assembly_repair_merge_takes_the_repaired_row_and_assembly_for_repaired_ids():
+    label, loaded = glb_report.load_extra_run("repair-asm", ASM)
+    assert label == "glimmer after assembly repair"
+
+    by_id = {row["id"]: row for row in loaded["rows"]}
+    assert set(by_id) == {"c1", "c2", "c3", "c4"}
+    assert by_id["c2"]["stats"]["glb"]["triangles"] == 210  # the repaired row, not the original 200
+    assert by_id["c4"]["stats"]["glb"]["triangles"] == 310  # the repaired row, not the original 300
+    assert by_id["c1"]["stats"]["glb"]["triangles"] == 100  # untouched, keeps the original
+    assert by_id["c3"]["reasons"] == ["bad_glb"]
+
+    assembly = {line["id"]: line["assembly"] for line in loaded["assembly"]}
+    assert assembly["c2"]["assembled"] is True   # repaired false -> true
+    assert assembly["c4"]["assembled"] is False  # repaired but still not assembled
+    assert assembly["c1"]["assembled"] is True   # untouched original
+
+
+def test_merge_by_ids_takes_the_repaired_value_where_the_repair_was_applied():
+    base = [{"id": "a", "ok": True}, {"id": "b", "ok": True}]
+    repair = [{"id": "b", "ok": False}, {"id": "c", "ok": True}]
+    # only the id the repair was applied to (b) takes the repaired value; a is untouched
+    assert glb_report.merge_by_ids(base, repair, ["b"]) == [{"id": "a", "ok": True}, {"id": "b", "ok": False}]
+    # a repaired id not in the base run is still added
+    merged = {row["id"]: row["ok"] for row in glb_report.merge_by_ids(base, repair, ["b", "c"])}
+    assert merged == {"a": True, "b": False, "c": True}
+
+
+def test_repaired_ids_reads_the_summary_and_falls_back_to_the_repair_rows(tmp_path):
+    (tmp_path / "summary.json").write_text('{"ids_repaired": ["x", "y"]}')
+    assert glb_report.repaired_ids(tmp_path, [{"id": "z"}]) == ["x", "y"]
+    empty = tmp_path / "none"
+    empty.mkdir()
+    assert glb_report.repaired_ids(empty, [{"id": "z"}]) == ["z"]
+
+
+def test_cli_extra_runs_writes_the_assembly_repair_row(tmp_path):
+    root = tmp_path / "report"
+    shutil.copytree(IMP, root)
+
+    glb_report.main([
+        "--root", str(root), "--briefs", str(IMP_BRIEFS),
+        "--extra-runs", f"repair-asm={root / 'asm_case' / 'glimmer' / 'repair-asm'}",
+    ])
+
+    report = json.loads((root / "report.json").read_text())
+    row = report["models"]["glimmer after assembly repair"]
+    assert row["pass"] == 3
+    assert row["assembly"]["assembled"] == 2
+    assert "glimmer after assembly repair" in (root / "report.md").read_text()

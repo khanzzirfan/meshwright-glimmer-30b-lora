@@ -310,3 +310,168 @@ def test_unknown_model_row_is_refused(tmp_path, ollama):
 
     assert exc.value.code != 0
     assert recorder.requests == []
+
+
+# --- assembly mode (imp-2) -------------------------------------------------------------------
+
+A0_ASSEMBLY = {
+    "parts": 4, "components": 3, "largest_share": 0.66666,
+    "floaters": 2, "min_y": 0.123456, "ground_gap": 0.123456,
+    "tol": 0.02, "assembled": False,
+}
+A4_ASSEMBLY = {
+    "parts": 5, "components": 2, "largest_share": 0.5,
+    "floaters": 1, "min_y": 0.5, "ground_gap": 0.5,
+    "tol": 0.02, "assembled": False,
+}
+ASSEMBLY_FIX_A0 = (
+    "Your page works, but the exported model is not assembled: it has 3 separate groups of parts "
+    "(largest group holds 66.67% of the parts), 2 parts float in the air and the lowest point is "
+    "0.12 above the ground. "
+    "Reply with the complete corrected HTML file in one ```html block. "
+    "Keep the same design and parts; only move or resize parts so they touch their neighbours, "
+    "sit on the ground (lowest y = 0), and keep it in one THREE.Group named \"asset\"."
+)
+
+
+def write_assembly_run(tmp_path):
+    """A run where some ok rows are unassembled, plus an assembled row, a failing row and a tiny asset."""
+    run = tmp_path / "glimmer-v3"
+    (run / "raw").mkdir(parents=True)
+    rows = [
+        {"id": "a0", "ok": True, "reasons": [], "stats": {}},
+        {"id": "a1", "ok": True, "reasons": [], "stats": {}},
+        {"id": "a2", "ok": False, "reasons": ["js_error"], "stats": {}},
+        {"id": "a3", "ok": True, "reasons": [], "stats": {}},
+        {"id": "a4", "ok": True, "reasons": [], "stats": {}},
+    ]
+    assembly = [
+        {"id": "a0", "kind": "static", "assembly": A0_ASSEMBLY},
+        {"id": "a1", "kind": "static", "assembly": dict(A0_ASSEMBLY, assembled=True)},
+        {"id": "a2", "kind": "static", "assembly": A0_ASSEMBLY},
+        {"id": "a3", "kind": "static", "assembly": dict(A0_ASSEMBLY, parts=2)},
+        {"id": "a4", "kind": "static", "assembly": A4_ASSEMBLY},
+    ]
+    for row in rows:
+        write_raw(run, row["id"], f"<html>{row['id']}</html>")
+    (run / "validation.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))
+    (run / "assembly.jsonl").write_text("".join(json.dumps(r) + "\n" for r in assembly))
+    return run, ["a0", "a4"]
+
+
+def make_assembly_env(tmp_path):
+    system_file = tmp_path / "system.txt"
+    system_file.write_text("You are the GLB coder.\n")
+    run, ids = write_assembly_run(tmp_path)
+    models = write_models(tmp_path, system_file)
+    return run, ids, models, system_file
+
+
+def assembly_argv(run, models, url, *extra):
+    return ["--run", str(run), "--model-row", "glimmer-v3", "--models", str(models),
+            "--ollama-url", url, "--mode", "assembly", "--no-validate", *extra]
+
+
+def test_assembly_fix_message_has_the_group_percent_floater_and_ground():
+    text = glb_repair.assembly_fix_message(A0_ASSEMBLY)
+    assert text == ASSEMBLY_FIX_A0
+    assert "3 separate groups" in text
+    assert "66.67% of the parts" in text
+    assert "2 parts float" in text
+    assert "0.12 above the ground" in text
+
+
+def test_select_assembly_ids_skips_assembled_not_ok_and_too_few_parts(tmp_path):
+    run, ids = write_assembly_run(tmp_path)
+    rows = glb_repair.read_rows(run / "validation.jsonl")
+    assembly = {row["id"]: row for row in glb_repair.read_rows(run / "assembly.jsonl")}
+
+    # a1 is assembled, a2 is not ok, a3 has fewer than 3 parts.
+    assert glb_repair.select_assembly_ids(rows, assembly) == ids == ["a0", "a4"]
+
+
+def test_error_mode_selection_is_unchanged_on_the_assembly_fixture(tmp_path):
+    run, _ = write_assembly_run(tmp_path)
+    rows = glb_repair.read_rows(run / "validation.jsonl")
+
+    assert glb_repair.select_ids(rows) == ["a2"]
+
+
+def test_assembly_mode_fake_server_sees_the_four_messages(tmp_path, ollama):
+    url, recorder = ollama
+    run, ids, models, system_file = make_assembly_env(tmp_path)
+
+    run_main(assembly_argv(run, models, url, "--limit", "1"))
+
+    assert len(recorder.requests) == 1
+    body = recorder.requests[0]
+    assert [m["role"] for m in body["messages"]] == ["system", "user", "assistant", "user"]
+    assert body["messages"][0]["content"] == system_file.read_text()
+    assert body["messages"][1]["content"] == "Make a a0."
+    assert body["messages"][2]["content"] == "<html>a0</html>"
+    assert body["messages"][3]["content"] == ASSEMBLY_FIX_A0
+
+    saved = json.loads((run / "repair-asm" / "raw" / "a0.json").read_text())
+    assert saved["content"] == FIXED_HTML
+    assert saved["repair_of"] == "a0"
+    assert saved["fix_message"] == ASSEMBLY_FIX_A0
+    assert saved["brief"]["id"] == "a0"
+
+
+def test_assembly_mode_generates_one_request_per_selected_id(tmp_path, ollama):
+    url, recorder = ollama
+    run, ids, models, _ = make_assembly_env(tmp_path)
+
+    run_main(assembly_argv(run, models, url))
+
+    assert len(recorder.requests) == len(ids) == 2
+    for brief_id in ids:
+        assert (run / "repair-asm" / "raw" / f"{brief_id}.json").exists()
+    assert not (run / "repair").exists()  # assembly mode never writes the error-mode folder
+
+
+def test_assembly_mode_rerun_makes_no_new_requests(tmp_path, ollama):
+    url, recorder = ollama
+    run, ids, models, _ = make_assembly_env(tmp_path)
+
+    run_main(assembly_argv(run, models, url))
+    first = len(recorder.requests)
+    assert first == 2
+
+    run_main(assembly_argv(run, models, url))
+    assert len(recorder.requests) == first
+
+
+def test_assembly_summary_reports_mode_repaired_and_assembled_after(tmp_path, ollama):
+    url, recorder = ollama
+    run, ids, models, _ = make_assembly_env(tmp_path)
+
+    run_main(assembly_argv(run, models, url))
+
+    repair_rows = [
+        {"id": "a0", "ok": True, "reasons": [], "stats": {"glb": {"assembly": {"assembled": True}}}},
+        {"id": "a4", "ok": True, "reasons": [], "stats": {"glb": {"assembly": {"assembled": False}}}},
+    ]
+    (run / "repair-asm" / "validation.jsonl").write_text("".join(json.dumps(r) + "\n" for r in repair_rows))
+    run_main(assembly_argv(run, models, url))
+
+    summary = json.loads((run / "repair-asm" / "summary.json").read_text())
+    assert summary["mode"] == "assembly"
+    assert summary["selected"] == 2
+    assert summary["attempted"] == 0  # every raw file already existed
+    assert summary["repaired"] == 2
+    assert summary["assembled_after"] == 1
+    assert summary["ids_repaired"] == ["a0", "a4"]
+    assert summary["model"] == "glimmer-v3"
+
+
+def test_error_summary_defaults_to_error_mode(tmp_path, ollama):
+    url, recorder = ollama
+    run, ids, models, _ = make_env(tmp_path)
+
+    run_main(base_argv(run, models, url))
+
+    summary = json.loads((run / "repair" / "summary.json").read_text())
+    assert summary["mode"] == "error"
+    assert "assembled_after" not in summary
+

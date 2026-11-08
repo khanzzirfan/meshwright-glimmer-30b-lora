@@ -1,0 +1,2 @@
+{"id": "c2", "kind": "static", "assembly": {"parts": 5, "components": 1, "largest_share": 1.0, "floaters": 0, "min_y": 0, "ground_gap": 0, "tol": 0.1, "assembled": true}}
+{"id": "c4", "kind": "set", "assembly": {"parts": 3, "components": 3, "largest_share": 0.34, "floaters": 0, "min_y": 0, "ground_gap": 0, "tol": 0.1, "assembled": false}}

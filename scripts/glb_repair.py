@@ -4,6 +4,10 @@ For each id in RUN/validation.jsonl that failed with a repairable reason, send t
 more /api/chat call: the system prompt, the original brief, the answer it wrote, then a fix
 message that quotes the failure. The corrected answer is validated like the bench validates a run.
 Resumable: an id whose RAW/repair/raw/<id>.json already exists is never requested again.
+
+`--mode assembly` (imp-2) instead feeds back a valid page whose asset is not assembled, quoting
+the assembly numbers (separate groups, the largest group's share, floaters and the ground gap).
+Its output goes to RAW/repair-asm/ and its summary adds `assembled_after`.
 """
 import argparse
 import hashlib
@@ -30,6 +34,10 @@ REPAIRABLE_REASONS = (
 )
 # Not one-line bugs: the answer was cut off, never produced a page, or leans on the network.
 SKIP_REASONS = {"truncated", "no_html", "external_dep"}
+
+# Assembly mode only feeds a valid but under-assembled asset back when it has at least this many
+# parts; a 1-2 part asset has nothing to assemble (docs/14 section 2; imp-2).
+ASSEMBLY_MIN_PARTS = 3
 
 # The same generation options teacher_generate.py sends on the native /api/chat route.
 NUM_CTX = 49152
@@ -80,6 +88,28 @@ def select_ids(rows):
     return selected
 
 
+def select_assembly_ids(rows, assembly_by_id, min_parts=ASSEMBLY_MIN_PARTS):
+    """Ids to repair in assembly mode, in file order: ok, not assembled and at least min_parts parts.
+
+    `assembly_by_id` maps id -> {id, kind, assembly} (the assembly.jsonl entry). A row without an
+    entry, with a null assembly or with fewer than min_parts is skipped.
+    """
+    selected = []
+    for row in rows:
+        if not row.get("ok"):
+            continue
+        entry = assembly_by_id.get(row["id"])
+        if not entry:
+            continue
+        asm = entry.get("assembly")
+        if not asm or asm.get("assembled"):
+            continue
+        if (asm.get("parts") or 0) < min_parts:
+            continue
+        selected.append(row["id"])
+    return selected
+
+
 def repair_messages(system, brief_text, original_content, fix):
     """The exact four-message list of docs/14 section 5."""
     return [
@@ -100,6 +130,25 @@ def fix_message(row):
         "Reply with the complete corrected HTML file in one ```html block. "
         "Keep the asset the same and fix only what is broken. "
         "Remember the GLB exporter rules in the system prompt."
+    )
+
+
+def assembly_fix_message(assembly):
+    """The assembly fix message text (imp-2): the group, percent, floater and ground numbers.
+
+    Percent and metres are rounded to 2 decimals.
+    """
+    components = assembly.get("components", 0)
+    percent = round(float(assembly.get("largest_share", 0.0)) * 100, 2)
+    floaters = assembly.get("floaters", 0)
+    ground = round(float(assembly.get("ground_gap", 0.0)), 2)
+    return (
+        f"Your page works, but the exported model is not assembled: it has {components} separate "
+        f"groups of parts (largest group holds {percent}% of the parts), {floaters} parts float in "
+        f"the air and the lowest point is {ground} above the ground. "
+        "Reply with the complete corrected HTML file in one ```html block. "
+        "Keep the same design and parts; only move or resize parts so they touch their neighbours, "
+        "sit on the ground (lowest y = 0), and keep it in one THREE.Group named \"asset\"."
     )
 
 
@@ -154,6 +203,20 @@ def validated_repairs(selected_ids, repair_rows):
     return [brief_id for brief_id in selected_ids if brief_id in ok]
 
 
+def validated_assembly(selected_ids, repair_rows):
+    """The selected ids whose repair row is ok and reports the repaired asset as assembled."""
+    by_id = {row["id"]: row for row in repair_rows}
+    assembled = []
+    for brief_id in selected_ids:
+        row = by_id.get(brief_id)
+        if not row or not row.get("ok"):
+            continue
+        asm = ((row.get("stats") or {}).get("glb") or {}).get("assembly") or {}
+        if asm.get("assembled"):
+            assembled.append(brief_id)
+    return assembled
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Feed each repairable failure back to the model once (docs/14 section 5).")
     ap.add_argument("--run", required=True, help="model run directory with validation.jsonl and raw/")
@@ -161,6 +224,8 @@ def main(argv=None):
     ap.add_argument("--models", default="bench/glb/models.json")
     ap.add_argument("--ollama-url", default="http://localhost:11434")
     ap.add_argument("--limit", type=int, default=0, help="stop after N selected ids")
+    ap.add_argument("--mode", choices=("error", "assembly"), default="error",
+                    help="error: repair pages that failed (default); assembly: repair valid but unassembled pages")
     ap.add_argument("--no-validate", action="store_true", help="generate only; do not run validate_scenes.mjs")
     ap.add_argument("--allow-paid", action="store_true", help="allow a model row with paid true")
     a = ap.parse_args(argv)
@@ -183,11 +248,15 @@ def main(argv=None):
 
     rows = read_rows(run / "validation.jsonl")
     by_id = {row["id"]: row for row in rows}
-    selected = select_ids(rows)
+    assembly_by_id = {row["id"]: row for row in read_rows(run / "assembly.jsonl")}
+    if a.mode == "assembly":
+        selected = select_assembly_ids(rows, assembly_by_id)
+    else:
+        selected = select_ids(rows)
     if a.limit:
         selected = selected[: a.limit]
 
-    repair = run / "repair"
+    repair = run / ("repair-asm" if a.mode == "assembly" else "repair")
     raw_out = repair / "raw"
     raw_out.mkdir(parents=True, exist_ok=True)
 
@@ -201,7 +270,10 @@ def main(argv=None):
             print(f"skip {brief_id}: original raw not found", file=sys.stderr)
             continue
         orig = json.loads(orig_file.read_text())
-        fix = fix_message(by_id[brief_id])
+        if a.mode == "assembly":
+            fix = assembly_fix_message(assembly_by_id[brief_id]["assembly"])
+        else:
+            fix = fix_message(by_id[brief_id])
         messages = repair_messages(
             system, (orig.get("brief") or {}).get("brief", ""), orig.get("content", ""), fix
         )
@@ -223,8 +295,10 @@ def main(argv=None):
         if rc:
             raise SystemExit(rc)
 
-    repaired_ids = validated_repairs(selected, read_rows(repair / "validation.jsonl"))
+    repair_rows = read_rows(repair / "validation.jsonl")
+    repaired_ids = validated_repairs(selected, repair_rows)
     summary = {
+        "mode": a.mode,
         "selected": len(selected),
         "attempted": attempted,
         "repaired": len(repaired_ids),
@@ -233,8 +307,13 @@ def main(argv=None):
         "system_file": system_file,
         "system_sha256": system_sha256,
     }
+    if a.mode == "assembly":
+        summary["assembled_after"] = len(validated_assembly(selected, repair_rows))
     (repair / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
-    print(f"repaired {len(repaired_ids)} of {len(selected)}")
+    if a.mode == "assembly":
+        print(f"repaired {len(repaired_ids)} of {len(selected)}, assembled after {summary['assembled_after']}")
+    else:
+        print(f"repaired {len(repaired_ids)} of {len(selected)}")
 
 
 if __name__ == "__main__":
