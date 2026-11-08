@@ -1,0 +1,159 @@
+{
+  "name": "GLB improvement 3: live adaptive best-of-N and report fix",
+  "branchName": "ralph/imp-3",
+  "description": "Offline tooling to confirm the imp-ops-2 finding out of sample: sampling until the first valid and assembled candidate matched best-of-3 (100% valid, 87.5% assembled) at 1.6 samples per brief in simulation. Add a brief-id filter to the generator and bench, a script that lists briefs still lacking a good candidate, jobs for fresh seeds 4 to 6 where seeds 5 and 6 only run on the remaining briefs, and fix the report so assembly-repair rows show the repaired assembled values (imp-ops-2 found they do not).",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Assembly repair writes assembly.jsonl and the report shows it",
+      "description": "As the owner, I want the after-assembly-repair report rows to carry the repaired assembled values, because imp-ops-2 showed they silently kept the originals.",
+      "steps": [
+        "In scripts/glb_repair.py (mode assembly), after validating the repaired rows, write RUN_DIR/repair-asm/assembly.jsonl with one line {id, kind, assembly} per repaired id, taken from each new validation row's stats.glb.assembly (kind from the original assembly.jsonl entry or the brief); null when the row is not ok. Keep validation.jsonl untouched.",
+        "In scripts/glb_report.py the '<model> after assembly repair' row must read assembled values for repaired ids from repair-asm/assembly.jsonl (fall back to the validation rows' stats.glb.assembly), and original values elsewhere.",
+        "Tests: a fixture run with 4 ok rows, 2 unassembled; a repair-asm dir where one id becomes assembled and one stays not; assert the report row's assembled count and 'of all briefs' share change accordingly (fails on the old behaviour)."
+      ],
+      "acceptanceCriteria": [
+        "The report test asserts assembled count goes from 2 to 3 of 4 on the fixture",
+        "glb_repair writes repair-asm/assembly.jsonl for repaired ids (asserted)",
+        "bash scripts/check.sh passes",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "",
+      "dependsOn": []
+    },
+    {
+      "id": "US-002",
+      "title": "Brief id filter in the generator and bench",
+      "description": "As an operator, I want a later seed to run only on the briefs that still need a sample.",
+      "steps": [
+        "Add `--ids-file FILE` (one brief id per line, blank lines and # comments ignored) to scripts/teacher_generate.py: only briefs whose id is listed are generated; unknown ids print a warning; existing raw files are still skipped.",
+        "Add the same `--ids-file` to scripts/glb_bench.py, forwarded to teacher_generate.py; the validator step must only see the raw files that exist (it already walks the raw dir).",
+        "Tests: teacher_generate with a 5-brief fixture and a 2-id file requests exactly those 2 (fake server request count); an unknown id warns; glb_bench builds the command with --ids-file for a dry run."
+      ],
+      "acceptanceCriteria": [
+        "Fake-server test asserts exactly the listed ids are requested",
+        "glb_bench --dry-run prints a command containing --ids-file=<path> when given (use the = form)",
+        "Without the flag nothing changes (existing tests pass)",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "List briefs that still lack a good candidate (glb_adaptive_ids.py)",
+      "description": "As an operator, I want the list of briefs with no valid and assembled candidate yet across the runs so far.",
+      "steps": [
+        "Create scripts/glb_adaptive_ids.py --runs DIR [DIR ...] --briefs FILE --out FILE [--no-compute]: for each brief id in briefs, keep it when no run has a row that is ok and assembled (kind-aware assembly.jsonl, computed with glb_assembly.mjs when missing unless --no-compute, reuse the helper glb_best_of.py uses). Write one id per line to --out and print 'remaining X of Y'.",
+        "Tests with a 3-run, 6-brief fixture: ids already good in run 1 are dropped, ids good only in run 2 are dropped when run 2 is given, ids with no ok candidate or only unassembled candidates stay; a run directory with no validation.jsonl is an error."
+      ],
+      "acceptanceCriteria": [
+        "Hand-computed fixture lists are asserted",
+        "A run with no assembly.jsonl and --no-compute counts its rows as not assembled with a printed warning",
+        "bash scripts/check.sh passes",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-002"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "imp_ops.sh jobs for fresh seeds 4 to 6",
+      "description": "As an operator, I want fixed commands for the live adaptive run.",
+      "steps": [
+        "Add jobs to scripts/imp_ops.sh: `ad4` runs the bench on all 48 briefs with `--seed 4 --run-suffix=-s4`; `ad5` runs it with `--seed 5 --run-suffix=-s5 --ids-file=runs/imp/adaptive/ids_after_s4.txt`; `ad6` with `--seed 6 --run-suffix=-s6 --ids-file=runs/imp/adaptive/ids_after_s5.txt`. All use --only glimmer-v3 and --out-root $RUNS, same prompt-hash refusal, one-job-at-a-time and dry-run behaviour. `job_total` for ad5/ad6 is the line count of its ids file (fall back to 48), and `job_raw` points at the run's raw dir.",
+        "Refuse `start ad5` / `start ad6` when its ids file is missing or empty with a clear message (an empty file means nothing remains: print 'nothing to do' and exit 0).",
+        "Extend tests/py/test_imp_ops.py (dry-run command table, missing ids file refusal, empty ids file) and document the jobs in docs/14 section 3 plus README.md, INDEX.md, NEXT-STEPS.md and ralph/README.md (imp-3, imp-ops-3)."
+      ],
+      "acceptanceCriteria": [
+        "`IMP_OPS_DRY=1 start ad5` prints the command with --ids-file=runs/imp/adaptive/ids_after_s4.txt once the file exists (asserted)",
+        "Missing and empty ids files behave as specified (asserted)",
+        "bash scripts/check.sh passes",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-003"
+      ]
+    }
+  ],
+  "metadata": {
+    "specs": [
+      "docs/14-glb-improvement.md",
+      "docs/13-glb-code-track.md"
+    ],
+    "readFirst": [
+      "docs/14-glb-improvement.md sections 3, 5, 6 and 10",
+      "runs/ is off limits; read ralph/imp-ops-2 notes in .ralph-tui/progress.md for the report defect",
+      "scripts/glb_best_of.py (candidates_for skips ids a run lacks; keep that)",
+      "scripts/glb_repair.py --mode assembly output layout",
+      "scripts/glb_report.py --extra-runs handling"
+    ],
+    "owns": [
+      "scripts/teacher_generate.py",
+      "scripts/glb_bench.py",
+      "scripts/glb_adaptive_ids.py",
+      "scripts/glb_repair.py",
+      "scripts/glb_report.py",
+      "scripts/imp_ops.sh",
+      "tests/py/test_teacher_generate.py",
+      "tests/py/test_glb_bench.py",
+      "tests/py/test_glb_adaptive_ids.py",
+      "tests/py/test_glb_repair.py",
+      "tests/py/test_glb_report.py",
+      "tests/py/test_imp_ops.py",
+      "docs/14-glb-improvement.md",
+      "README.md",
+      "INDEX.md",
+      "NEXT-STEPS.md",
+      "ralph/README.md"
+    ],
+    "requires": [
+      "ralph/imp-ops-2.prd.json: all 4 stories passing"
+    ],
+    "standingRule": "Offline-only PRD. Build and test with fixtures, fake HTTP servers on localhost and temp dirs. Never call the real Ollama, never run the benchmark, never read or write runs/, data/, out/ or eval/, never edit briefs, bench/glb/eval_subjects.json or prompts/. Never commit. Assembly stays a quality signal, never a validity failure reason. Never type the literal completion tag except when every criterion holds.",
+    "guardrails": [
+      "Work offline. Tests use fixtures under tests/fixtures and mocked HTTP. Never call Baseten, Meta, Hugging Face or any remote service from a story, a test or a script you run. The only network use allowed is `npm install` and `.venv/bin/pip install` of packages the story names.",
+      "Never commit, push, tag or publish. autoCommit is off and the owner commits.",
+      "Never delete, overwrite or reformat anything under data/, out/, eval/, .env or .venv. They are the owner's data (a long Glimmer generation run may be writing data/raw right now). Tests write only to temporary directories.",
+      "Do not start long jobs. Any command that would run more than about 5 minutes (corpus generation, training, GGUF conversion, evals) is written as a script plus docs and left for the owner. A live smoke call to the local Ollama is allowed only if the story says so, with at most 2 briefs, and must skip cleanly when Ollama is down. Never rent GPUs or run `runpodctl` with anything that creates a pod.",
+      "Edit only the files named in the story's steps, plus their tests and the doc the story names. Do not change prompts/system.txt: every existing raw answer was generated against it.",
+      "Match the surrounding code: short comments that explain why, argparse CLIs, resumable file-per-item outputs, no new dependency the story does not name. Python runs with `.venv/bin/python`; Node scripts are ESM `.mjs` (Node 22).",
+      "Three.js stays pinned at 0.160.0 and the validator keeps serving the local copy in place of the CDN URL.",
+      "Python scripts must stay importable without heavy deps: import torch, transformers, trl or peft only inside functions or under `if __name__ == '__main__'` so pytest can import them.",
+      "Record only real results. Never invent pass rates, token counts, timings or costs; where a number is unknown write 'not measured'.",
+      "Debug output goes to data/ or a temp dir, never into scripts/ or docs/.",
+      "If the spec is wrong or impossible, do the closest thing that works and explain the difference in `notes`. If you cannot finish a story, set `notes` to why and stop; do not mark it passing."
+    ],
+    "qualityGates": {
+      "universal": [
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "chromium": [
+        "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
+      ]
+    },
+    "manualGates": [
+      "Owner reviews and commits the imp-3 diff",
+      "Owner runs ralph/imp-ops-3.prd.json (local only, about 90 minutes)",
+      "Owner approves any rented-GPU spend; Ralph never creates pods"
+    ]
+  }
+}

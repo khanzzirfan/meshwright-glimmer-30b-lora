@@ -64,6 +64,8 @@ accepts `--top-k`, `--min-p` and `--repeat-penalty`; each is sent in `options` o
 is sent as `0.0`, while leaving it out keeps the old request unchanged). `--seed N` is sent as `options.seed` on
 that route and recorded in each saved raw row; without it the request body and every row are unchanged. Every saved
 raw row records `system_file` (the path used) and `system_sha256` (the SHA-256 of the exact system text sent).
+`--ids-file FILE` generates only the briefs whose id is listed in that file (one id per line, blank lines and
+`#` comments ignored); an id that is not in `--briefs` prints a warning, and already-saved rows are still skipped.
 
 ## GLB benchmark (code track)
 
@@ -83,6 +85,8 @@ resumable: saved raw answers are skipped, so rerunning the same command continue
 - `--seed N` is forwarded to `teacher_generate.py` (`options.seed`) and `--run-suffix S` appends `S` to every run
   directory (`<out-root>/<name><S>`, e.g. `--run-suffix=-s2` for a second sample). Both are omitted by default, so
   the commands for a plain run are byte-identical to before.
+- `--ids-file FILE` is forwarded to `teacher_generate.py` as `--ids-file=FILE`, so a later seed runs only on the
+  briefs that still need a sample; omitted by default, so a plain run is unchanged.
 - `--allow-paid` is required for rows marked `paid`, and `--dry-run` prints every command without running it.
 - The script refuses to run a model whose system file is missing or still contains the ccore placeholder, and a
   real run checks `ollama list` once and names the `ollama pull` command for any missing model.
@@ -241,6 +245,27 @@ best-of-N rule would have spent, so best-of-3's 3x time can be sized against an 
 - A run without `assembly.jsonl` prints `warning: <run> has no assembly.jsonl; its rows count as not assembled`
   and its rows never stop the walk. `--out` must be outside `data/`, `out/` and `eval/`.
 
+## Remaining briefs (glb_adaptive_ids.py)
+
+`scripts/glb_adaptive_ids.py` lists the briefs that still have no valid **and** assembled candidate across the
+runs sampled so far, so the next seed can be limited to them (docs/14 section 6):
+
+```bash
+.venv/bin/python scripts/glb_adaptive_ids.py \
+  --runs runs/imp/adaptive/glimmer-v3-s4 \
+  --briefs bench/glb/briefs.jsonl --out runs/imp/adaptive/ids_after_s4.txt
+```
+
+- `--runs DIR [DIR ...]` (required) are the run directories to sweep, in sampling order. Each needs a
+  `validation.jsonl`; a run without one is an error. A brief is kept when no run holds a row that is both `ok`
+  and assembled (the kind-aware `assembled` boolean in `assembly.jsonl`); the check imports
+  `glb_best_of.py`'s `candidates_for`, so the ranking is never copied.
+- A run without `assembly.jsonl` gets one from `glb_assembly.mjs` unless `--no-compute`; with `--no-compute`
+  it prints `warning: <run> has no assembly.jsonl; its rows count as not assembled` (the same wording
+  `glb_best_of_cost.py` uses) and its rows count as not assembled.
+- `--briefs FILE` (required) names every candidate id and `--out FILE` (required) receives the remaining ids,
+  one per line, in `--briefs` order; it prints `remaining X of Y`.
+
 ## Phase 2 data (ccore_prep.py)
 
 `scripts/ccore_prep.py` turns ccore's downloaded parquet shards into the conversational prompt/completion set that
@@ -293,7 +318,7 @@ runs a raw bench or repair command. Jobs run detached and are resumable, and one
 
 ```bash
 bash scripts/imp_ops.sh preflight        # Ollama up/down, running job, v3 hash check, imp-1 status
-bash scripts/imp_ops.sh start v3s2       # or v3s3, repair-v3, repair-asm-v3, repair-asm-v3s3
+bash scripts/imp_ops.sh start v3s2       # or v3s3, repair-v3, repair-asm-v3, repair-asm-v3s3, ad4, ad5, ad6
 bash scripts/imp_ops.sh wait v3s2        # wait up to 540 s; exit 0 finished, 2 still running, 1 failed
 bash scripts/imp_ops.sh status
 ```
@@ -302,6 +327,11 @@ bash scripts/imp_ops.sh status
   --run-suffix=-s2|-s3`; `repair-v3` runs `.venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3
   --model-row glimmer-v3`. `repair-asm-v3` adds `--mode assembly` (docs/14 section 5) to the same run, and
   `repair-asm-v3s3` is the same on `runs/glb_v3/glimmer-v3-s3` (same `--model-row glimmer-v3`).
+- `ad4` runs the bench on all 48 briefs with `--seed 4 --run-suffix=-s4`; `ad5` and `ad6` add `--seed 5|6
+  --run-suffix=-s5|-s6 --ids-file=runs/imp/adaptive/ids_after_s4.txt|ids_after_s5.txt`, so seeds 5 and 6 sample only
+  the briefs that still lack a valid, assembled candidate (`glb_adaptive_ids.py`, docs/14 section 6). `start ad5` /
+  `ad6` refuses when its ids file is missing and prints `nothing to do` (exit 0) when the file is empty; its job
+  total is the ids file's line count (48 when the file is absent).
 - `start` refuses unless `runs/glb_v3/PROMPT_FROZEN.json` exists and its `sha256` equals the SHA-256 of
   `prompts/system_glb_v3.txt`, and it refuses a second job while one is alive. Jobs have pid/exit/log/started files
   under `runs/imp/jobs/`.
@@ -309,7 +339,8 @@ bash scripts/imp_ops.sh status
 - `IMP_OPS_DRY=1 start JOB` prints the command instead of running it.
 - Overrides for tests: `IMP_OPS_RUNS` (run root, default `runs/glb_v3`), `IMP_OPS_JOBS` (job state, default
   `runs/imp/jobs`), `IMP_OPS_BENCH` (bench command), `IMP_OPS_PROMPT` (default `prompts/system_glb_v3.txt`),
-  `IMP_OPS_POLL` (default 10 s) and `IMP_OPS_SKIP_CHECKS` (skip the Ollama check in preflight).
+  `IMP_OPS_POLL` (default 10 s), `IMP_OPS_ADAPTIVE` (the adaptive ids directory, default `runs/imp/adaptive`) and
+  `IMP_OPS_SKIP_CHECKS` (skip the Ollama check in preflight).
 
 ## Tests
 

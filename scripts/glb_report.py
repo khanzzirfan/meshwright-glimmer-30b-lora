@@ -280,13 +280,44 @@ def repaired_ids(directory, repair_rows):
     return [row["id"] for row in repair_rows]
 
 
+def assembly_lines_from_rows(rows):
+    """`assembly.jsonl` lines built from validation rows' `stats.glb.assembly` (imp-3).
+
+    A `repair-asm` directory written before glb_repair wrote `assembly.jsonl` only has the repaired
+    assembly in its validation rows; a row that is not ok gets a null assembly, matching glb_repair.
+    """
+    lines = []
+    for row in rows:
+        asm = ((row.get("stats") or {}).get("glb") or {}).get("assembly")
+        lines.append({
+            "id": row["id"],
+            "kind": row.get("kind"),
+            "assembly": asm if row.get("ok") else None,
+        })
+    return lines
+
+
+def repaired_assembly_lines(repair):
+    """The assembly lines for a `repair-asm` run dict (imp-3).
+
+    `assembly.jsonl` wins for the ids it lists; any other repaired id falls back to its validation
+    row's `stats.glb.assembly` (the layout imp-ops-2 produced, where `assembly.jsonl` was missing).
+    """
+    by_id = {line["id"]: line for line in repair["assembly"] or []}
+    for line in assembly_lines_from_rows(repair["rows"]):
+        by_id.setdefault(line["id"], line)
+    return list(by_id.values())
+
+
 def load_extra_run(name, directory):
     """Load one --extra-runs entry.
 
     A `repair` directory becomes '<model> after 1 repair', merged with its parent run so its pass
     count is the original ok ids plus the repaired ids. A `repair-asm` directory becomes '<model>
     after assembly repair': the ids in its `summary.json` `ids_repaired` take the repaired ok and
-    assembled values, every other brief keeps the original run's (imp-2 US-003).
+    assembled values, every other brief keeps the original run's (imp-2 US-003). The repaired
+    assembled values come from `repair-asm/assembly.jsonl`, falling back to each validation row's
+    `stats.glb.assembly` when the file is missing (imp-3).
     """
     directory = Path(directory)
     parent = directory.parent
@@ -294,12 +325,13 @@ def load_extra_run(name, directory):
         base = load_model(parent)
         repair = load_model(directory)
         ids = repaired_ids(directory, repair["rows"])
+        repaired_assembly = repaired_assembly_lines(repair)
         loaded = {
             "rows": merge_by_ids(base["rows"], repair["rows"], ids),
             "raws": {**base["raws"], **repair["raws"]},
             "assembly": (
-                None if base["assembly"] is None and repair["assembly"] is None
-                else merge_by_ids(base["assembly"], repair["assembly"], ids)
+                None if base["assembly"] is None and not repaired_assembly
+                else merge_by_ids(base["assembly"], repaired_assembly, ids)
             ),
         }
         return f"{parent.name} after assembly repair", loaded

@@ -1,7 +1,7 @@
 {
   "name": "GLB improvement 2: assembly repair and adaptive best-of-N",
-  "description": "Offline tooling that targets the main weakness the imp-ops numbers show: single-shot v3 assets are valid (about 90%) but only about 65% assembled, while best-of-3 reaches 100% valid and 87.5% assembled at 3x the time. Add (1) an assembly repair turn that tells the model which parts float or are disconnected, (2) a sequential best-of-N cost simulator that stops sampling at the first assembled valid candidate, (3) report columns over all briefs, (4) imp_ops.sh jobs for the follow-up.",
   "branchName": "ralph/imp-2",
+  "description": "Offline tooling that targets the main weakness the imp-ops numbers show: single-shot v3 assets are valid (about 90%) but only about 65% assembled, while best-of-3 reaches 100% valid and 87.5% assembled at 3x the time. Add (1) an assembly repair turn that tells the model which parts float or are disconnected, (2) a sequential best-of-N cost simulator that stops sampling at the first assembled valid candidate, (3) report columns over all briefs, (4) imp_ops.sh jobs for the follow-up.",
   "userStories": [
     {
       "id": "US-001",
@@ -23,8 +23,7 @@
       "priority": 1,
       "passes": true,
       "notes": "",
-      "dependsOn": [],
-      "completionNotes": "Completed by agent"
+      "dependsOn": []
     },
     {
       "id": "US-002",
@@ -47,8 +46,7 @@
       "notes": "",
       "dependsOn": [
         "US-001"
-      ],
-      "completionNotes": "Completed by agent"
+      ]
     },
     {
       "id": "US-003",
@@ -71,8 +69,7 @@
       "notes": "",
       "dependsOn": [
         "US-002"
-      ],
-      "completionNotes": "Completed by agent"
+      ]
     },
     {
       "id": "US-004",
@@ -95,8 +92,7 @@
       "notes": "",
       "dependsOn": [
         "US-003"
-      ],
-      "completionNotes": "Completed by agent"
+      ]
     }
   ],
   "metadata": {
@@ -155,7 +151,6 @@
       "Owner reviews the imp-2 diff and commits it",
       "Owner runs ralph/imp-ops-2.prd.json (local only)",
       "Owner approves any rented-GPU spend; Ralph never creates pods"
-    ],
-    "updatedAt": "2026-11-08T05:41:34.816Z"
+    ]
   }
 }

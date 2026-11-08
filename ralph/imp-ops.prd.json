@@ -1,7 +1,7 @@
 {
   "name": "GLB improvement ops: assembly backfill, repair, best of 3, phase 2 data (local only)",
-  "description": "Operator PRD for docs/14-glb-improvement.md, run after ralph/imp-1 passes. Backfill the assembly metric on the existing v2, v3 and ccore runs, try the one-shot repair on v3's failures, generate two more v3 seeds and pick the best of 3, then build the phase 2 dataset from ccore's downloaded parquet files. Everything runs on this Mac against the local Ollama. Training is not part of this PRD.",
   "branchName": "ralph/imp-ops",
+  "description": "Operator PRD for docs/14-glb-improvement.md, run after ralph/imp-1 passes. Backfill the assembly metric on the existing v2, v3 and ccore runs, try the one-shot repair on v3's failures, generate two more v3 seeds and pick the best of 3, then build the phase 2 dataset from ccore's downloaded parquet files. Everything runs on this Mac against the local Ollama. Training is not part of this PRD.",
   "userStories": [
     {
       "id": "US-001",
@@ -171,8 +171,7 @@
       "notes": "",
       "dependsOn": [
         "US-007"
-      ],
-      "completionNotes": "Completed by agent"
+      ]
     }
   ],
   "metadata": {
@@ -213,7 +212,6 @@
     },
     "manualGates": [
       "Owner rates runs/imp/best3 sheet (or a sample) and decides on the phase 2 LoRA spend (docs/14 sections 8 and 9)"
-    ],
-    "updatedAt": "2026-11-08T05:00:20.795Z"
+    ]
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "GLB improvement ops 2: assembly repair and adaptive cost (local only)",
-  "description": "Operator PRD run after imp-2 passes. Run the assembly repair on v3 seed 1 and seed 3, simulate adaptive best-of-N cost from the three v3 samples, and write the numbers into runs/imp/RESULTS2.md and docs/14 section 10. Local Ollama only. No code edits, no training.",
   "branchName": "ralph/imp-ops-2",
+  "description": "Operator PRD run after imp-2 passes. Run the assembly repair on v3 seed 1 and seed 3, simulate adaptive best-of-N cost from the three v3 samples, and write the numbers into runs/imp/RESULTS2.md and docs/14 section 10. Local Ollama only. No code edits, no training.",
   "userStories": [
     {
       "id": "US-001",
@@ -20,8 +20,7 @@
       "priority": 1,
       "passes": true,
       "notes": "",
-      "dependsOn": [],
-      "completionNotes": "Completed by agent"
+      "dependsOn": []
     },
     {
       "id": "US-002",
@@ -42,8 +41,7 @@
       "notes": "",
       "dependsOn": [
         "US-001"
-      ],
-      "completionNotes": "Completed by agent"
+      ]
     },
     {
       "id": "US-003",
@@ -63,8 +61,7 @@
       "notes": "",
       "dependsOn": [
         "US-002"
-      ],
-      "completionNotes": "Completed by agent"
+      ]
     },
     {
       "id": "US-004",
@@ -85,8 +82,7 @@
       "notes": "",
       "dependsOn": [
         "US-003"
-      ],
-      "completionNotes": "Completed by agent"
+      ]
     }
   ],
   "metadata": {
@@ -128,7 +124,6 @@
     },
     "manualGates": [
       "Owner rates a blind sample of the repaired assets before anyone claims a quality gain"
-    ],
-    "updatedAt": "2026-11-08T07:03:53.111Z"
+    ]
   }
 }

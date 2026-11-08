@@ -3,11 +3,11 @@
 # checks the long local jobs instead of running raw bench/repair commands. One job runs at a time, and the v3 prompt
 # hash must match the frozen file before any job starts. Jobs run detached and are resumable.
 #   scripts/imp_ops.sh preflight            Ollama up/down, the running job if any, the v3 hash check, imp-1 status
-#   scripts/imp_ops.sh start v3s2|v3s3|repair-v3|repair-asm-v3|repair-asm-v3s3
+#   scripts/imp_ops.sh start v3s2|v3s3|repair-v3|repair-asm-v3|repair-asm-v3s3|ad4|ad5|ad6
 #   scripts/imp_ops.sh wait JOB [SECONDS]   wait up to 540 s; exit 0 finished, 2 still running, 1 failed or never started
 #   scripts/imp_ops.sh status [JOB]
 # IMP_OPS_DRY=1 start JOB prints the real command instead of running it.
-# Overrides for tests: IMP_OPS_RUNS, IMP_OPS_JOBS, IMP_OPS_BENCH, IMP_OPS_PROMPT, IMP_OPS_POLL, IMP_OPS_SKIP_CHECKS.
+# Overrides for tests: IMP_OPS_RUNS, IMP_OPS_JOBS, IMP_OPS_BENCH, IMP_OPS_PROMPT, IMP_OPS_POLL, IMP_OPS_SKIP_CHECKS, IMP_OPS_ADAPTIVE.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 RUNS="${IMP_OPS_RUNS:-runs/glb_v3}"
@@ -15,27 +15,45 @@ JOBS="${IMP_OPS_JOBS:-runs/imp/jobs}"
 BENCH="${IMP_OPS_BENCH:-.venv/bin/python scripts/glb_bench.py}"
 PROMPT="${IMP_OPS_PROMPT:-prompts/system_glb_v3.txt}"
 POLL="${IMP_OPS_POLL:-10}"
+ADAPTIVE="${IMP_OPS_ADAPTIVE:-runs/imp/adaptive}"
 FROZEN="$RUNS/PROMPT_FROZEN.json"
 [ -n "${IMP_OPS_DRY:-}" ] || mkdir -p "$JOBS"
 
 sha() { shasum -a 256 "$PROMPT" | cut -d' ' -f1; }
 # the frozen file may be written with or without spaces around the colon, so pull the 64 hex value out
 frozen_sha() { grep -o '"sha256"[[:space:]]*:[[:space:]]*"[0-9a-f]\{64\}"' "$FROZEN" 2>/dev/null | grep -o '[0-9a-f]\{64\}' | head -1; }
+# the brief list an adaptive seed limits itself to (docs/14 section 6); ad5/ad6 only
+job_ids() {
+  case "$1" in
+    ad5) echo "$ADAPTIVE/ids_after_s4.txt" ;;
+    ad6) echo "$ADAPTIVE/ids_after_s5.txt" ;;
+    *) return 1 ;;
+  esac
+}
 job_cmd() {
   case "$1" in
     v3s2) echo "$BENCH --out-root $RUNS --only glimmer-v3 --seed 2 --run-suffix=-s2" ;;
     v3s3) echo "$BENCH --out-root $RUNS --only glimmer-v3 --seed 3 --run-suffix=-s3" ;;
+    ad4) echo "$BENCH --out-root $RUNS --only glimmer-v3 --seed 4 --run-suffix=-s4" ;;
+    ad5) echo "$BENCH --out-root $RUNS --only glimmer-v3 --seed 5 --run-suffix=-s5 --ids-file=$(job_ids ad5)" ;;
+    ad6) echo "$BENCH --out-root $RUNS --only glimmer-v3 --seed 6 --run-suffix=-s6 --ids-file=$(job_ids ad6)" ;;
     repair-v3) echo ".venv/bin/python scripts/glb_repair.py --run $RUNS/glimmer-v3 --model-row glimmer-v3" ;;
     repair-asm-v3) echo ".venv/bin/python scripts/glb_repair.py --run $RUNS/glimmer-v3 --model-row glimmer-v3 --mode assembly" ;;
     repair-asm-v3s3) echo ".venv/bin/python scripts/glb_repair.py --run $RUNS/glimmer-v3-s3 --model-row glimmer-v3 --mode assembly" ;;
     *) return 1 ;;
   esac
 }
-job_total() { echo 48; }
+job_total() {
+  f=$(job_ids "$1" 2>/dev/null) || f=""
+  if [ -n "$f" ] && [ -f "$f" ]; then wc -l < "$f" | tr -d ' '; else echo 48; fi
+}
 job_raw() {
   case "$1" in
     v3s2) echo "$RUNS/glimmer-v3-s2/raw" ;;
     v3s3) echo "$RUNS/glimmer-v3-s3/raw" ;;
+    ad4) echo "$RUNS/glimmer-v3-s4/raw" ;;
+    ad5) echo "$RUNS/glimmer-v3-s5/raw" ;;
+    ad6) echo "$RUNS/glimmer-v3-s6/raw" ;;
     repair-v3) echo "$RUNS/glimmer-v3/repair/raw" ;;
     repair-asm-v3) echo "$RUNS/glimmer-v3/repair-asm/raw" ;;
     repair-asm-v3s3) echo "$RUNS/glimmer-v3-s3/repair-asm/raw" ;;
@@ -51,6 +69,13 @@ require_freeze() {
   [ "$(frozen_sha)" = "$(sha)" ] || { echo "REFUSED: $PROMPT changed after it was frozen"; exit 1; }
 }
 
+# ad5/ad6 limit themselves to a briefs list: refuse when the file is missing, and stop (nothing to do) when it is empty
+require_ids() {
+  f=$(job_ids "$1") || return 0
+  [ -f "$f" ] || { echo "REFUSED: job $1 needs its ids file ($f); run glb_adaptive_ids.py first"; exit 1; }
+  [ "$(job_total "$1")" -gt 0 ] || { echo "nothing to do: $f is empty"; exit 0; }
+}
+
 cmd_preflight() {
   if [ -z "${IMP_OPS_SKIP_CHECKS:-}" ]; then
     curl -s --max-time 5 localhost:11434/api/tags > /dev/null 2>&1 && echo "Ollama up" || echo "Ollama down"
@@ -63,7 +88,7 @@ cmd_preflight() {
 }
 
 cmd_start() {
-  job="${1:-}"; cmd=$(job_cmd "$job") || { echo "unknown job '$job' (v3s2, v3s3, repair-v3, repair-asm-v3, repair-asm-v3s3)"; exit 1; }
+  job="${1:-}"; cmd=$(job_cmd "$job") || { echo "unknown job '$job' (v3s2, v3s3, repair-v3, repair-asm-v3, repair-asm-v3s3, ad4, ad5, ad6)"; exit 1; }
   [ -n "${IMP_OPS_DRY:-}" ] && { echo "$cmd"; exit 0; }
   if [ -f "$JOBS/$job.exit" ]; then
     if [ "$(cat "$JOBS/$job.exit")" = 0 ]; then echo "job $job already finished OK; not starting it again"; exit 0; fi
@@ -73,6 +98,7 @@ cmd_start() {
     echo "job $j is already running; one job at a time"
     [ "$j" = "$job" ] && exit 0 || exit 1
   fi
+  require_ids "$job"
   require_freeze
   sha > "$JOBS/$job.prompt_sha"
   ( nohup bash -c "$cmd; echo \$? > '$JOBS/$job.exit'" > "$JOBS/$job.log" 2>&1 < /dev/null & echo $! > "$JOBS/$job.pid" )

@@ -20,6 +20,8 @@ opencode only when Command Code credit runs out.
 | 9 | `imp-ops.prd.json` | 8 | **GLB improvement ops (local only):** assembly backfill, repair on v3's failures, two more v3 seeds and best of 3, phase 2 dataset build, all through `scripts/imp_ops.sh` | rate the best-of-3 sheet and approve the phase 2 LoRA spend (docs/14 section 8) |
 | 10 | `imp-2.prd.json` | 4 | **GLB improvement 2 (offline):** assembly repair mode in `glb_repair.py`, adaptive best-of-N cost simulator, `Assembled (of all briefs)` report column and the `repair-asm` rows, `imp_ops.sh` assembly-repair jobs | review the imp-2 diff, then run `imp-ops-2.prd.json` locally |
 | 11 | `imp-ops-2.prd.json` | 4 | **GLB improvement ops 2 (local only):** assembly repair on v3 seed 1 and seed 3, adaptive best-of-N cost and the result reports, all through `scripts/imp_ops.sh` | rate a blind sample of the repaired assets before claiming a quality gain (docs/14 section 8) |
+| 12 | `imp-3.prd.json` | 4 | **GLB improvement 3 (offline):** the `--ids-file` brief filter in the generator and bench, `glb_adaptive_ids.py` to list briefs still lacking a valid, assembled candidate, and the assembly-repair report fix | review the imp-3 diff, then run `imp-ops-3.prd.json` locally |
+| 13 | `imp-ops-3.prd.json` | 6 | **GLB improvement ops 3 (local only):** fresh seeds 4-6 through `scripts/imp_ops.sh` (`start ad4`/`ad5`/`ad6`, seeds 5 and 6 on the remaining briefs only), the best pick, a blind sheet and RESULTS3 | rate the adaptive sheet blind and record the live numbers (docs/14 section 10) |
 
 PRDs 5 and 6 are the mesh track (docs/08-mesh-track.md). PRD 6 needs PRD 5 finished first because it edits
 `caption_meshes.py` and `build_mesh_dataset.py`. PRDs 1 to 4 are the Three.js-code track and can wait.

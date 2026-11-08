@@ -7,7 +7,9 @@ Resumable: an id whose RAW/repair/raw/<id>.json already exists is never requeste
 
 `--mode assembly` (imp-2) instead feeds back a valid page whose asset is not assembled, quoting
 the assembly numbers (separate groups, the largest group's share, floaters and the ground gap).
-Its output goes to RAW/repair-asm/ and its summary adds `assembled_after`.
+Its output goes to RAW/repair-asm/ and its summary adds `assembled_after`. It also writes
+RAW/repair-asm/assembly.jsonl (imp-3): one `{id, kind, assembly}` line per selected id, so the
+report's assembly-repair row reads the repaired assembled values, not the originals.
 """
 import argparse
 import hashlib
@@ -217,6 +219,34 @@ def validated_assembly(selected_ids, repair_rows):
     return assembled
 
 
+def brief_kind(raw_dir, brief_id):
+    """The brief kind from a repair raw row, or None when the file is absent."""
+    path = Path(raw_dir) / f"{brief_id}.json"
+    if not path.exists():
+        return None
+    return (json.loads(path.read_text()).get("brief") or {}).get("kind")
+
+
+def assembly_lines(selected_ids, repair_rows, assembly_by_id, raw_dir):
+    """The `repair-asm/assembly.jsonl` lines (imp-3), one per selected id.
+
+    The assembly comes from the repair validation row's `stats.glb.assembly`, or `null` when the row
+    is missing or not ok. The kind comes from the original `assembly.jsonl` entry, else the brief.
+    """
+    by_id = {row["id"]: row for row in repair_rows}
+    lines = []
+    for brief_id in selected_ids:
+        row = by_id.get(brief_id)
+        asm = None
+        if row and row.get("ok"):
+            asm = ((row.get("stats") or {}).get("glb") or {}).get("assembly")
+        kind = assembly_by_id.get(brief_id, {}).get("kind")
+        if kind is None:
+            kind = brief_kind(raw_dir, brief_id)
+        lines.append({"id": brief_id, "kind": kind, "assembly": asm})
+    return lines
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Feed each repairable failure back to the model once (docs/14 section 5).")
     ap.add_argument("--run", required=True, help="model run directory with validation.jsonl and raw/")
@@ -297,6 +327,9 @@ def main(argv=None):
 
     repair_rows = read_rows(repair / "validation.jsonl")
     repaired_ids = validated_repairs(selected, repair_rows)
+    if a.mode == "assembly":
+        lines = assembly_lines(selected, repair_rows, assembly_by_id, raw_out)
+        (repair / "assembly.jsonl").write_text("".join(json.dumps(line) + "\n" for line in lines))
     summary = {
         "mode": a.mode,
         "selected": len(selected),

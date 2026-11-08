@@ -1,0 +1,146 @@
+{
+  "name": "GLB improvement 4: one-command generator (adaptive best-of-N plus repair)",
+  "branchName": "ralph/imp-4",
+  "description": "Package what the numbers support into the product: one command that turns a text prompt into a GLB. It samples the frozen v3 prompt until a candidate is valid and assembled (at most 3 seeds, imp-ops-3: 1.375 samples and 84.5 s per brief, 100% valid, 93.8% assembled on fresh seeds), tries one error repair when nothing valid exists, and records every attempt. Offline: tests use a fake Ollama server and a fake validator.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Core loop: sample until valid and assembled",
+      "description": "As a user, I want one command that returns the best asset for a prompt.",
+      "steps": [
+        "Create scripts/glb_generate.py `PROMPT [--kind static|animated|set] [--out-dir DIR] [--max-samples 3] [--seed-start 1] [--model-row glimmer-v3] [--models bench/glb/models.json] [--ollama-url URL] [--no-validate]`. For seed in seed-start..seed-start+max-samples-1: one chat call with the model row's system prompt and the prompt as the user message (reuse the helper from glb_repair.py or teacher_generate.py, passing options.seed), write attempt files under OUT_DIR/attempts/<n>/ (raw.json, page.html, the GLB and its validation row), validate with `node scripts/validate_scenes.mjs --mode glb --allow-addons` unless --no-validate, then stop at the first candidate that is ok and assembled (kind-aware).",
+        "Pick the winner with the ranking in glb_best_of.py (import rank_keys/pick; do not copy). Write OUT_DIR/asset.glb and OUT_DIR/result.json {prompt, kind, attempts:[{seed, ok, reasons, assembled, parts, triangles, seconds}], picked_seed, picked_ok, picked_assembled, total_seconds, system_sha256}. Exit 0 when picked_ok, else 2.",
+        "Refuse a protected OUT_DIR (data/, out/, eval/) and a paid model row, like glb_bench.py.",
+        "Tests (tests/py/test_glb_generate.py): fake Ollama server returning canned pages plus a fake validator (a small script path passed via an env var or flag for tests only); assert: stops at the first good candidate (1 request), continues after an unassembled one (2 requests), uses all samples when none is assembled and picks by ranking, writes result.json fields and asset.glb, exit codes, protected path refusal."
+      ],
+      "acceptanceCriteria": [
+        "Fake-server tests assert request counts 1, 2 and max-samples for the three scenarios",
+        "result.json contains the listed fields (asserted)",
+        "The picker is imported from glb_best_of.py (asserted by a monkeypatch test)",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "",
+      "dependsOn": []
+    },
+    {
+      "id": "US-002",
+      "title": "Error repair fallback",
+      "description": "As a user, I want one repair turn when no sample was valid, because 4 of 5 such failures recovered in imp-ops.",
+      "steps": [
+        "After the sampling loop, when no attempt is ok, take the attempt whose reasons are repairable (docs/14 section 5 list) and run one repair turn with the same fix message glb_repair.py uses (import its message builder), validate, and record it as an attempt with `repair: true`. Never repair truncated, no_html or external_dep.",
+        "If the repair is ok it competes in the ranking like any other attempt. Add `--no-repair` to disable.",
+        "Tests: all samples fail with js_error then the repair succeeds (request order: samples then repair, repair message contains the first error); all samples truncated means no repair request; --no-repair means no repair request."
+      ],
+      "acceptanceCriteria": [
+        "Repair request count and the 4-message order are asserted with the fake server",
+        "truncated and no_html are never repaired (asserted)",
+        "bash scripts/check.sh passes",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Batch mode and per-run summary",
+      "description": "As an operator, I want to run it over a briefs file and get a table.",
+      "steps": [
+        "Add `--briefs FILE [--limit N] [--ids-file FILE]` batch mode: for each brief (id, prompt, kind) run the same loop into OUT_DIR/<id>/, resumable (a finished result.json is skipped), then write OUT_DIR/summary.json {briefs, picked_ok, picked_assembled, mean_samples, mean_seconds, repairs_used} and print a one-screen table. A single positional PROMPT and --briefs are mutually exclusive.",
+        "Tests with a 3-brief fixture: summary values hand-computed, rerun makes no new requests, ids-file restricts."
+      ],
+      "acceptanceCriteria": [
+        "summary.json numbers are asserted on the fixture",
+        "A rerun makes zero new HTTP requests (asserted)",
+        "bash scripts/check.sh passes",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-002"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "Docs and index wiring",
+      "description": "As the owner, I want the command documented with the evidence it rests on.",
+      "steps": [
+        "Add a section to docs/14-glb-improvement.md ('One-command generator'): usage, how it chooses, and a table of the evidence with the exact imp-ops-3 numbers (100% valid, 93.8% assembled, 1.375 samples, 84.5 s per brief on fresh seeds 4-6) labelled 'assembled is the ranking key; no blind rating yet'.",
+        "List scripts/glb_generate.py in README.md, INDEX.md, NEXT-STEPS.md and ralph/README.md (imp-4). Add a docs wiring test in the style of tests/py/test_docs_imp.py."
+      ],
+      "acceptanceCriteria": [
+        "The docs section states the numbers and the no-blind-rating caveat (asserted by the docs test)",
+        "bash scripts/check.sh passes",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-003"
+      ]
+    }
+  ],
+  "metadata": {
+    "specs": [
+      "docs/14-glb-improvement.md",
+      "docs/13-glb-code-track.md"
+    ],
+    "readFirst": [
+      "runs/ is off limits; read RESULTS3 numbers from .ralph-tui/progress.md (imp-ops-3 US-006)",
+      "scripts/teacher_generate.py (the Ollama chat call and options), scripts/glb_repair.py (chat helper and fix message), scripts/glb_best_of.py (rank_keys, pick), scripts/validate_scenes.mjs and scripts/glb_check.mjs (assembly)",
+      "docs/14-glb-improvement.md sections 5, 6 and 10"
+    ],
+    "owns": [
+      "scripts/glb_generate.py",
+      "tests/py/test_glb_generate.py",
+      "docs/14-glb-improvement.md",
+      "README.md",
+      "INDEX.md",
+      "NEXT-STEPS.md",
+      "ralph/README.md"
+    ],
+    "requires": [
+      "ralph/imp-ops-3.prd.json: all 6 stories passing"
+    ],
+    "standingRule": "Offline-only PRD. Build and test with fixtures, fake HTTP servers on localhost and temp dirs. Never call the real Ollama, never run the benchmark, never read or write runs/, data/, out/ or eval/, never edit briefs, bench/glb/eval_subjects.json or prompts/. Never commit. Assembly stays a quality signal, never a validity failure reason. Never type the literal completion tag except when every criterion holds.",
+    "guardrails": [
+      "Work offline. Tests use fixtures under tests/fixtures and mocked HTTP. Never call Baseten, Meta, Hugging Face or any remote service from a story, a test or a script you run. The only network use allowed is `npm install` and `.venv/bin/pip install` of packages the story names.",
+      "Never commit, push, tag or publish. autoCommit is off and the owner commits.",
+      "Never delete, overwrite or reformat anything under data/, out/, eval/, .env or .venv. They are the owner's data (a long Glimmer generation run may be writing data/raw right now). Tests write only to temporary directories.",
+      "Do not start long jobs. Any command that would run more than about 5 minutes (corpus generation, training, GGUF conversion, evals) is written as a script plus docs and left for the owner. A live smoke call to the local Ollama is allowed only if the story says so, with at most 2 briefs, and must skip cleanly when Ollama is down. Never rent GPUs or run `runpodctl` with anything that creates a pod.",
+      "Edit only the files named in the story's steps, plus their tests and the doc the story names. Do not change prompts/system.txt: every existing raw answer was generated against it.",
+      "Match the surrounding code: short comments that explain why, argparse CLIs, resumable file-per-item outputs, no new dependency the story does not name. Python runs with `.venv/bin/python`; Node scripts are ESM `.mjs` (Node 22).",
+      "Three.js stays pinned at 0.160.0 and the validator keeps serving the local copy in place of the CDN URL.",
+      "Python scripts must stay importable without heavy deps: import torch, transformers, trl or peft only inside functions or under `if __name__ == '__main__'` so pytest can import them.",
+      "Record only real results. Never invent pass rates, token counts, timings or costs; where a number is unknown write 'not measured'.",
+      "Debug output goes to data/ or a temp dir, never into scripts/ or docs/.",
+      "If the spec is wrong or impossible, do the closest thing that works and explain the difference in `notes`. If you cannot finish a story, set `notes` to why and stop; do not mark it passing."
+    ],
+    "qualityGates": {
+      "universal": [
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "chromium": [
+        "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
+      ]
+    },
+    "manualGates": [
+      "Owner reviews and commits the imp-4 diff",
+      "Owner tries it on a few of their own prompts and rates the output blind before anyone calls it better than best-of-3",
+      "Owner decides on the phase 2 LoRA (docs/14 sections 8 and 9); Ralph never creates pods"
+    ]
+  }
+}

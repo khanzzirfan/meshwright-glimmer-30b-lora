@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import json
 import os
+import sys
 import threading
 import time
 import urllib.request
@@ -13,6 +14,16 @@ from tqdm import tqdm
 
 from common import ROOT, client, system_prompt
 from tags import THINK_CLOSE, THINK_OPEN
+
+
+def read_ids_file(path):
+    """Ids from a file, one brief id per line; blank lines and # comments ignored."""
+    ids = []
+    for line in Path(path).read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            ids.append(line)
+    return ids
 
 
 def call_ollama(model, system, brief, a):
@@ -78,6 +89,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--briefs", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--ids-file", default=None, help="only generate briefs whose id is listed (one per line, blank lines and # comments ignored); unknown ids warn")
     ap.add_argument("--model", default=os.environ.get("TEACHER_MODEL"))
     ap.add_argument("--base-url", default=None)
     ap.add_argument("--api-key", default=None)
@@ -101,6 +113,14 @@ def main():
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     briefs = [json.loads(l) for l in Path(a.briefs).read_text().splitlines() if l.strip()]
+    if a.ids_file:
+        wanted = read_ids_file(a.ids_file)
+        wanted_set = set(wanted)
+        known = {b["id"] for b in briefs}
+        for wid in wanted:
+            if wid not in known:
+                print(f"warning: id not in {a.briefs}: {wid}", file=sys.stderr)
+        briefs = [b for b in briefs if b["id"] in wanted_set]
     todo = [b for b in briefs if not (out / f"{b['id']}.json").exists()]
     if a.limit:
         todo = todo[: a.limit]

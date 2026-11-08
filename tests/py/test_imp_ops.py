@@ -126,6 +126,9 @@ def test_dry_run_prints_the_real_job_commands(tmp_path):
     expected = {
         "v3s2": ".venv/bin/python scripts/glb_bench.py --out-root runs/glb_v3 --only glimmer-v3 --seed 2 --run-suffix=-s2",
         "v3s3": ".venv/bin/python scripts/glb_bench.py --out-root runs/glb_v3 --only glimmer-v3 --seed 3 --run-suffix=-s3",
+        "ad4": ".venv/bin/python scripts/glb_bench.py --out-root runs/glb_v3 --only glimmer-v3 --seed 4 --run-suffix=-s4",
+        "ad5": ".venv/bin/python scripts/glb_bench.py --out-root runs/glb_v3 --only glimmer-v3 --seed 5 --run-suffix=-s5 --ids-file=runs/imp/adaptive/ids_after_s4.txt",
+        "ad6": ".venv/bin/python scripts/glb_bench.py --out-root runs/glb_v3 --only glimmer-v3 --seed 6 --run-suffix=-s6 --ids-file=runs/imp/adaptive/ids_after_s5.txt",
         "repair-v3": ".venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3 --model-row glimmer-v3",
         "repair-asm-v3": ".venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3 --model-row glimmer-v3 --mode assembly",
         "repair-asm-v3s3": ".venv/bin/python scripts/glb_repair.py --run runs/glb_v3/glimmer-v3-s3 --model-row glimmer-v3 --mode assembly",
@@ -135,3 +138,48 @@ def test_dry_run_prints_the_real_job_commands(tmp_path):
         assert r.returncode == 0, r.stderr
         assert r.stdout.strip() == command
     assert not (tmp_path / "jobs").exists()
+
+
+def test_dry_run_prints_the_adaptive_jobs_with_their_ids_file(tmp_path):
+    # ad4 samples all briefs; ad5/ad6 add the fixed --ids-file the operator pre-computes (imp-ops-3).
+    env = dict(os.environ, IMP_OPS_DRY="1", IMP_OPS_JOBS=str(tmp_path / "jobs"))
+    ad4 = ops(env, "start", "ad4")
+    assert ad4.returncode == 0 and "--ids-file" not in ad4.stdout and "--seed 4" in ad4.stdout
+    ad5 = ops(env, "start", "ad5")
+    assert ad5.returncode == 0 and "--ids-file=runs/imp/adaptive/ids_after_s4.txt" in ad5.stdout
+    ad6 = ops(env, "start", "ad6")
+    assert ad6.returncode == 0 and "--ids-file=runs/imp/adaptive/ids_after_s5.txt" in ad6.stdout
+
+
+def test_start_refuses_an_adaptive_job_when_its_ids_file_is_missing(env, tmp_path):
+    write_frozen(env, prompt_sha(env))
+    env["IMP_OPS_ADAPTIVE"] = str(tmp_path / "adaptive")  # nothing has been listed yet
+    for job, name in (("ad5", "ids_after_s4.txt"), ("ad6", "ids_after_s5.txt")):
+        r = ops(env, "start", job)
+        assert r.returncode == 1 and "REFUSED" in r.stdout and name in r.stdout
+        assert not (Path(env["_jobs"]) / f"{job}.pid").exists()
+
+
+def test_start_an_adaptive_job_with_an_empty_ids_file_says_nothing_to_do(env, tmp_path):
+    write_frozen(env, prompt_sha(env))
+    adaptive = tmp_path / "adaptive"
+    adaptive.mkdir()
+    (adaptive / "ids_after_s4.txt").write_text("")  # every brief already has a good candidate
+    env["IMP_OPS_ADAPTIVE"] = str(adaptive)
+    r = ops(env, "start", "ad5")
+    assert r.returncode == 0 and "nothing to do" in r.stdout
+    assert not (Path(env["_jobs"]) / "ad5.pid").exists()
+
+
+def test_adaptive_job_total_is_the_ids_file_line_count(env, tmp_path):
+    write_frozen(env, prompt_sha(env))
+    adaptive = tmp_path / "adaptive"
+    adaptive.mkdir()
+    (adaptive / "ids_after_s4.txt").write_text("g001\ng002\ng003\n")
+    env["IMP_OPS_ADAPTIVE"] = str(adaptive)
+
+    started = ops(env, "start", "ad5")
+    assert started.returncode == 0 and "started ad5" in started.stdout
+    done = ops(env, "wait", "ad5", "30")
+    # the fake bench writes 2 raw files; job_total is the 3-line ids file, not the 48 fallback
+    assert done.returncode == 0 and "raw 2/3" in done.stdout

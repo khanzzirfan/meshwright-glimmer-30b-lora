@@ -1,0 +1,170 @@
+{
+  "name": "GLB improvement ops 3: live adaptive best-of-N on fresh seeds (local only)",
+  "branchName": "ralph/imp-ops-3",
+  "description": "Operator PRD run after imp-3 passes. Generate fresh v3 seed 4 on all 48 briefs, seed 5 only on briefs still lacking a valid assembled candidate, seed 6 on those still lacking one, pick the best, and compare with always-3 on fresh samples. Local Ollama only; about 90 minutes.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Preflight",
+      "description": "As the owner, I want the gate and jobs checked first.",
+      "steps": [
+        "Run `bash scripts/imp_ops.sh preflight`, `python3 ralph/build_prds.py --status | grep imp` and `bash scripts/check.sh` and copy the outputs (last line for check) into notes."
+      ],
+      "acceptanceCriteria": [
+        "preflight reports Ollama up, no job running, prompt hash match",
+        "imp-3 shows 4/4",
+        "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "",
+      "dependsOn": []
+    },
+    {
+      "id": "US-002",
+      "title": "Fresh seed 4 on all briefs",
+      "description": "As the owner, I want a fresh first sample.",
+      "steps": [
+        "Run `bash scripts/imp_ops.sh start ad4` then `wait ad4` (repeat in later iterations; while it is running end the iteration with no completion signal).",
+        "When exit 0: run `node scripts/glb_assembly.mjs --run runs/glb_v3/glimmer-v3-s4 --briefs bench/glb/briefs.jsonl` and copy the pass-rate and assembled lines into notes."
+      ],
+      "acceptanceCriteria": [
+        "runs/glb_v3/glimmer-v3-s4/validation.jsonl has 48 lines and the lines are copied into notes",
+        "`bash scripts/imp_ops.sh status` shows no job running",
+        "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Seed 5 on briefs still lacking a good candidate",
+      "description": "As the owner, I want the second sample only where needed.",
+      "steps": [
+        "Run `mkdir -p runs/imp/adaptive` then `.venv/bin/python scripts/glb_adaptive_ids.py --runs runs/glb_v3/glimmer-v3-s4 --briefs bench/glb/briefs.jsonl --out runs/imp/adaptive/ids_after_s4.txt` and copy the 'remaining X of 48' line into notes.",
+        "Run `bash scripts/imp_ops.sh start ad5` then wait as before (if it prints nothing to do, say so in notes).",
+        "When exit 0: run `node scripts/glb_assembly.mjs --run runs/glb_v3/glimmer-v3-s5 --briefs bench/glb/briefs.jsonl`, copy its output into notes."
+      ],
+      "acceptanceCriteria": [
+        "ids_after_s4.txt exists and its line count equals the remaining number copied into notes",
+        "The seed 5 raw directory has exactly that many files (or nothing to do is recorded)",
+        "No job is running at the end",
+        "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-002"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "Seed 6 on briefs still lacking a good candidate",
+      "description": "As the owner, I want the third sample only where still needed.",
+      "steps": [
+        "Run `.venv/bin/python scripts/glb_adaptive_ids.py --runs runs/glb_v3/glimmer-v3-s4 runs/glb_v3/glimmer-v3-s5 --briefs bench/glb/briefs.jsonl --out runs/imp/adaptive/ids_after_s5.txt` and copy the remaining line.",
+        "Run `bash scripts/imp_ops.sh start ad6` and wait as before; then run glb_assembly.mjs on runs/glb_v3/glimmer-v3-s6 if it ran and copy the output."
+      ],
+      "acceptanceCriteria": [
+        "ids_after_s5.txt exists and the seed 6 raw file count equals its line count (or nothing to do is recorded)",
+        "No job is running at the end",
+        "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-003"
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Pick, compare and blind sheet",
+      "description": "As the owner, I want the live adaptive result beside single-shot and always-3 on fresh samples, plus a sheet to rate.",
+      "steps": [
+        "Run `.venv/bin/python scripts/glb_best_of.py --runs runs/glb_v3/glimmer-v3-s4 runs/glb_v3/glimmer-v3-s5 runs/glb_v3/glimmer-v3-s6 --briefs bench/glb/briefs.jsonl --out runs/imp/adaptive/best/glimmer-v3-adaptive` (omit any run dir that does not exist).",
+        "Run `.venv/bin/python scripts/glb_report.py --root runs/glb_v3 --briefs bench/glb/briefs.jsonl --extra-runs adaptive=runs/imp/adaptive/best/glimmer-v3-adaptive > runs/imp/adaptive/report.md`.",
+        "Run `node scripts/glb_sheet.mjs --root runs/imp/adaptive/best --out runs/imp/adaptive/sheet --briefs bench/glb/briefs.jsonl`.",
+        "Compute the real cost: sum the seconds field (as glb_best_of_cost.py reads it) over the raw files of seeds 4, 5 and 6, divided by 48, and the always-3-equivalent from seeds 4, 5 and 6 on all briefs is not available, so write only the live mean seconds per brief and mean samples per brief (total raw files / 48)."
+      ],
+      "acceptanceCriteria": [
+        "runs/imp/adaptive/report.md has an adaptive row and the valid and assembled numbers are copied into notes",
+        "runs/imp/adaptive/sheet/rating.csv exists with 48 rows plus header",
+        "mean samples per brief and mean seconds per brief are computed from files and shown with the command",
+        "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated",
+        "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-004"
+      ]
+    },
+    {
+      "id": "US-006",
+      "title": "Write RESULTS3",
+      "description": "As the owner, I want one page.",
+      "steps": [
+        "Write runs/imp/RESULTS3.md: fresh seed 4 single-shot numbers, remaining counts after seeds 4 and 5, the adaptive row (valid, assembled, mean samples, mean seconds per brief) next to the simulated adaptive row from runs/imp/adaptive_cost.json (1.62 samples, 97.45 s) and the best-of-3 row from runs/imp/report_best3.md, a sentence saying whether the simulation replicated or not, and a 'Not measured' section (no blind rating, assembled used as ranking key so partly by construction, seeds 4 to 6 are one machine).",
+        "Add one row 'live adaptive best-of-N (seeds 4-6) | valid X/48, assembled Y, mean samples Z, mean seconds S' to docs/14 section 10."
+      ],
+      "acceptanceCriteria": [
+        "Every number in RESULTS3.md appears in a command output in notes",
+        "RESULTS3.md has a 'Not measured' section",
+        "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "US-005"
+      ]
+    }
+  ],
+  "metadata": {
+    "specs": [
+      "docs/14-glb-improvement.md"
+    ],
+    "readFirst": [
+      "docs/14-glb-improvement.md (sections 3-7 and the section 10 results table)",
+      "scripts/imp_ops.sh (preflight, start, wait, status)",
+      "ralph/imp-1.prd.json notes (what was built)"
+    ],
+    "owns": [
+      "runs/imp/",
+      "docs/14-glb-improvement.md section 10"
+    ],
+    "requires": [
+      "ralph/imp-3.prd.json: all 4 stories passing"
+    ],
+    "standingRule": "Operator PRD, to be approved by the owner before it runs: starting local jobs through scripts/imp_ops.sh and waiting for them is allowed here, and it overrides the 'no long jobs' line in AGENTS.md for this PRD only. Run exactly the commands in the story. One story per iteration. A wait story that finds the job still running ends without finishing and is run again later. If a result is missing or a command fails, write the exact output in notes and stop. Never edit prompts/ or the PRDs.",
+    "guardrails": [
+      "You are an operator, not a developer. Run only the commands named in the story. Do not edit any file in scripts/, prompts/, bench/, tests/, ralph/ or .ralph-tui/config.toml, and nothing under data/, out/, eval/, .env or .venv. The only files you may write are under runs/imp/ and the section 10 table of docs/14-glb-improvement.md.",
+      "Never commit, push, tag or publish.",
+      "No network and no cloud: never run runpodctl, never train, never call Baseten, Hugging Face or any remote model. The scripts talk only to the local Ollama at localhost:11434.",
+      "Never kill processes or delete files under runs/. Long jobs start and stop only through scripts/imp_ops.sh.",
+      "One story per iteration. Never run two jobs at once; scripts/imp_ops.sh refuses and you must not work around it.",
+      "A foreground command may run for at most about 9 minutes (scripts/imp_ops.sh wait caps itself at 540 seconds). Do not poll in a loop or call sleep yourself.",
+      "Never read or use runs/glb_v3/claude_ratings_unblinded.csv or any rating.csv to choose, filter or pick outputs; ratings are only compared after the fact in US-002.",
+      "The completion tag is matched literally by the harness. Write it only when every acceptance criterion holds. When a criterion cannot hold yet, never type the tag, not even inside a sentence that says you are not using it; say 'no completion signal this iteration' instead. If a criterion cannot hold yet, say why in notes and stop.",
+      "Record only real results: copy numbers from command output; where unknown write 'not measured'."
+    ],
+    "qualityGates": {
+      "universal": [
+        "Every number you report in notes or in docs/14 section 10 is copied from a command's output, never estimated"
+      ],
+      "chromium": [
+        "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
+      ]
+    },
+    "manualGates": [
+      "Owner rates runs/imp/adaptive/sheet blind; no quality claim before that"
+    ]
+  }
+}

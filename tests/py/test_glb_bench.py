@@ -26,6 +26,7 @@ def args(**overrides):
         "dry_run": False,
         "seed": None,
         "run_suffix": "",
+        "ids_file": None,
     }
     base.update(overrides)
     return SimpleNamespace(**base)
@@ -236,3 +237,32 @@ def test_run_suffix_changes_every_run_directory():
     assert value_after(generate, "--out") == str(run / "raw")
     assert value_after(validate, "--scenes") == str(run / "scenes")
     assert value_after(validate, "--report") == str(run / "validation.jsonl")
+
+
+# --- imp-3 US-002: --ids-file -------------------------------------------------------------------
+
+
+def test_ids_file_reaches_the_generate_command_in_equals_form():
+    generate = glb_bench.plan(
+        glb_bench.load_models(MODELS),
+        args(only=["glimmer"], ids_file="runs/imp/adaptive/ids_after_s4.txt"),
+    )[0]
+    assert "--ids-file=runs/imp/adaptive/ids_after_s4.txt" in generate
+
+
+def test_no_ids_file_leaves_the_generate_command_unchanged():
+    generate = glb_bench.plan(glb_bench.load_models(MODELS), args(only=["glimmer"]))[0]
+    assert not any(part.startswith("--ids-file") for part in generate)
+
+
+def test_dry_run_prints_the_ids_file_flag(monkeypatch, tmp_path, capsys):
+    ids = tmp_path / "ids.txt"
+    ids.write_text("g001\n")
+    monkeypatch.setattr(sys, "argv", [
+        "glb_bench.py", "--out-root", str(tmp_path / "bench"), "--models", str(MODELS),
+        "--briefs", "bench/glb/briefs.jsonl", "--only", "glimmer", "--dry-run",
+        "--ids-file", str(ids),
+    ])
+    glb_bench.main()
+    out = capsys.readouterr().out
+    assert f"--ids-file={ids}" in out

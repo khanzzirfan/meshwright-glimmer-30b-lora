@@ -1,0 +1,2 @@
+{"id": "c2", "ok": true, "reasons": [], "stats": {"export_ms": 9, "glb": {"ok": true, "triangles": 210, "assembly": {"parts": 3, "components": 1, "largest_share": 1.0, "floaters": 0, "min_y": 0, "ground_gap": 0, "tol": 0.1, "assembled": true}}}}
+{"id": "c4", "ok": true, "reasons": [], "stats": {"export_ms": 8, "glb": {"ok": true, "triangles": 310, "assembly": {"parts": 3, "components": 3, "largest_share": 0.34, "floaters": 1, "min_y": 0, "ground_gap": 0.05, "tol": 0.1, "assembled": false}}}}

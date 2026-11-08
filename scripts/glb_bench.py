@@ -123,6 +123,9 @@ def plan(models, args):
         limit = getattr(args, "limit", 0)
         if limit:
             cmd += ["--limit", str(limit)]
+        ids_file = getattr(args, "ids_file", None)
+        if ids_file:
+            cmd.append(f"--ids-file={ids_file}")
         commands.append(cmd)
         commands.append([
             "node", "scripts/validate_scenes.mjs",
@@ -152,6 +155,7 @@ def main(argv=None):
     ap.add_argument("--ollama-url", default=None, help="Ollama server for generation, e.g. http://localhost:11435 through an SSH tunnel to a rented GPU (default: the local server)")
     ap.add_argument("--concurrency", type=int, default=1, help="parallel requests; use more than 1 only against a server started with OLLAMA_NUM_PARALLEL")
     ap.add_argument("--seed", type=int, default=None, help="sampling seed forwarded to teacher_generate.py (options.seed); omitted by default")
+    ap.add_argument("--ids-file", default=None, help="file of brief ids forwarded to teacher_generate.py as --ids-file=PATH; only those briefs are generated")
     ap.add_argument("--run-suffix", default="", help="appended to every run directory name: <out-root>/<name><suffix> (default: none)")
     ap.add_argument("--allow-paid", action="store_true", help="allow rows with paid true")
     ap.add_argument("--dry-run", action="store_true", help="print every command and run nothing")

@@ -355,3 +355,38 @@ def test_cli_extra_runs_writes_the_assembly_repair_row(tmp_path):
     assert row["pass"] == 3
     assert row["assembly"]["assembled"] == 2
     assert "glimmer after assembly repair" in (root / "report.md").read_text()
+
+
+# --- imp-3 US-001: repair-asm row falls back to the validation rows' assembly stats ---------------
+
+ASM_FALLBACK = IMP / "asm_fallback" / "glimmer" / "repair-asm"
+
+
+def test_assembly_lines_from_rows_null_assembly_for_a_not_ok_row():
+    rows = [
+        {"id": "a", "ok": True, "stats": {"glb": {"assembly": {"parts": 3, "assembled": True}}}},
+        {"id": "b", "ok": False, "stats": {"glb": {"assembly": {"parts": 3, "assembled": True}}}},
+    ]
+    lines = glb_report.assembly_lines_from_rows(rows)
+    assert lines[0] == {"id": "a", "kind": None, "assembly": {"parts": 3, "assembled": True}}
+    assert lines[1] == {"id": "b", "kind": None, "assembly": None}
+
+
+def test_assembly_repair_row_reads_repaired_values_when_assembly_jsonl_is_missing():
+    """The imp-ops-2 layout: no `repair-asm/assembly.jsonl`, only the validation rows' stats.
+
+    Base glimmer has 4 ok briefs and 2 assembled; the repair makes one id assembled and one stays
+    not, so the merged row's assembled count goes from 2 to 3 of 4.
+    """
+    base = glb_report.load_model(IMP / "asm_fallback" / "glimmer")
+    assert glb_report.assembly_summary(base["rows"], base["assembly"])["assembled"] == 2
+
+    report = glb_report.build_report(
+        IMP, IMP_BRIEFS, None, None, extra_runs=[("repair-asm", ASM_FALLBACK)]
+    )
+    merged = report["models"]["glimmer after assembly repair"]
+
+    assert merged["pass"] == 4
+    assert merged["assembly"] == {"valid": 4, "assembled": 3, "share": 3 / 4, "median_parts": 3}
+    assert merged["assembly"]["assembled"] / report["briefs"] == 3 / 4
+    assert "| 3/4 (75.0%) | 3/4 (75.0%) | 3 |" in glb_report.render_markdown(report)

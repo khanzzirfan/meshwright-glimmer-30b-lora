@@ -43,9 +43,10 @@ Planned by Ralph (do not exist yet): `docs/08-train-mlx.md`, `docs/09-train-gpu.
 | `scripts/glb_assembly.mjs` | GLB improvement | backfills `assembly.jsonl` for a run on disk (docs/14 section 4) |
 | `scripts/glb_repair.py` | GLB improvement | one-shot repair retry for failed GLB answers (docs/14 section 5) |
 | `scripts/glb_best_of.py` | GLB improvement | picks the best of several sampled candidates per brief (docs/14 section 6) |
+| `scripts/glb_adaptive_ids.py` | GLB improvement | lists the briefs with no valid and assembled candidate yet, to limit a later seed (docs/14 section 6) |
 | `scripts/ccore_prep.py` | GLB improvement | builds the phase 2 dataset from ccore's parquet, eval-leak guarded (docs/14 section 7) |
 | `scripts/glb_phase2_estimate.py` | GLB improvement | reads the phase 2 data and estimates steps, hours and cost (docs/14 section 8) |
-| `scripts/imp_ops.sh` | GLB improvement | operator wrapper for the local imp jobs: preflight, start, wait, status |
+| `scripts/imp_ops.sh` | GLB improvement | operator wrapper for the local imp jobs: preflight, start, wait, status; bench jobs `v3s2`, `v3s3`, adaptive seeds `ad4`/`ad5`/`ad6` and the repair jobs |
 | `scripts/build_dataset.py` | 4. SFT files | prompt/completion JSONL, `--no-reasoning` |
 | `scripts/train_sft.py` | 5. training | TRL, LoRA or full; GPU box |
 | `scripts/export_gguf.sh` | 6. export | merge, GGUF, quantise, Modelfile |

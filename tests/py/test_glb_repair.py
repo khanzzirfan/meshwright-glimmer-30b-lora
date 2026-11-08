@@ -475,3 +475,57 @@ def test_error_summary_defaults_to_error_mode(tmp_path, ollama):
     assert summary["mode"] == "error"
     assert "assembled_after" not in summary
 
+
+def test_assembly_mode_writes_repair_asm_assembly_jsonl(tmp_path, ollama):
+    url, recorder = ollama
+    run, ids, models, _ = make_assembly_env(tmp_path)
+
+    run_main(assembly_argv(run, models, url))
+
+    a0_asm = dict(A0_ASSEMBLY, assembled=True)
+    repair_rows = [
+        {"id": "a0", "ok": True, "reasons": [], "stats": {"glb": {"assembly": a0_asm}}},
+        {"id": "a4", "ok": True, "reasons": [], "stats": {"glb": {"assembly": A4_ASSEMBLY}}},
+    ]
+    (run / "repair-asm" / "validation.jsonl").write_text("".join(json.dumps(r) + "\n" for r in repair_rows))
+    run_main(assembly_argv(run, models, url))
+
+    lines = [json.loads(line) for line in (run / "repair-asm" / "assembly.jsonl").read_text().splitlines()]
+    assert [line["id"] for line in lines] == ["a0", "a4"]
+    assert [line["kind"] for line in lines] == ["static", "static"]
+    assert lines[0] == {"id": "a0", "kind": "static", "assembly": a0_asm}
+    assert lines[1] == {"id": "a4", "kind": "static", "assembly": A4_ASSEMBLY}
+    # the original validation file is left untouched
+    assert (run / "validation.jsonl").read_text().splitlines()[0].startswith('{"id": "a0"')
+    # error mode never writes the assembly-repair folder
+    assert not (run / "repair-asm" / "repair").exists()
+
+
+def test_assembly_mode_assembly_jsonl_is_null_for_a_not_ok_row(tmp_path, ollama):
+    url, recorder = ollama
+    run, ids, models, _ = make_assembly_env(tmp_path)
+
+    run_main(assembly_argv(run, models, url))
+    repair_rows = [
+        {"id": "a0", "ok": False, "reasons": ["bad_glb"], "stats": {"glb": {"assembly": A0_ASSEMBLY}}},
+        {"id": "a4", "ok": True, "reasons": [], "stats": {"glb": {"assembly": A4_ASSEMBLY}}},
+    ]
+    (run / "repair-asm" / "validation.jsonl").write_text("".join(json.dumps(r) + "\n" for r in repair_rows))
+    run_main(assembly_argv(run, models, url))
+
+    by_id = {
+        line["id"]: line
+        for line in (json.loads(text) for text in (run / "repair-asm" / "assembly.jsonl").read_text().splitlines())
+    }
+    assert by_id["a0"]["assembly"] is None
+    assert by_id["a4"]["assembly"] == A4_ASSEMBLY
+
+
+def test_error_mode_never_writes_assembly_jsonl(tmp_path, ollama):
+    url, recorder = ollama
+    run, ids, models, _ = make_env(tmp_path)
+
+    run_main(base_argv(run, models, url))
+
+    assert not (run / "repair" / "assembly.jsonl").exists()
+

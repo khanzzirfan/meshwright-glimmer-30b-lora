@@ -25,9 +25,10 @@ OLLAMA_BODY = {
 }
 
 
-def run_main(monkeypatch, tmp_path, extra_args):
+def run_main(monkeypatch, tmp_path, extra_args, briefs_data=None):
+    rows = briefs_data if briefs_data is not None else [BRIEF]
     briefs = tmp_path / "briefs.jsonl"
-    briefs.write_text(json.dumps(BRIEF) + "\n")
+    briefs.write_text("".join(json.dumps(b) + "\n" for b in rows))
     out = tmp_path / "raw"
     requests = []
 
@@ -123,3 +124,40 @@ def test_rerun_skips_briefs_already_saved(monkeypatch, tmp_path):
     requests, _ = run_main(monkeypatch, tmp_path, [])
     assert requests == []
     assert json.loads((out / "b000.json").read_text()) == saved
+
+
+def test_ids_file_requests_only_the_listed_ids(monkeypatch, tmp_path):
+    rows = [{"id": f"b00{i}", "brief": f"scene {i}"} for i in range(5)]
+    ids = tmp_path / "ids.txt"
+    ids.write_text("# keep these two\n\nb001\nb003\n")
+
+    requests, out = run_main(monkeypatch, tmp_path, ["--ids-file", str(ids)], briefs_data=rows)
+
+    assert len(requests) == 2
+    asked = {r["messages"][1]["content"] for r in requests}
+    assert asked == {"scene 1", "scene 3"}
+    assert sorted(p.name for p in out.iterdir()) == ["b001.json", "b003.json"]
+
+
+def test_ids_file_unknown_id_warns(monkeypatch, tmp_path, capsys):
+    ids = tmp_path / "ids.txt"
+    ids.write_text("b000\nb999\n")
+
+    requests, out = run_main(monkeypatch, tmp_path, ["--ids-file", str(ids)])
+
+    assert len(requests) == 1
+    err = capsys.readouterr().err
+    assert "b999" in err
+    assert "b000" not in err
+
+
+def test_ids_file_still_skips_saved_rows(monkeypatch, tmp_path):
+    rows = [{"id": "b001", "brief": "one"}, {"id": "b003", "brief": "three"}]
+    ids = tmp_path / "ids.txt"
+    ids.write_text("b001\nb003\n")
+
+    requests, out = run_main(monkeypatch, tmp_path, ["--ids-file", str(ids)], briefs_data=rows)
+    assert len(requests) == 2
+
+    requests, _ = run_main(monkeypatch, tmp_path, ["--ids-file", str(ids)], briefs_data=rows)
+    assert requests == []
