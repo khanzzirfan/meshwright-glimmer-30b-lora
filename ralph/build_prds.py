@@ -43,6 +43,14 @@ GUARDRAILS = [
     "If the spec is wrong or impossible, do the closest thing that works and explain the difference in `notes`. If you cannot finish a story, set `notes` to why and stop; do not mark it passing.",
 ]
 
+# Added to every PRD, including operations PRDs that replace GUARDRAILS: the harness matches the completion
+# tag literally, so an agent that types it inside a refusal flips the story to passing (seen twice in imp-ops).
+COMPLETION_RULE = (
+    "The completion tag is matched literally by the harness. Write it only when every acceptance criterion holds. "
+    "When a criterion cannot hold yet, never type the tag, not even inside a sentence saying you are not using it; "
+    "write 'no completion signal this iteration' instead."
+)
+
 
 def prd_files(folder: Path) -> list[Path]:
     """prd-NN-*.json (the main tracks) plus <name>-N.prd.json (side experiments such as proof-1.prd.json)."""
@@ -59,7 +67,9 @@ def build(src: Path) -> dict:
     stories = s["stories"]
     # an operations PRD can replace the default gates and guardrails (build PRDs never do)
     universal = s.get("universalGates", UNIVERSAL_GATES)
-    guardrails = s.get("guardrails", GUARDRAILS)
+    guardrails = list(s.get("guardrails", GUARDRAILS))
+    if not any("matched literally" in g for g in guardrails):
+        guardrails.append(COMPLETION_RULE)
     out_stories = []
     for i, st in enumerate(stories, 1):
         sid = f"US-{i:03d}"

@@ -1,7 +1,7 @@
 {
   "name": "GLB improvement 4: one-command generator (adaptive best-of-N plus repair)",
-  "description": "Package what the numbers support into the product: one command that turns a text prompt into a GLB. It samples the frozen v3 prompt until a candidate is valid and assembled (at most 3 seeds, imp-ops-3: 1.375 samples and 84.5 s per brief, 100% valid, 93.8% assembled on fresh seeds), tries one error repair when nothing valid exists, and records every attempt. Offline: tests use a fake Ollama server and a fake validator.",
   "branchName": "ralph/imp-4",
+  "description": "Package what the numbers support into the product: one command that turns a text prompt into a GLB. It samples the frozen v3 prompt until a candidate is valid and assembled (at most 3 seeds, imp-ops-3: 1.375 samples and 84.5 s per brief, 100% valid, 93.8% assembled on fresh seeds), tries one error repair when nothing valid exists, and records every attempt. Offline: tests use a fake Ollama server and a fake validator.",
   "userStories": [
     {
       "id": "US-001",
@@ -23,8 +23,7 @@
       "priority": 1,
       "passes": true,
       "notes": "",
-      "dependsOn": [],
-      "completionNotes": "Completed by agent"
+      "dependsOn": []
     },
     {
       "id": "US-002",
@@ -47,8 +46,7 @@
       "notes": "",
       "dependsOn": [
         "US-001"
-      ],
-      "completionNotes": "Completed by agent"
+      ]
     },
     {
       "id": "US-003",
@@ -70,8 +68,7 @@
       "notes": "",
       "dependsOn": [
         "US-002"
-      ],
-      "completionNotes": "Completed by agent"
+      ]
     },
     {
       "id": "US-004",
@@ -92,8 +89,7 @@
       "notes": "",
       "dependsOn": [
         "US-003"
-      ],
-      "completionNotes": "Completed by agent"
+      ]
     }
   ],
   "metadata": {
@@ -130,7 +126,8 @@
       "Python scripts must stay importable without heavy deps: import torch, transformers, trl or peft only inside functions or under `if __name__ == '__main__'` so pytest can import them.",
       "Record only real results. Never invent pass rates, token counts, timings or costs; where a number is unknown write 'not measured'.",
       "Debug output goes to data/ or a temp dir, never into scripts/ or docs/.",
-      "If the spec is wrong or impossible, do the closest thing that works and explain the difference in `notes`. If you cannot finish a story, set `notes` to why and stop; do not mark it passing."
+      "If the spec is wrong or impossible, do the closest thing that works and explain the difference in `notes`. If you cannot finish a story, set `notes` to why and stop; do not mark it passing.",
+      "The completion tag is matched literally by the harness. Write it only when every acceptance criterion holds. When a criterion cannot hold yet, never type the tag, not even inside a sentence saying you are not using it; write 'no completion signal this iteration' instead."
     ],
     "qualityGates": {
       "universal": [
@@ -145,7 +142,6 @@
       "Owner reviews and commits the imp-4 diff",
       "Owner tries it on a few of their own prompts and rates the output blind before anyone calls it better than best-of-3",
       "Owner decides on the phase 2 LoRA (docs/14 sections 8 and 9); Ralph never creates pods"
-    ],
-    "updatedAt": "2026-11-08T09:46:22.121Z"
+    ]
   }
 }

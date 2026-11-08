@@ -1,0 +1,252 @@
+{
+  "name": "GLB improvement 5: generator fixes, stricter touch check, self-distillation data tooling",
+  "branchName": "ralph/imp-5",
+  "description": "Offline tooling from the imp-4 review. (1) Drop each exported GLB onto the ground: 0 to 5 assets per v3 run fail assembly only because they hover. (2) Report an oriented-box touch check next to the existing one, because axis-aligned boxes of rotated parts overstate joins. (3) Generator: ground, stop only when valid, assembled and within the triangle budget, and fall back to the assembly repair. (4) Test every imp_ops.sh command against the real argument parsers (the --run-suffix bug passed its fake). (5) Author about 540 new non-eval briefs and (6) a prep script that turns the generator's picks into a training set in the existing prompt/completion format. No training.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Ground drop for exported GLBs (glb_ground.mjs)",
+      "description": "As a user, I want an asset that hovers above (or sinks below) the ground moved so its lowest point is at y = 0, because that alone fails 0 to 5 assets per v3 run.",
+      "steps": [
+        "Create scripts/glb_ground.mjs exporting `groundGlb(buf, {kind, tolFrac=0.02})` -> {buf, shift, assembly_before, assembly_after}. Compute the world boxes with glb_check.mjs (export worldBoxes or reuse assembly internals; do not copy). When |min_y| > tol, append ONE new node {name: 'ground_offset', translation: [0, -min_y, 0], children: <the scene's root nodes>} and make it the scene's only root; existing node indices do not change, so animation channels and skins stay valid. Rewrite the GLB: JSON chunk padded with spaces to 4 bytes, BIN chunk unchanged, total length updated. When |min_y| <= tol return the input buffer unchanged with shift 0.",
+        "CLI: `node scripts/glb_ground.mjs --in FILE --out FILE [--kind static|animated|set]` prints one JSON line {shift, assembly_before, assembly_after}.",
+        "Tests (tests/js/glb_ground.test.mjs) with makeGlb: a hovering two-part asset becomes grounded (assembly_after.assembled true, ground_gap 0); a sunk asset is lifted; an already grounded asset is byte-identical; parseGlb(ok) on the result; an animated fixture keeps its channel target indices."
+      ],
+      "acceptanceCriteria": [
+        "Hover, sunk, unchanged and animated cases are asserted",
+        "parseGlb reports ok and the same triangle count after grounding",
+        "The existing assembly tests still pass unchanged",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "",
+      "dependsOn": []
+    },
+    {
+      "id": "US-002",
+      "title": "Oriented-box touch check beside the existing one",
+      "description": "As the owner, I want a stricter join test, because axis-aligned boxes of rotated parts overlap even when the parts do not touch.",
+      "steps": [
+        "In scripts/glb_check.mjs compute, per mesh node, an oriented box: the local POSITION min/max box transformed by the node's world matrix (centre, three axes with half extents). Two parts touch_obb when the separating-axis test over the 15 axes finds no axis with a gap larger than tol (same tol as now).",
+        "Add fields to the assembly result: components_obb, largest_share_obb, assembled_obb (same kind-aware rule as assembled, with largest_share_obb and the existing floaters and ground rules). Keep every existing field and the meaning of `assembled` unchanged.",
+        "Tests: two thin planks rotated 45 degrees placed so their AABBs overlap but the planks are 0.5 apart -> assembled true, assembled_obb false; touching rotated planks -> both true; a degenerate (flat) box does not crash."
+      ],
+      "acceptanceCriteria": [
+        "The rotated-planks fixture asserts assembled true and assembled_obb false",
+        "All existing glb_check and assembly tests pass unchanged",
+        "bash scripts/check.sh passes",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-001"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Generator: ground, triangle budget stop, assembly repair fallback",
+      "description": "As a user, I want the generator to fix hovering for free, respect the triangle budget and try the assembly repair before giving up.",
+      "steps": [
+        "In scripts/glb_generate.py, after validating each attempt, run `node scripts/glb_ground.mjs --in <attempt glb> --out <attempt dir>/glb/asset.grounded.glb --kind KIND` (skip when the GLB is missing). Use assembly_after for that attempt's assembled value and the grounded file as its GLB from then on. Record `grounded_shift` per attempt.",
+        "Stop rule becomes ok AND assembled AND triangles <= --tri-budget (default 5000). Record `within_budget` per attempt.",
+        "After the samples, when some attempt is ok but none is assembled, spend one assembly repair turn on the best ok attempt (glb_repair's assembly fix message, imported), validate and ground it like a sample, record it with `repair: \"assembly\"` (the error repair keeps `repair: true`). --no-repair disables both repairs.",
+        "Update result.json and summary.json (add picked_within_budget, assembly_repairs_used) and the docs section. Tests with the fake server and fake validator: a hovering candidate is accepted after grounding (1 request); an over-budget assembled candidate does not stop the loop; the assembly repair runs only when nothing is assembled; existing generator tests still pass or are updated with a note why."
+      ],
+      "acceptanceCriteria": [
+        "The three new scenarios are asserted with request counts",
+        "result.json has grounded_shift and within_budget per attempt (asserted)",
+        "bash scripts/check.sh passes",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-002"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "Test every imp_ops.sh command against the real parsers",
+      "description": "As the owner, I want a test that would have caught the --run-suffix bug.",
+      "steps": [
+        "Expose `build_parser()` in scripts/glb_bench.py, scripts/glb_repair.py and scripts/glb_generate.py (main uses it; behaviour unchanged).",
+        "Add tests/py/test_imp_ops_parsers.py: for every job name in scripts/imp_ops.sh (read the case labels from the script), get its command with IMP_OPS_DRY=1 (create any ids file it needs in a temp copy or via env overrides), shlex-split it, find the script path and parse the remaining arguments with that script's real build_parser(); the test fails on any argparse error.",
+        "Verify the test fails if a job's command is changed back to `--run-suffix -s2` (do this in a temp copy inside the test, not by editing the script)."
+      ],
+      "acceptanceCriteria": [
+        "Every imp_ops.sh job's command parses with the real parser (asserted)",
+        "The negative case with `--run-suffix -s2` fails to parse (asserted)",
+        "bash scripts/check.sh passes",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-003"
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Distillation briefs, part 1: script and six domains",
+      "description": "As the owner, I want new briefs that are not eval briefs, to generate a self-distillation set.",
+      "steps": [
+        "Create bench/distill/subjects.json: {domain: [ {title, brief, kind} ... ]} with exactly 45 entries for each of: buildings, characters, creatures, fantasy_medieval, food, furniture. Briefs follow the style of bench/glb/briefs.jsonl (one or two sentences, concrete parts, low-poly). Kinds per domain: 27 static, 11 animated, 7 set.",
+        "Create scripts/glb_distill_briefs.py --subjects FILE --eval-briefs bench/glb/briefs.jsonl --leak-file bench/glb/eval_subjects.json --out bench/distill/briefs.jsonl: assign ids x0001... in domain order, level 1-3 by brief length, style low-poly; drop entries whose title or brief contains an eval subject phrase (whole word, case-insensitive) or whose title equals an eval title; drop duplicate titles; print kept/dropped counts by reason; write the JSONL in the eval brief field format.",
+        "Tests with a tiny fixture: leak by phrase, leak by title, duplicate, id assignment, field set equal to the eval brief field set."
+      ],
+      "acceptanceCriteria": [
+        "subjects.json has 45 entries for each of the six domains with the 27/11/7 kind split (asserted by a test that reads the real file)",
+        "Leak, duplicate and id rules are asserted on the fixture",
+        "bash scripts/check.sh passes",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-004"
+      ]
+    },
+    {
+      "id": "US-006",
+      "title": "Distillation briefs, part 2: six more domains and the built file",
+      "description": "As the owner, I want all 12 domains covered.",
+      "steps": [
+        "Add 45 entries each for modular_kits, nature, props_and_tools, sci_fi, vehicles, weapons_and_armour to bench/distill/subjects.json with the same 27/11/7 kind split.",
+        "Run `.venv/bin/python scripts/glb_distill_briefs.py --subjects bench/distill/subjects.json --eval-briefs bench/glb/briefs.jsonl --leak-file bench/glb/eval_subjects.json --out bench/distill/briefs.jsonl` and copy its output into notes. If more than 60 entries are dropped as leaks, replace them with new subjects and rerun until at least 480 briefs are kept.",
+        "Extend the real-file test to all 12 domains and assert bench/distill/briefs.jsonl has at least 480 rows, no eval id and no eval title."
+      ],
+      "acceptanceCriteria": [
+        "bench/distill/briefs.jsonl has at least 480 rows and the script output is copied into notes",
+        "No row's title or brief contains an eval subject phrase (asserted)",
+        "bash scripts/check.sh passes",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-005"
+      ]
+    },
+    {
+      "id": "US-007",
+      "title": "Distilled training set prep (glb_distill_prep.py)",
+      "description": "As the owner, I want the generator's good picks turned into a training set in the same row format as the ccore set.",
+      "steps": [
+        "Create scripts/glb_distill_prep.py --run DIR --briefs bench/distill/briefs.jsonl --out DIR [--system prompts/system_glb_v3.txt] [--val-frac 0.1] [--require-obb]: for each DIR/<id>/result.json keep briefs with picked_ok, picked_assembled and picked_within_budget (and assembled_obb when --require-obb); completion = the picked attempt's raw content (answer only, no reasoning); prompt = [system from --system, user = the brief text]; rows in the ccore_prep.py format. Refuse ids starting with g or any id/title found in bench/glb/briefs.jsonl. Split by a stable hash of id. Write train.jsonl, val.jsonl and stats.json {kept, dropped_by_reason, completion_chars median/max, by_domain, by_kind}.",
+        "Tests with a fixture run of 5 briefs: one not ok, one unassembled, one over budget, two kept; eval id refusal; the row format matches what scripts/mesh_lora_hf.py --dry-run accepts (call its loader on the output)."
+      ],
+      "acceptanceCriteria": [
+        "The fixture keeps exactly 2 rows and stats.json counts the drops by reason (asserted)",
+        "mesh_lora_hf.py's loader accepts the output (asserted)",
+        "bash scripts/check.sh passes",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-006"
+      ]
+    },
+    {
+      "id": "US-008",
+      "title": "imp_ops.sh distill jobs and docs",
+      "description": "As the owner session, I want fixed commands for the overnight run.",
+      "steps": [
+        "Add jobs to scripts/imp_ops.sh: `distill-smoke` runs `.venv/bin/python scripts/glb_generate.py --briefs bench/glb/dev_briefs.jsonl --limit 2 --out-dir runs/imp/distill_smoke`; `distill` runs `.venv/bin/python scripts/glb_generate.py --briefs bench/distill/briefs.jsonl --out-dir runs/imp/distill`. For both, job_raw counts result.json files (one per finished brief) and job_total is the brief count (2, and the line count of bench/distill/briefs.jsonl). Same prompt-hash refusal and one-job rule.",
+        "Document the distillation flow in docs/14 (new section 'Self-distillation data'): briefs, the overnight job, prep command, expected size, and that training needs owner approval.",
+        "Update README.md, INDEX.md, NEXT-STEPS.md and ralph/README.md (imp-5); the parser test from US-004 must cover the new jobs."
+      ],
+      "acceptanceCriteria": [
+        "`IMP_OPS_DRY=1 start distill` prints the exact command (asserted)",
+        "The real-parser test covers distill and distill-smoke (asserted)",
+        "bash scripts/check.sh passes",
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "US-007"
+      ]
+    }
+  ],
+  "metadata": {
+    "specs": [
+      "docs/14-glb-improvement.md",
+      "docs/13-glb-code-track.md"
+    ],
+    "readFirst": [
+      "docs/14-glb-improvement.md sections 4-6 and the One-command generator section",
+      "scripts/glb_check.mjs (assembly, worldBoxes) and tests/js/glb_util.mjs (makeGlb)",
+      "scripts/glb_generate.py, scripts/glb_repair.py (fix_message, assembly mode), scripts/ccore_prep.py (row format and leak guard)",
+      "bench/glb/briefs.jsonl (field format only) and bench/glb/eval_subjects.json (leak list)"
+    ],
+    "owns": [
+      "scripts/glb_ground.mjs",
+      "scripts/glb_check.mjs",
+      "scripts/glb_generate.py",
+      "scripts/glb_bench.py",
+      "scripts/glb_repair.py",
+      "scripts/glb_best_of.py",
+      "scripts/glb_distill_briefs.py",
+      "scripts/glb_distill_prep.py",
+      "scripts/imp_ops.sh",
+      "bench/distill/",
+      "tests/js/",
+      "tests/py/",
+      "docs/14-glb-improvement.md",
+      "README.md",
+      "INDEX.md",
+      "NEXT-STEPS.md",
+      "ralph/README.md"
+    ],
+    "requires": [
+      "ralph/imp-4.prd.json: all 4 stories passing"
+    ],
+    "standingRule": "Offline-only PRD. Build and test with fixtures, GLBs built inside tests, fake HTTP servers and temp dirs. Never call the real Ollama, never run the benchmark or the generator for real, never read or write runs/, data/, out/ or eval/. Never edit bench/glb/briefs.jsonl, bench/glb/eval_subjects.json or prompts/. Never commit. The existing `assembled` field keeps its exact meaning so past numbers stay comparable.",
+    "guardrails": [
+      "Work offline. Tests use fixtures under tests/fixtures and mocked HTTP. Never call Baseten, Meta, Hugging Face or any remote service from a story, a test or a script you run. The only network use allowed is `npm install` and `.venv/bin/pip install` of packages the story names.",
+      "Never commit, push, tag or publish. autoCommit is off and the owner commits.",
+      "Never delete, overwrite or reformat anything under data/, out/, eval/, .env or .venv. They are the owner's data (a long Glimmer generation run may be writing data/raw right now). Tests write only to temporary directories.",
+      "Do not start long jobs. Any command that would run more than about 5 minutes (corpus generation, training, GGUF conversion, evals) is written as a script plus docs and left for the owner. A live smoke call to the local Ollama is allowed only if the story says so, with at most 2 briefs, and must skip cleanly when Ollama is down. Never rent GPUs or run `runpodctl` with anything that creates a pod.",
+      "Edit only the files named in the story's steps, plus their tests and the doc the story names. Do not change prompts/system.txt: every existing raw answer was generated against it.",
+      "Match the surrounding code: short comments that explain why, argparse CLIs, resumable file-per-item outputs, no new dependency the story does not name. Python runs with `.venv/bin/python`; Node scripts are ESM `.mjs` (Node 22).",
+      "Three.js stays pinned at 0.160.0 and the validator keeps serving the local copy in place of the CDN URL.",
+      "Python scripts must stay importable without heavy deps: import torch, transformers, trl or peft only inside functions or under `if __name__ == '__main__'` so pytest can import them.",
+      "Record only real results. Never invent pass rates, token counts, timings or costs; where a number is unknown write 'not measured'.",
+      "Debug output goes to data/ or a temp dir, never into scripts/ or docs/.",
+      "If the spec is wrong or impossible, do the closest thing that works and explain the difference in `notes`. If you cannot finish a story, set `notes` to why and stop; do not mark it passing.",
+      "The completion tag is matched literally by the harness. Write it only when every acceptance criterion holds. When a criterion cannot hold yet, never type the tag, not even inside a sentence saying you are not using it; write 'no completion signal this iteration' instead."
+    ],
+    "qualityGates": {
+      "universal": [
+        "`bash scripts/check.sh` passes (syntax checks, pytest, node tests; offline)",
+        "Any script flag or behaviour you changed or added is described in README.md or the doc the story names"
+      ],
+      "chromium": [
+        "Browser-driven tests run against the installed Chromium (`npx playwright install chromium` is already done); if Chromium cannot launch, say so in `notes` instead of skipping silently"
+      ]
+    },
+    "manualGates": [
+      "Owner reviews and commits the imp-5 diff",
+      "The overnight distillation run is started by the owner session through scripts/imp_ops.sh, not by Ralph",
+      "Training on the distilled set needs the owner's explicit GPU approval; Ralph never creates pods"
+    ]
+  }
+}

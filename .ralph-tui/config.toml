@@ -1,9 +1,9 @@
 # Ralph TUI configuration for muse-threejs. Same agent setup as pixitween-director.
 configVersion = "2.1"
 tracker = "json"
-# agent = "command-code-go"   # needs `cmd login`
+agent = "command-code-go"   # needs `cmd login`
 # Local Ollama through opencode (opencode.json); 64k-context variant of qwen3.8:27b made with `ollama create`:
-agent = "claude"
+# agent = "claude"
 maxIterations = 200
 autoCommit = false
 # Ralph strips *_API_KEY from the agent env by default; opencode's cmdc provider needs this one.
@@ -11,7 +11,7 @@ envPassthrough = ["CMDC_KEY", "NVIDIA_NIM_API_KEY"]
 
 [trackerOptions]
 [agentOptions]
-# model = "deepseek/deepseek-v4-flash"   # with command-code-go
+model = "deepseek/deepseek-v4-flash"   # with command-code-go
 # model = "ollama/qwen3.8:27b-64k"   # local fallback: slow (about 10-20 min per attempt on this Mac)
 # model = "nvidia/deepseek-ai/deepseek-v4.1-flash"   # free hosted endpoint via opencode, NVIDIA_NIM_API_KEY
-model = "sonnet"
+# model = "sonnet"
