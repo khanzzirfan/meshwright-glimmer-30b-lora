@@ -1,8 +1,0 @@
-== [1] model nvidia/deepseek-ai/deepseek-v4.1-flash | stories passing 5/7 | log .ralph-tui/models/glb-1.prd.1.nvidia_deepseek-ai_deepseek-v4.1-flash.log
-   result: 5 -> 5 of 7 stories passing
-== [2] model opencode/deepseek-v4.1-flash-free | stories passing 5/7 | log .ralph-tui/models/glb-1.prd.2.opencode_deepseek-v4.1-flash-free.log
-   result: 5 -> 5 of 7 stories passing
-== [3] model ollama/qwen3.8:27b-64k | stories passing 5/7 | log .ralph-tui/models/glb-1.prd.3.ollama_qwen3.8_27b-64k.log
-   result: 5 -> 5 of 7 stories passing
-glb-1.prd.json: 5/7 | next US-006 glb_sheet.mjs: render exported GLBs to contact sheets and a blind rating file
-== not finished after all models; read the story notes

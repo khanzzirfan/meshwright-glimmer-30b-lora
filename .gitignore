@@ -26,3 +26,10 @@ __pycache__/
 
 # local benchmark runs (large, regenerated)
 runs/
+
+# release data copies (uploaded to HF, source in runs/imp/distill_data)
+release/*/hf-dataset/*.jsonl
+
+##ralph
+.ralph-tui/
+!.ralph-tui/config.toml

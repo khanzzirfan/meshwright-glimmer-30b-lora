@@ -1,6 +1,0 @@
-== [1] model opencode/deepseek-v4.1-flash-free | stories passing 0/7 | log .ralph-tui/models/glb-1.prd.1.opencode_deepseek-v4.1-flash-free.log
-   time limit (40 min) reached, stopping this model
-   result: 0 -> 5 of 7 stories passing
-== [2] model nvidia/z-ai/glm-5.3-flash | stories passing 5/7 | log .ralph-tui/models/glb-1.prd.2.nvidia_z-ai_glm-5.3-flash.log
-   result: 5 -> 5 of 7 stories passing
-== [3] model ollama/qwen3.8:27b-64k | stories passing 5/7 | log .ralph-tui/models/glb-1.prd.3.ollama_qwen3.8_27b-64k.log
