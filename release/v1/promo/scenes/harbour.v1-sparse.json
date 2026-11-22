@@ -1,0 +1,21 @@
+{
+  "plinth": { "shape": "square", "size_m": 56, "top": "0x9ccf7a", "side": "0x8a5a3c" },
+  "camera": { "yaw": 30, "pitch": 28, "fov": 30, "zoom": 1.8 },
+  "water": { "color": "0x5aa0d8", "side": "front", "drop_m": 0.01 },
+  "items": [
+    { "id": "g023", "glb": "runs/imp/adaptive/best/glimmer-v3-adaptive/glb/g023.glb", "x": -14, "z": -12, "rot_y_deg": 0 },
+    { "id": "x0019", "glb": "runs/imp/distill/x0019/asset.glb", "x": 3, "z": -14, "rot_y_deg": 0 },
+    { "id": "x0004", "glb": "runs/imp/distill/x0004/asset.glb", "x": 13, "z": -14, "rot_y_deg": 0 },
+    { "id": "x0011", "glb": "runs/imp/distill/x0011/asset.glb", "x": -11, "z": 1, "rot_y_deg": 0 },
+    { "id": "x0152", "glb": "runs/imp/distill/x0152/asset.glb", "x": -7, "z": -8, "rot_y_deg": 0 },
+    { "id": "x0361", "glb": "runs/imp/distill/x0361/asset.glb", "x": 9, "z": -9, "rot_y_deg": 0 },
+    { "id": "x0149", "glb": "runs/imp/distill/x0149/asset.glb", "x": -5, "z": -13, "rot_y_deg": 0 },
+    { "id": "x0153", "glb": "runs/imp/distill/x0153/asset.glb", "x": 6, "z": -6, "rot_y_deg": 0 },
+    { "id": "x0109", "glb": "runs/imp/distill/x0109/asset.glb", "x": 11, "z": -7, "rot_y_deg": 0, "height_m": 0.3, "notes": "1.62 m tall as generated, far too large for a shore crab; scaled to a 0.3 m crab." },
+    { "id": "x0086", "glb": "runs/imp/distill/x0086/asset.glb", "x": 0, "z": -8, "rot_y_deg": 0, "height_m": 1.9, "notes": "2.38 m tall as generated; trimmed to 1.9 m so the crew reads as people beside the 9.9 m lighthouse." },
+    { "id": "x0460", "glb": "runs/imp/distill/x0460/asset.glb", "x": -13, "z": 9, "rot_y_deg": 30, "on_water": true },
+    { "id": "x0462", "glb": "runs/imp/distill/x0462/asset.glb", "x": 2, "z": 13, "rot_y_deg": 0, "on_water": true },
+    { "id": "x0461", "glb": "runs/imp/distill/x0461/asset.glb", "x": 14, "z": 9, "rot_y_deg": 0, "height_m": 5, "on_water": true, "notes": "15 m tall as generated (mast and rig swollen); scaled to a 5 m boat to read beside the 8-10 m buildings." },
+    { "id": "x0465", "glb": "runs/imp/distill/x0465/asset.glb", "x": -2, "z": 6, "rot_y_deg": 0, "on_water": true }
+  ]
+}

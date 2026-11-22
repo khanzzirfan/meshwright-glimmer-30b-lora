@@ -381,9 +381,19 @@ function measure(json, bytes, version) {
 
   const bbox = min === null ? emptyBbox() : { min, max, size: max.map((v, i) => v - min[i]) };
   const empty = meshes.length === 0 || triangles === 0;
+  // NaN in a page's transform is written as null by JSON: three.js silently hides the part and Blender refuses
+  // the file ("Couldn't parse glTF"), so a node with a non-numeric transform makes the GLB invalid.
+  const badTransform = (n) => ['translation', 'rotation', 'scale', 'matrix'].some((k) =>
+    Array.isArray(n?.[k]) && n[k].some((v) => typeof v !== 'number' || !Number.isFinite(v)));
+  const nanNodes = nodes.filter(badTransform).length;
+  // The same for vertex data: an accessor whose min/max is not numeric holds NaN positions.
+  const nanAccessors = accessors.filter((a) => ['min', 'max'].some((k) =>
+    Array.isArray(a?.[k]) && a[k].some((v) => typeof v !== 'number' || !Number.isFinite(v)))).length;
   const result = {
-    ok: !empty,
-    reason: empty ? 'empty_glb' : null,
+    ok: !empty && nanNodes === 0 && nanAccessors === 0,
+    reason: empty ? 'empty_glb' : (nanNodes ? 'nan_transform' : (nanAccessors ? 'nan_geometry' : null)),
+    nan_transform_nodes: nanNodes,
+    nan_geometry_accessors: nanAccessors,
     bytes,
     version,
     meshes: meshes.length,

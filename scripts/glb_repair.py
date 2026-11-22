@@ -32,8 +32,22 @@ REPAIRABLE_REASONS = (
     "export_error",
     "bad_glb",
     "empty_glb",
+    "nan_transform",
+    "nan_geometry",
     "no_export_button",
 )
+# Extra hint per reason, appended to the fix message when the reason is present.
+REASON_HINTS = {
+    "nan_transform": (
+        "Some parts have a position, rotation or scale that is NaN (for example from an undefined variable or "
+        "a division by zero in a loop), so they vanish and the GLB is invalid. Compute every position from "
+        "defined numbers."
+    ),
+    "nan_geometry": (
+        "Some geometry has NaN vertex positions (for example a size or radius computed from an undefined "
+        "variable), so the GLB is invalid. Build every shape from defined numbers."
+    ),
+}
 # Not one-line bugs: the answer was cut off, never produced a page, or leans on the network.
 SKIP_REASONS = {"truncated", "no_html", "external_dep"}
 
@@ -132,6 +146,7 @@ def fix_message(row):
         "Reply with the complete corrected HTML file in one ```html block. "
         "Keep the asset the same and fix only what is broken. "
         "Remember the GLB exporter rules in the system prompt."
+        + "".join(" " + REASON_HINTS[r] for r in (row.get("reasons") or []) if r in REASON_HINTS)
     )
 
 

@@ -157,6 +157,12 @@ The owner approves the spend first. Starting points, all of them estimates, not 
 |---|---|
 | Valid GLB | 100% (48/48) |
 | Assembled | 93.8% (45/48) |
+
+**Correction, 22 Nov 2026.** The live adaptive pick for g012 (seed 4, market stall) has 28 nodes whose matrix holds
+NaN (written as null), so three.js hides those parts and Blender refuses the file. `glb_check.mjs` now fails such
+GLBs as `nan_transform`; under that rule the live adaptive result is 47/48 valid and 44/48 assembled. Best of 3 and
+the single-seed runs s2, s3, s5 and s6 have no such GLB; across the 588 GLBs on disk only g012 (s4) and x0211
+(distill) are affected.
 | Mean samples per brief | 1.375 |
 | Mean seconds per brief | 84.5 |
 

@@ -18,6 +18,7 @@ export function makeGlb({
   nodes = null,
   scene = null,
   boxes = null,
+  names = null,
 } = {}) {
   triangles = Math.max(0, Math.floor(triangles));
   animations = Math.max(0, Math.floor(animations));
@@ -91,7 +92,7 @@ export function makeGlb({
     }
 
     gltfMeshes.push({
-      name: `mesh${m}`,
+      name: names?.meshes?.[m] ?? `mesh${m}`,
       primitives: [
         {
           attributes: { POSITION: posAccessor },
@@ -126,7 +127,7 @@ export function makeGlb({
 
     for (let a = 0; a < animations; a++) {
       gltfAnimations.push({
-        name: `anim${a}`,
+        name: names?.animations?.[a] ?? `anim${a}`,
         samplers: [{ input: timeAccessor, output: valueAccessor, interpolation: 'LINEAR' }],
         channels: [{ sampler: 0, target: { node: 0, path: 'translation' } }],
       });
@@ -135,13 +136,14 @@ export function makeGlb({
 
   const gltfNodes = Array.isArray(nodes) ? nodes : Array.from({ length: meshes }, (_, i) => ({ mesh: i, name: `node${i}` }));
   const sceneNodes = Array.isArray(scene) ? scene : gltfNodes.map((_, i) => i);
+  const sceneName = names?.scenes?.[0];
   const json = {
     asset: { version: '2.0', generator: 'tests/js/glb_util.mjs' },
     scene: 0,
-    scenes: [{ nodes: sceneNodes }],
+    scenes: [{ nodes: sceneNodes, ...(sceneName !== undefined ? { name: sceneName } : {}) }],
     nodes: gltfNodes,
     meshes: gltfMeshes,
-    materials: meshes > 0 ? [{ name: 'mat', pbrMetallicRoughness: { baseColorFactor: [0.7, 0.7, 0.7, 1] } }] : [],
+    materials: meshes > 0 ? [{ name: names?.materials?.[0] ?? 'mat', pbrMetallicRoughness: { baseColorFactor: [0.7, 0.7, 0.7, 1] } }] : [],
     accessors,
     bufferViews,
     buffers: [{ byteLength: bin.length }],

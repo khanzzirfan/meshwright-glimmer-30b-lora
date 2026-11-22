@@ -1,0 +1,27 @@
+{
+  "plinth": { "shape": "round", "size_m": 62, "top": "0x9ccf7a", "side": "0x8a5a3c" },
+  "camera": { "yaw": 30, "pitch": 28, "fov": 30, "zoom": 2 },
+  "items": [
+    { "id": "x0022", "glb": "runs/imp/distill/x0022/asset.glb", "x": -18, "z": -14, "rot_y_deg": 0 },
+    { "id": "x0018", "glb": "runs/imp/distill/x0018/asset.glb", "x": 2, "z": -19, "rot_y_deg": 90 },
+    { "id": "x0013", "glb": "runs/imp/distill/x0013/asset.glb", "x": 16, "z": -12, "rot_y_deg": 0 },
+    { "id": "x0001", "glb": "runs/imp/distill/x0001/asset.glb", "x": -25, "z": -3, "rot_y_deg": 0 },
+    { "id": "x0024", "glb": "runs/imp/distill/x0024/asset.glb", "x": 26, "z": -2, "rot_y_deg": 0 },
+    { "id": "x0005", "glb": "runs/imp/distill/x0005/asset.glb", "x": -8, "z": -7, "rot_y_deg": 0 },
+    { "id": "x0316", "glb": "runs/imp/distill/x0316/asset.glb", "x": -6, "z": -2, "rot_y_deg": 0 },
+    { "id": "x0319", "glb": "runs/imp/distill/x0319/asset.glb", "x": 6, "z": -8, "rot_y_deg": 0 },
+    { "id": "x0344", "glb": "runs/imp/distill/x0344/asset.glb", "x": 3, "z": -3, "rot_y_deg": 0 },
+    { "id": "x0336", "glb": "runs/imp/distill/x0336/asset.glb", "x": -2, "z": -4, "rot_y_deg": 0 },
+    { "id": "x0339", "glb": "runs/imp/distill/x0339/asset.glb", "x": 19, "z": 3, "rot_y_deg": 0 },
+    { "id": "x0153", "glb": "runs/imp/distill/x0153/asset.glb", "x": -12, "z": 6, "rot_y_deg": 0 },
+    { "id": "x0158", "glb": "runs/imp/distill/x0158/asset.glb", "x": 0, "z": 9, "rot_y_deg": 20 },
+    { "id": "x0157", "glb": "runs/imp/distill/x0157/asset.glb", "x": 12, "z": 7, "rot_y_deg": 0 },
+    { "id": "x0149", "glb": "runs/imp/distill/x0149/asset.glb", "x": -4, "z": 5, "rot_y_deg": 0 },
+    { "id": "x0146", "glb": "runs/imp/distill/x0146/asset.glb", "x": 7, "z": 5, "rot_y_deg": -30 },
+    { "id": "x0051", "glb": "runs/imp/distill/x0051/asset.glb", "x": -6, "z": 9, "rot_y_deg": 0 },
+    { "id": "x0062", "glb": "runs/imp/distill/x0062/asset.glb", "x": 4, "z": 12, "rot_y_deg": 30 },
+    { "id": "x0073", "glb": "runs/imp/distill/x0073/asset.glb", "x": 16, "z": 11, "rot_y_deg": -20 },
+    { "id": "x0121", "glb": "runs/imp/distill/x0121/asset.glb", "x": -9, "z": 11, "rot_y_deg": 40 },
+    { "id": "x0125", "glb": "runs/imp/distill/x0125/asset.glb", "x": 1, "z": 6, "rot_y_deg": 0 }
+  ]
+}

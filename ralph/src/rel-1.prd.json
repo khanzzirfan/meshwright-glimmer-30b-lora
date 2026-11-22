@@ -1,0 +1,149 @@
+{
+  "name": "Release 1: Meshwright release tooling (Modelfiles, GGUF tag rows, preflight, ops, v2 runbook, release gate)",
+  "branchName": "ralph/rel-1",
+  "description": "Offline tooling for docs/15-release.md. Meshwright v1 is already published (HF private, Ollama public). This PRD makes the next steps repeatable and checkable: (1) generate Modelfiles from the frozen prompt instead of hand-editing them, (2) model rows for the v1 and v1-gguf Ollama tags, including a no-system-message mode that matches what an Ollama user sends, (3) a preflight check before anything goes public, (4) an owner-session ops script for the v1-gguf dev-brief gate, (5) a dry-run-first v2 pod runbook that refuses to spend without explicit flags, (6) a v1-versus-v2 release gate. No network, no pulls, no pushes, no uploads, no training.",
+  "standingRule": "Offline-only PRD. Build and test with fixtures, temp dirs, fake HTTP servers and a fake `ollama`/`hf`/`runpodctl` on PATH where needed. Never call the real Ollama, Hugging Face, GitHub or RunPod; never run ollama pull/create/push, hf upload, git push or any pod command for real. Never read or write runs/, data/, out/ or eval/ except through temp-dir fixtures. Never edit prompts/, bench/glb/briefs.jsonl, bench/glb/eval_subjects.json or the published files under release/v1/ (read them only). Never commit.",
+  "specs": [
+    "docs/15-release.md",
+    "docs/14-glb-improvement.md"
+  ],
+  "readFirst": [
+    "docs/15-release.md (all of it)",
+    "release/v1/Modelfile, release/v1/hf-model/README.md, release/v1/hf-dataset/README.md (read only)",
+    "bench/glb/models.json (the glimmer-v3 row), scripts/glb_bench.py, scripts/teacher_generate.py (how the system message is sent)",
+    "scripts/imp_ops.sh and tests/py/test_imp_ops.py, tests/py/test_imp_ops_parsers.py (the ops-script pattern to copy)",
+    "scripts/glb_report.py and scripts/glb_phase2_estimate.py (report and estimate helpers to reuse)"
+  ],
+  "owns": [
+    "scripts/release_modelfile.py",
+    "scripts/release_check.py",
+    "scripts/rel_ops.sh",
+    "scripts/v2_pod.sh",
+    "scripts/release_compare.py",
+    "scripts/glb_bench.py",
+    "scripts/teacher_generate.py",
+    "bench/glb/models.json",
+    "tests/py/",
+    "tests/fixtures/",
+    "docs/15-release.md",
+    "README.md",
+    "INDEX.md",
+    "NEXT-STEPS.md",
+    "ralph/README.md"
+  ],
+  "manualGates": [
+    "Owner reviews and commits the rel-1 diff",
+    "The v1-gguf pull, create and 12-brief dev gate are started by the owner session through scripts/rel_ops.sh, not by Ralph",
+    "Every ollama push, hf upload, repo visibility change and git push is done by the owner session after the owner says so",
+    "v2 training needs the owner's explicit GPU approval and a dollar cap; Ralph never creates pods"
+  ],
+  "stories": [
+    {
+      "title": "Modelfile generator from the frozen prompt (release_modelfile.py)",
+      "description": "As the owner, I want every Ollama Modelfile generated from prompts/system_glb_v3.txt and one parameter set, so the :v1 and :v1-gguf tags cannot drift apart.",
+      "steps": [
+        "Create scripts/release_modelfile.py: `--base NAME` (required, e.g. muse-glimmer:30b-mlx or muse-glimmer:30b), `--system FILE` (default prompts/system_glb_v3.txt), `--expect-sha256 HEX` (default the frozen v3 hash from docs/15 section 2), `--out FILE` (refused inside data/, out/, eval/ and release/v1/). It refuses when the system file's sha256 differs from the expected hash, naming both hashes.",
+        "Output format exactly: `FROM <base>`, blank line, `SYSTEM \"\"\"` + the file's text + `\"\"\"`, blank line, then `PARAMETER temperature 0.7`, `PARAMETER top_p 0.95`, `PARAMETER num_ctx 49152`, `PARAMETER num_predict 40000`, one per line, trailing newline. Refuse a system file that contains a triple double quote.",
+        "Tests (tests/py/test_release_modelfile.py): generating with --base muse-glimmer:30b-mlx reproduces release/v1/Modelfile byte for byte; --base muse-glimmer:30b differs only in the FROM line; a wrong hash, a forbidden --out and a system text with a triple quote are each refused with a clear message."
+      ],
+      "criteria": [
+        "Byte-identical reproduction of release/v1/Modelfile is asserted",
+        "Hash mismatch, forbidden output path and triple-quote cases are asserted",
+        "No file under release/v1/ is modified"
+      ]
+    },
+    {
+      "title": "Model rows for the released tags, with a no-system-message mode",
+      "description": "As the owner, I want to benchmark the published Ollama tags exactly as a user calls them (no system message, the baked-in one applies), so the release numbers describe what users get.",
+      "steps": [
+        "teacher_generate.py: add `--no-system`. With it, both the Ollama-native and the OpenAI-compatible routes send only the user message, and the raw row records `system_file: null` and `system_sha256: null`. Without it, behaviour is unchanged (assert the existing tests still pass).",
+        "glb_bench.py: a model row may set `\"system\": null`; it then passes --no-system and skips the system-file existence check. Other rows are unchanged.",
+        "bench/glb/models.json: add two rows, both `enabled: false`, `paid: false`, `think: false`, `system: null`, temperature 0.7, top_p 0.95: `meshwright-v1` (model `khanzz_irfan/meshwright-glimmer-30b-lora:v1`) and `meshwright-v1-gguf` (model `khanzz_irfan/meshwright-glimmer-30b-lora:v1-gguf`). Do not change any existing row.",
+        "Tests: a fake Ollama HTTP server records the request body; with --no-system the messages list has exactly one user message; the bench builds the --no-system command for a null-system row; models.json loads and the glimmer-v3 row is byte-for-byte unchanged."
+      ],
+      "criteria": [
+        "The recorded request has no system message with --no-system and has one without it",
+        "Both new rows exist, disabled, and every existing row is unchanged",
+        "Existing teacher_generate and bench tests pass unchanged"
+      ]
+    },
+    {
+      "title": "Release preflight (release_check.py)",
+      "description": "As the owner, I want one command that tells me whether the release files and the repo are safe and consistent before anything goes public.",
+      "steps": [
+        "Create scripts/release_check.py with checks that each print PASS or FAIL plus a reason, and exit 1 when any FAIL. Inputs default to docs/15 paths: `--model-card release/v1/hf-model/README.md`, `--dataset-card release/v1/hf-dataset/README.md`, `--dataset-dir release/v1/hf-dataset`, `--system prompts/system_glb_v3.txt`, `--repo-root .`, `--eval-briefs bench/glb/briefs.jsonl`.",
+        "Card checks: the credit line from docs/15 section 1 appears verbatim in both cards; the model card names `khanzz_irfan/meshwright-glimmer-30b-lora:v1`, the HF dataset id and the GitHub URL from docs/15 section 1; the sha256 printed in the model card equals the system file's; the phrase 'Fine-tuned from' does not appear in a card unless `--allow-finetuned` is given; `license: apache-2.0` is in both front matters.",
+        "Dataset checks: train.jsonl and val.jsonl row counts equal the numbers stated in the dataset card's Splits table; every row's system message hashes to the frozen sha256; no row id or title matches an eval brief id or title; no row contains any pattern from a private-pattern list (`/Users/`, `/home/`, an email regex, `sk-`, `hf_`, `api_key`, `BEGIN .*PRIVATE KEY`), with `--extra-pattern` repeatable.",
+        "Repo checks: run `git ls-files` (subprocess, read only) and FAIL on tracked `.env*` (except `.env.example`), `*.pem`, `id_*`, any file over 50 MB, and any tracked text file under 2 MB containing the private patterns, listing at most 20 hits with path:line. Skip binary files.",
+        "Tests (tests/py/test_release_check.py) build a temp repo (git init in a temp dir), temp cards and temp JSONL: a clean setup passes; each failure (missing credit, wrong sha, wrong count, eval leak, email in a row, tracked .env, 'Fine-tuned from' without the flag) fails with its reason."
+      ],
+      "criteria": [
+        "A clean fixture passes and each listed failure is asserted to FAIL with its reason",
+        "Only read-only git commands are used (asserted by checking the subprocess calls)",
+        "Exit codes are 0 for all PASS and 1 for any FAIL"
+      ]
+    },
+    {
+      "title": "Owner-session ops for the v1-gguf gate (rel_ops.sh)",
+      "description": "As the owner session, I want one script that builds the cross-platform tag locally and runs the docs/15 section 4 gate, so the result is recorded the same way every time. It never pushes.",
+      "steps": [
+        "Create scripts/rel_ops.sh following scripts/imp_ops.sh (start/status/stop, background jobs, logs and pid files under runs/rel/jobs/, refuse to start when the v3 prompt hash differs). Jobs: `gguf-pull` (`ollama pull muse-glimmer:30b`), `gguf-create` (release_modelfile.py --base muse-glimmer:30b --out runs/rel/Modelfile.v1-gguf, then `ollama create khanzz_irfan/meshwright-glimmer-30b-lora:v1-gguf -f` it), `gguf-dev` (glb_bench on bench/glb/dev_briefs.jsonl for the rows meshwright-v1 and meshwright-v1-gguf, then validate, then write runs/rel/gguf_dev.md), and `gguf-all` (the three in order, stopping at the first failure).",
+        "runs/rel/gguf_dev.md: a table per row of valid n/12, assembled of valid, median seconds, and a final line `GATE: PASS` or `GATE: FAIL (<reason>)` using the docs/15 section 4 rule (valid >= 10/12 and assembled-of-valid within 15 points of meshwright-v1). Put the gate computation in a small Python helper with unit tests.",
+        "The script must not contain the word `push` in any executed command; `status` prints the push command for the owner to run by hand only when the gate line says PASS.",
+        "Tests: a fake `ollama` on PATH records its arguments; every job's arguments are asserted against the real argument parsers (as in tests/py/test_imp_ops_parsers.py); the gate helper is tested on PASS, low-valid FAIL and assembled-gap FAIL fixtures; a grep-style test asserts no executed `ollama push`."
+      ],
+      "criteria": [
+        "Every job's command line parses with the real parsers (asserted)",
+        "Gate PASS and both FAIL reasons are asserted",
+        "No executed push command exists in the script (asserted)"
+      ]
+    },
+    {
+      "title": "v2 pod runbook, dry run first (v2_pod.sh)",
+      "description": "As the owner, I want the v2 training steps from docs/15 section 5 as one script that prints the plan by default and cannot spend money without explicit flags.",
+      "steps": [
+        "Create scripts/v2_pod.sh with subcommands `plan` (default; prints every step as commands: create an A100 80 GB pod, upload runs/imp/distill_data and the scripts, 20-step smoke, run glb_phase2_estimate.py with the measured sec-per-step, full training, merge, quantise, download the adapter, the loss curve and the quantised build, stop and delete the pod), `smoke`, `train` and `teardown`.",
+        "`smoke`, `train` and `teardown` refuse to run unless both `--approve-spend` and `--max-usd N` are given, print the estimated cost from glb_phase2_estimate.py next to N, and refuse when the estimate exceeds N. Every pod command goes through a single `run_remote` function so tests can stub it.",
+        "Before any spend it checks that runs/imp/distill_data has train.jsonl and val.jsonl with no eval ids (reuse glb_distill_prep.py or release_check.py helpers, do not copy).",
+        "Tests: `plan` output contains each step in order and makes no external calls; spend subcommands without the flags, or with an estimate over the cap, exit non-zero before calling the stubbed runpodctl; a fake runpodctl on PATH records that teardown always runs after a failed train (trap)."
+      ],
+      "criteria": [
+        "plan makes no external calls (asserted with a fake runpodctl that fails if called)",
+        "Missing flags and an over-cap estimate are refused before any pod command (asserted)",
+        "Teardown runs after a failure (asserted)"
+      ]
+    },
+    {
+      "title": "v1-versus-v2 release gate (release_compare.py)",
+      "description": "As the owner, I want the docs/15 section 5 release rule computed from run directories, so v2 is published only when it measurably beats v1.",
+      "steps": [
+        "Create scripts/release_compare.py `--v1 RUN_DIR --v2 RUN_DIR [--v1-ratings CSV --v2-ratings CSV] [--out FILE]`. Read validation.jsonl and assembly.jsonl the way glb_report.py does (import its helpers). Compute valid rate, assembled of all briefs and median seconds per run, and, when both rating CSVs are given, the share rated 2 (good).",
+        "Decision: PUBLISH when v2 valid >= v1 valid, v2 assembled >= v1 assembled + 10 points and (when ratings exist) v2 good >= v1 good; otherwise HOLD with every failed condition listed. Without ratings the line says `PUBLISH (pending blind rating)` instead of PUBLISH. Print a Markdown table and the decision line; --out writes the same.",
+        "Refuse when the two runs cover different brief id sets, naming the differences.",
+        "Tests with temp run dirs: PUBLISH, HOLD on validity, HOLD on assembled margin, HOLD on rating, pending-rating wording and the mismatched-briefs refusal."
+      ],
+      "criteria": [
+        "All four decisions and the refusal are asserted",
+        "glb_report.py helpers are imported, not copied (asserted by import in the test or by grep)",
+        "Seconds per brief are reported but never change the decision (asserted)"
+      ]
+    },
+    {
+      "title": "Docs and indexes for the release tooling",
+      "description": "As the owner, I want the release steps findable from the usual entry points.",
+      "steps": [
+        "docs/15-release.md: replace each '(rel-1 US-00N)' reference with the final script names and usage lines; add a short 'Commands' section listing release_modelfile.py, release_check.py, rel_ops.sh, v2_pod.sh and release_compare.py with one usage line each. Do not change the numbers, names or rules in sections 1-6.",
+        "README.md: a 'Release' section with the Ollama quick start (`ollama run khanzz_irfan/meshwright-glimmer-30b-lora:v1 --think=false \"...\"`) and a link to docs/15. INDEX.md and NEXT-STEPS.md: add docs/15 and the open owner items from its section 3. ralph/README.md: add rel-1 to the PRD list.",
+        "Run `bash scripts/check.sh` and fix anything it reports in files this PRD owns."
+      ],
+      "criteria": [
+        "docs/15 has a Commands section and no remaining 'rel-1 US-' placeholders",
+        "README, INDEX, NEXT-STEPS and ralph/README link docs/15",
+        "bash scripts/check.sh passes"
+      ]
+    }
+  ],
+  "requires": [
+    "ralph/imp-5.prd.json: all stories passing"
+  ]
+}

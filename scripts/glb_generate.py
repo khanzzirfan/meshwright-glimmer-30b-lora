@@ -4,10 +4,12 @@ Samples the frozen prompt up to --max-samples times (seeds seed-start, seed-star
 is one Ollama /api/chat call (reusing teacher_generate.call_ollama, which forwards options.seed), then
 validated with `node scripts/validate_scenes.mjs --mode glb --allow-addons` and dropped onto the ground
 with glb_ground.mjs (docs/14 section 4), so a hovering asset is fixed for free and the grounding's
-assembly_after decides that attempt's `assembled` value. The loop stops at the first candidate that is
-valid (ok), assembled and within --tri-budget (default 5000) triangles. When none is assembled it keeps
-every sample and picks a winner with glb_best_of.py's ranking (imported, never copied). Every attempt is
-recorded:
+assembly_after decides that attempt's `assembled` value. The grounded copy is then passed through
+glb_names.mjs, which rewrites any name ending in a long fractional suffix so Blender 5.2 does not abort on
+it, and the attempt records how many names changed (`renamed_names`, promo-1 US-008). The loop stops at
+the first candidate that is valid (ok), assembled and within --tri-budget (default 5000) triangles. When
+none is assembled it keeps every sample and picks a winner with glb_best_of.py's ranking (imported, never
+copied). Every attempt is recorded:
 
     OUT_DIR/attempts/<seed>/
         raw/asset.json          the generation row (its brief carries the kind)
@@ -63,6 +65,7 @@ ATTEMPT_ID = "asset"  # the single candidate in each attempt directory
 REPAIR_DIR = "repair"  # the one error repair turn lives beside the seed directories
 ASSEMBLY_REPAIR_DIR = "repair-asm"  # the one assembly repair turn (glb_repair.py's --mode assembly layout)
 GROUND_SCRIPT = ROOT / "scripts" / "glb_ground.mjs"  # absolute so the grounding works from any cwd
+NAMES_SCRIPT = ROOT / "scripts" / "glb_names.mjs"  # makes Blender-unsafe names safe (promo-1 US-008)
 DEFAULT_TRI_BUDGET = 5000  # glb_best_of.py's triangle ceiling, so the stop rule matches its ranking
 NUM_CTX = 49152
 NUM_PREDICT = 40000
@@ -157,17 +160,19 @@ def chat_args(model_row, ollama_url, seed):
 
 
 def attempt_record(seed, ok, reasons, assembled, parts, triangles, seconds, repair=False,
-                   grounded_shift=None, within_budget=False):
+                   grounded_shift=None, within_budget=False, renamed_names=0):
     """One result.json `attempts` entry, in the docs/14 US-001 field order (plus the imp-5 fields).
 
     `grounded_shift` is the vertical shift glb_ground.mjs applied (null when there was no GLB or it could
-    not be read) and `within_budget` says whether `triangles` is at or under --tri-budget. An error repair
-    turn carries `repair: true`; an assembly repair turn carries `repair: "assembly"`; a sample carries
-    neither key.
+    not be read) and `within_budget` says whether `triangles` is at or under --tri-budget. `renamed_names`
+    is how many Blender-unsafe names glb_names.mjs rewrote in the attempt's GLB (promo-1 US-008). An error
+    repair turn carries `repair: true`; an assembly repair turn carries `repair: "assembly"`; a sample
+    carries neither key.
     """
     record = {"seed": seed, "ok": ok, "reasons": reasons, "assembled": assembled,
               "parts": parts, "triangles": triangles, "seconds": seconds,
-              "grounded_shift": grounded_shift, "within_budget": within_budget}
+              "grounded_shift": grounded_shift, "within_budget": within_budget,
+              "renamed_names": renamed_names}
     if repair:
         record["repair"] = repair
     return record
@@ -221,6 +226,29 @@ def ground_attempt(attempt_dir, kind):
     return (grounded if grounded.exists() else original), payload.get("shift"), after
 
 
+def names_command(in_file, out_file):
+    """The glb_names.mjs command that rewrites Blender-unsafe names in a GLB (promo-1 US-008)."""
+    return ["node", str(NAMES_SCRIPT), "--in", str(in_file), "--out", str(out_file)]
+
+
+def sanitize_names(glb_path):
+    """Rewrite the attempt's GLB names in place; return (glb_path, renamed count).
+
+    Runs after grounding, so the delivered GLB is the sanitized grounded copy. A missing file, a failed
+    command or unparseable output leaves the GLB as is with 0 renamed, so a name problem is never fatal
+    (the GLB still loads in three.js, only Blender 5.2 aborts on it).
+    """
+    glb_path = Path(glb_path)
+    if not glb_path.exists():
+        return glb_path, 0
+    try:
+        proc = subprocess.run(names_command(glb_path, glb_path), capture_output=True, text=True)
+        payload = json.loads(proc.stdout.strip().splitlines()[-1])
+        return glb_path, int(payload.get("renamed") or 0)
+    except (OSError, ValueError, IndexError):
+        return glb_path, 0
+
+
 def assembly_of(candidate_entry):
     """The assembly the validator measured for one candidate, or {} (the assembly repair's numbers)."""
     return (((candidate_entry.get("row") or {}).get("stats") or {}).get("glb") or {}).get("assembly") or {}
@@ -243,6 +271,7 @@ def validate_attempt(attempt_dir, seed, kind, raw, run_index, repair=False,
     glb = stats.get("glb") or {}
     assembly = glb.get("assembly") or {}
     glb_path, shift, after = ground_attempt(attempt_dir, kind)
+    glb_path, renamed = sanitize_names(glb_path)
     assembled = bool(after["assembled"]) if after is not None else bool(assembly.get("assembled"))
     triangles = glb.get("triangles")
     record = attempt_record(
@@ -250,6 +279,7 @@ def validate_attempt(attempt_dir, seed, kind, raw, run_index, repair=False,
         assembly.get("parts"), triangles,
         (raw.get("usage") or {}).get("seconds") or 0.0, repair=repair,
         grounded_shift=shift, within_budget=within_budget(triangles, tri_budget),
+        renamed_names=renamed,
     )
     cand = candidate(seed, attempt_dir, row, kind, run_index, glb=glb_path, assembled=assembled)
     cand["within_budget"] = record["within_budget"]  # the winner's flag must use --tri-budget, not best_of's

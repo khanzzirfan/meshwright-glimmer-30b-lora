@@ -32,4 +32,7 @@ release/*/hf-dataset/*.jsonl
 
 ##ralph
 .ralph-tui/
-!.ralph-tui/config.toml
+!.ralph-tui/config.toml# promo intermediates (regenerate with scripts/showcase_render.mjs)
+release/*/promo/renders/
+release/*/promo/turn/
+release/*/promo/scenes_out/*_orbit/

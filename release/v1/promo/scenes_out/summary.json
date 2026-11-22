@@ -1,0 +1,95 @@
+{
+  "village": {
+    "label": "village diorama",
+    "still": "release/v1/promo/scenes_out/village.png",
+    "orbit": "release/v1/promo/scenes_out/village_orbit/",
+    "width": 1920,
+    "height": 1080,
+    "orbit_frames": 96,
+    "plinth": {
+      "shape": "round",
+      "size_m": 62
+    },
+    "water": null,
+    "items": 21,
+    "overlaps": 0,
+    "missing": 0,
+    "ids": [
+      "x0022",
+      "x0018",
+      "x0013",
+      "x0001",
+      "x0024",
+      "x0005",
+      "x0316",
+      "x0319",
+      "x0344",
+      "x0336",
+      "x0339",
+      "x0153",
+      "x0158",
+      "x0157",
+      "x0149",
+      "x0146",
+      "x0051",
+      "x0062",
+      "x0073",
+      "x0121",
+      "x0125"
+    ],
+    "scale_notes": []
+  },
+  "harbour": {
+    "label": "harbour diorama",
+    "still": "release/v1/promo/scenes_out/harbour.png",
+    "orbit": "release/v1/promo/scenes_out/harbour_orbit/",
+    "width": 1920,
+    "height": 1080,
+    "orbit_frames": 96,
+    "plinth": {
+      "shape": "square",
+      "size_m": 56
+    },
+    "water": {
+      "side": "front",
+      "color": "0x5aa0d8",
+      "drop_m": 0.01
+    },
+    "items": 14,
+    "overlaps": 0,
+    "missing": 0,
+    "ids": [
+      "g023",
+      "x0019",
+      "x0004",
+      "x0011",
+      "x0152",
+      "x0361",
+      "x0149",
+      "x0153",
+      "x0109",
+      "x0086",
+      "x0460",
+      "x0462",
+      "x0461",
+      "x0465"
+    ],
+    "scale_notes": [
+      {
+        "id": "x0109",
+        "height_m": 0.3,
+        "notes": "1.62 m tall as generated, far too large for a shore crab; scaled to a 0.3 m crab."
+      },
+      {
+        "id": "x0086",
+        "height_m": 1.9,
+        "notes": "2.38 m tall as generated; trimmed to 1.9 m so the crew reads as people beside the 9.9 m lighthouse."
+      },
+      {
+        "id": "x0461",
+        "height_m": 5,
+        "notes": "15 m tall as generated (mast and rig swollen); scaled to a 5 m boat to read beside the 8-10 m buildings."
+      }
+    ]
+  }
+}

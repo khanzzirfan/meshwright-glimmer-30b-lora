@@ -137,7 +137,7 @@ def test_select_ids_keeps_the_seven_and_skips_the_rest(tmp_path):
     rows = glb_repair.read_rows(run / "validation.jsonl")
 
     assert glb_repair.select_ids(rows) == ids
-    assert set(glb_repair.REPAIRABLE_REASONS) == set(REPAIRABLE)
+    assert set(glb_repair.REPAIRABLE_REASONS) == set(REPAIRABLE) | {"nan_transform", "nan_geometry"}
     assert glb_repair.SKIP_REASONS == set(SKIPPED)
 
 
@@ -529,3 +529,11 @@ def test_error_mode_never_writes_assembly_jsonl(tmp_path, ollama):
 
     assert not (run / "repair" / "assembly.jsonl").exists()
 
+
+
+def test_fix_message_adds_the_nan_transform_hint_only_for_that_reason():
+    hinted = glb_repair.fix_message({"reasons": ["nan_transform"], "stats": {}})
+    assert "NaN" in hinted and "nan_transform" in hinted
+    plain = glb_repair.fix_message({"reasons": ["js_error"], "stats": {"error": "x"}})
+    assert "NaN" not in plain
+    assert "nan_transform" in glb_repair.REPAIRABLE_REASONS

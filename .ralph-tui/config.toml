@@ -2,6 +2,9 @@
 configVersion = "2.1"
 tracker = "json"
 agent = "command-code-go"   # needs `cmd login`
+# Fallback when Command Code reports a rate limit / quota / overload (ralph-tui only falls back on those, not on
+# ordinary failures). Fallback agents inherit [agentOptions], hence cmdModel for Command Code and model for claude.
+fallbackAgents = ["claude"]
 # Local Ollama through opencode (opencode.json); 64k-context variant of qwen3.8:27b made with `ollama create`:
 # agent = "claude"
 maxIterations = 200
@@ -11,7 +14,13 @@ envPassthrough = ["CMDC_KEY", "NVIDIA_NIM_API_KEY"]
 
 [trackerOptions]
 [agentOptions]
-model = "deepseek/deepseek-v4-flash"   # with command-code-go
+cmdModel = "deepseek/deepseek-v4-flash"   # read only by the command-code-go plugin
+model = "sonnet"   # used by the claude fallback
 # model = "ollama/qwen3.8:27b-64k"   # local fallback: slow (about 10-20 min per attempt on this Mac)
 # model = "nvidia/deepseek-ai/deepseek-v4.1-flash"   # free hosted endpoint via opencode, NVIDIA_NIM_API_KEY
-# model = "sonnet"
+
+[rateLimitHandling]
+enabled = true
+maxRetries = 2
+baseBackoffMs = 15000
+recoverPrimaryBetweenIterations = true

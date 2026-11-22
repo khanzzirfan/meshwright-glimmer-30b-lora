@@ -1,0 +1,411 @@
+{
+  "blender": "5.2.0 LTS",
+  "glbs": [
+    {
+      "file": "runs/imp/distill/x0022/asset.glb",
+      "ok": true,
+      "objects": 57,
+      "meshes": 54,
+      "triangles": 812,
+      "materials": 7,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0013/asset.glb",
+      "ok": true,
+      "objects": 56,
+      "meshes": 55,
+      "triangles": 734,
+      "materials": 9,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0001/asset.glb",
+      "ok": true,
+      "objects": 100,
+      "meshes": 99,
+      "triangles": 1288,
+      "materials": 9,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0024/asset.glb",
+      "ok": true,
+      "objects": 40,
+      "meshes": 39,
+      "triangles": 2000,
+      "materials": 8,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0005/asset.glb",
+      "ok": true,
+      "objects": 36,
+      "meshes": 35,
+      "triangles": 1822,
+      "materials": 4,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0316/asset.glb",
+      "ok": true,
+      "objects": 57,
+      "meshes": 55,
+      "triangles": 2636,
+      "materials": 6,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0319/asset.glb",
+      "ok": true,
+      "objects": 24,
+      "meshes": 23,
+      "triangles": 484,
+      "materials": 6,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0339/asset.glb",
+      "ok": true,
+      "objects": 63,
+      "meshes": 44,
+      "triangles": 1672,
+      "materials": 4,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0158/asset.glb",
+      "ok": true,
+      "objects": 44,
+      "meshes": 43,
+      "triangles": 1136,
+      "materials": 6,
+      "actions": 0,
+      "raw_names_crash_risk": true
+    },
+    {
+      "file": "runs/imp/distill/x0149/asset.glb",
+      "ok": true,
+      "objects": 36,
+      "meshes": 29,
+      "triangles": 1884,
+      "materials": 6,
+      "actions": 0,
+      "raw_names_crash_risk": true
+    },
+    {
+      "file": "runs/imp/distill/x0146/asset.glb",
+      "ok": true,
+      "objects": 30,
+      "meshes": 25,
+      "triangles": 1372,
+      "materials": 3,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0153/asset.glb",
+      "ok": true,
+      "objects": 28,
+      "meshes": 25,
+      "triangles": 3128,
+      "materials": 5,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0157/asset.glb",
+      "ok": true,
+      "objects": 25,
+      "meshes": 22,
+      "triangles": 480,
+      "materials": 4,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0344/asset.glb",
+      "ok": true,
+      "objects": 27,
+      "meshes": 26,
+      "triangles": 504,
+      "materials": 5,
+      "actions": 1,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0336/asset.glb",
+      "ok": true,
+      "objects": 30,
+      "meshes": 28,
+      "triangles": 1916,
+      "materials": 11,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0331/asset.glb",
+      "ok": true,
+      "objects": 123,
+      "meshes": 111,
+      "triangles": 2268,
+      "materials": 4,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0320/asset.glb",
+      "ok": true,
+      "objects": 11,
+      "meshes": 10,
+      "triangles": 242,
+      "materials": 4,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0051/asset.glb",
+      "ok": true,
+      "objects": 31,
+      "meshes": 23,
+      "triangles": 4452,
+      "materials": 7,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0062/asset.glb",
+      "ok": true,
+      "objects": 24,
+      "meshes": 19,
+      "triangles": 1026,
+      "materials": 9,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0073/asset.glb",
+      "ok": true,
+      "objects": 19,
+      "meshes": 18,
+      "triangles": 206,
+      "materials": 8,
+      "actions": 1,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0121/asset.glb",
+      "ok": true,
+      "objects": 22,
+      "meshes": 20,
+      "triangles": 452,
+      "materials": 5,
+      "actions": 1,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0125/asset.glb",
+      "ok": true,
+      "objects": 19,
+      "meshes": 16,
+      "triangles": 1008,
+      "materials": 4,
+      "actions": 1,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0113/asset.glb",
+      "ok": true,
+      "objects": 36,
+      "meshes": 33,
+      "triangles": 562,
+      "materials": 3,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0102/asset.glb",
+      "ok": true,
+      "objects": 23,
+      "meshes": 22,
+      "triangles": 1080,
+      "materials": 6,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0145/asset.glb",
+      "ok": true,
+      "objects": 22,
+      "meshes": 20,
+      "triangles": 2048,
+      "materials": 3,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0166/asset.glb",
+      "ok": true,
+      "objects": 18,
+      "meshes": 16,
+      "triangles": 2688,
+      "materials": 4,
+      "actions": 1,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/adaptive/best/glimmer-v3-adaptive/glb/g023.glb",
+      "ok": true,
+      "objects": 64,
+      "meshes": 61,
+      "triangles": 1932,
+      "materials": 6,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0019/asset.glb",
+      "ok": true,
+      "objects": 37,
+      "meshes": 36,
+      "triangles": 432,
+      "materials": 8,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0004/asset.glb",
+      "ok": true,
+      "objects": 25,
+      "meshes": 23,
+      "triangles": 1548,
+      "materials": 6,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0011/asset.glb",
+      "ok": true,
+      "objects": 65,
+      "meshes": 62,
+      "triangles": 744,
+      "materials": 4,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0086/asset.glb",
+      "ok": true,
+      "objects": 54,
+      "meshes": 49,
+      "triangles": 7028,
+      "materials": 10,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0361/asset.glb",
+      "ok": true,
+      "objects": 47,
+      "meshes": 38,
+      "triangles": 456,
+      "materials": 3,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0152/asset.glb",
+      "ok": true,
+      "objects": 20,
+      "meshes": 17,
+      "triangles": 4400,
+      "materials": 3,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0461/asset.glb",
+      "ok": true,
+      "objects": 24,
+      "meshes": 23,
+      "triangles": 862,
+      "materials": 8,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0462/asset.glb",
+      "ok": true,
+      "objects": 34,
+      "meshes": 33,
+      "triangles": 5252,
+      "materials": 9,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0460/asset.glb",
+      "ok": true,
+      "objects": 20,
+      "meshes": 18,
+      "triangles": 384,
+      "materials": 8,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0465/asset.glb",
+      "ok": true,
+      "objects": 55,
+      "meshes": 52,
+      "triangles": 4434,
+      "materials": 6,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0265/asset.glb",
+      "ok": true,
+      "objects": 65,
+      "meshes": 56,
+      "triangles": 1742,
+      "materials": 11,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0422/asset.glb",
+      "ok": true,
+      "objects": 36,
+      "meshes": 34,
+      "triangles": 408,
+      "materials": 6,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    },
+    {
+      "file": "runs/imp/distill/x0110/asset.glb",
+      "ok": true,
+      "objects": 125,
+      "meshes": 112,
+      "triangles": 4364,
+      "materials": 6,
+      "actions": 0,
+      "raw_names_crash_risk": false
+    }
+  ],
+  "totals": {
+    "count": 40,
+    "ok": 40,
+    "failed": 0,
+    "triangles": 71886
+  }
+}

@@ -1,0 +1,120 @@
+{
+ "plinth": {
+  "shape": "square",
+  "size_m": 28,
+  "top": "0x9ccf7a",
+  "side": "0x8a5a3c"
+ },
+ "camera": {
+  "yaw": 28,
+  "pitch": 33,
+  "fov": 30,
+  "zoom": 1.4
+ },
+ "water": {
+  "color": "0x5aa0d8",
+  "side": "front",
+  "drop_m": 0.01
+ },
+ "items": [
+  {
+   "id": "g023",
+   "glb": "runs/imp/adaptive/best/glimmer-v3-adaptive/glb/g023.glb",
+   "x": -9,
+   "z": -8.5,
+   "rot_y_deg": 0
+  },
+  {
+   "id": "x0019",
+   "glb": "runs/imp/distill/x0019/asset.glb",
+   "x": 6.5,
+   "z": -9,
+   "rot_y_deg": 90
+  },
+  {
+   "id": "x0004",
+   "glb": "runs/imp/distill/x0004/asset.glb",
+   "x": -2.5,
+   "z": -10,
+   "rot_y_deg": 0
+  },
+  {
+   "id": "x0011",
+   "glb": "runs/imp/distill/x0011/asset.glb",
+   "x": -4,
+   "z": 2,
+   "rot_y_deg": 90
+  },
+  {
+   "id": "x0086",
+   "glb": "runs/imp/distill/x0086/asset.glb",
+   "x": 2,
+   "z": -4,
+   "rot_y_deg": 20,
+   "height_m": 1.9,
+   "notes": "2.38 m tall as generated; 1.9 m so the crew reads as people beside the buildings."
+  },
+  {
+   "id": "x0361",
+   "glb": "runs/imp/distill/x0361/asset.glb",
+   "x": 6,
+   "z": -3,
+   "rot_y_deg": 15
+  },
+  {
+   "id": "x0149",
+   "glb": "runs/imp/distill/x0149/asset.glb",
+   "x": 9.5,
+   "z": -3,
+   "rot_y_deg": 0
+  },
+  {
+   "id": "x0152",
+   "glb": "runs/imp/distill/x0152/asset.glb",
+   "x": -1.2,
+   "z": -1.2,
+   "rot_y_deg": 0
+  },
+  {
+   "id": "x0153",
+   "glb": "runs/imp/distill/x0153/asset.glb",
+   "x": -9.5,
+   "z": -2.5,
+   "rot_y_deg": 0
+  },
+  {
+   "id": "x0461",
+   "glb": "runs/imp/distill/x0461/asset.glb",
+   "x": 7.5,
+   "z": 10.5,
+   "rot_y_deg": -15,
+   "height_m": 9,
+   "on_water": true,
+   "notes": "15 m tall as generated (mast swollen); 9 m so the hull is about 7.6 m, close to the 7.8 m tug."
+  },
+  {
+   "id": "x0462",
+   "glb": "runs/imp/distill/x0462/asset.glb",
+   "x": 2.5,
+   "z": 5,
+   "rot_y_deg": -10,
+   "on_water": true
+  },
+  {
+   "id": "x0460",
+   "glb": "runs/imp/distill/x0460/asset.glb",
+   "x": -9.5,
+   "z": 7,
+   "rot_y_deg": 30,
+   "on_water": true
+  },
+  {
+   "id": "x0465",
+   "glb": "runs/imp/distill/x0465/asset.glb",
+   "x": -3.5,
+   "z": 10.5,
+   "rot_y_deg": 0,
+   "on_water": true
+  }
+ ]
+}

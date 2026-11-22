@@ -112,6 +112,40 @@ test('zero triangles and zero meshes are empty_glb', () => {
   assert.equal(noMeshes.meshes, 0);
 });
 
+test('a node transform holding null (NaN in the page) is nan_transform', () => {
+  const nanMatrix = parseGlb(makeGlb({ nodes: [{ mesh: 0, name: 'fruit', matrix: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, null, 0.45, null, 1] }] }));
+  assert.equal(nanMatrix.ok, false);
+  assert.equal(nanMatrix.reason, 'nan_transform');
+  assert.equal(nanMatrix.nan_transform_nodes, 1);
+
+  const nanTranslation = parseGlb(makeGlb({ nodes: [{ mesh: 0, translation: [0, null, 0] }] }));
+  assert.equal(nanTranslation.reason, 'nan_transform');
+
+  const fine = parseGlb(makeGlb({ nodes: [{ mesh: 0, translation: [1, 2, 3], rotation: [0, 0, 0, 1], scale: [1, 1, 1] }] }));
+  assert.equal(fine.ok, true);
+  assert.equal(fine.nan_transform_nodes, 0);
+
+  const str = parseGlb(makeGlb({ nodes: [{ mesh: 0, matrix: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0.95, 0.05, 'snout', 1] }] }));
+  assert.equal(str.reason, 'nan_transform');
+});
+
+test('an accessor whose min/max is null (NaN vertices) is nan_geometry', () => {
+  const buf = makeGlb();
+  const n = buf.readUInt32LE(12);
+  const json = JSON.parse(buf.subarray(20, 20 + n).toString());
+  json.accessors[0].min = [null, null, null];
+  let text = JSON.stringify(json);
+  while (text.length % 4) text += ' ';
+  const head = Buffer.alloc(20);
+  const rest = buf.subarray(20 + n);
+  head.write('glTF', 0); head.writeUInt32LE(2, 4); head.writeUInt32LE(20 + text.length + rest.length, 8);
+  head.writeUInt32LE(text.length, 12); head.write('JSON', 16);
+  const out = parseGlb(Buffer.concat([head, Buffer.from(text), rest]));
+  assert.equal(out.ok, false);
+  assert.equal(out.reason, 'nan_geometry');
+  assert.equal(out.nan_geometry_accessors, 1);
+});
+
 test('CLI prints one JSON line and exits 0 for ok, 1 for bad_glb', () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'glb-check-'));
   try {

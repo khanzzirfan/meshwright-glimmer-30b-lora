@@ -13,8 +13,9 @@ const USAGE = 'usage: node scripts/glb_ground.mjs --in FILE --out FILE [--kind s
 const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i > -1 ? process.argv[i + 1] : d; };
 
 // Rebuild a GLB with a new JSON chunk. The JSON is re-encoded and space-padded to 4 bytes, every chunk
-// after it (the BIN chunk) is copied byte for byte, and the total length is rewritten.
-function rewriteGlb(buf, json) {
+// after it (the BIN chunk) is copied byte for byte, and the total length is rewritten. Shared with
+// glb_names.mjs so both rewrite a GLB the same way.
+export function rewriteGlb(buf, json) {
   const jsonLength = buf.readUInt32LE(12);
   const rest = buf.subarray(20 + jsonLength);
   let jsonBytes = Buffer.from(JSON.stringify(json), 'utf8');

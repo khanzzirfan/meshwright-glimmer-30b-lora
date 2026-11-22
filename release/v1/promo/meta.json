@@ -1,0 +1,232 @@
+{
+ "x0004": {
+  "prompt": "A small blue beach hut with a striped awning and a lifebuoy on the wall.",
+  "kind": "static",
+  "seconds": 48
+ },
+ "x0022": {
+  "prompt": "A long farm house with a tiled roof, two dormers and a wide front step.",
+  "kind": "static",
+  "seconds": 67
+ },
+ "x0005": {
+  "prompt": "An open wooden gazebo with six posts, a low railing and a peaked roof.",
+  "kind": "static",
+  "seconds": 63
+ },
+ "x0024": {
+  "prompt": "A water tower on four legs with a rounded tank and a ladder up the side.",
+  "kind": "static",
+  "seconds": 63
+ },
+ "x0047": {
+  "prompt": "A wizard in a tall pointed hat and a flowing robe holding a gnarled wand.",
+  "kind": "static",
+  "seconds": 116
+ },
+ "x0054": {
+  "prompt": "An astronaut in a bulky white suit with a round visor and a chest pack.",
+  "kind": "static",
+  "seconds": 49
+ },
+ "x0057": {
+  "prompt": "A diver in a wetsuit, mask and fins with a small tank on the back.",
+  "kind": "static",
+  "seconds": 162
+ },
+ "x0091": {
+  "prompt": "A chunky bee with a striped body, two round wings and a small stinger.",
+  "kind": "static",
+  "seconds": 57
+ },
+ "x0092": {
+  "prompt": "A perched owl with a rounded body, big round eyes and folded wings.",
+  "kind": "static",
+  "seconds": 56
+ },
+ "x0110": {
+  "prompt": "An octopus with a bulbous head and eight curling arms.",
+  "kind": "static",
+  "seconds": 115
+ },
+ "x0106": {
+  "prompt": "An upright penguin with a black back, a white belly and an orange beak.",
+  "kind": "static",
+  "seconds": 46
+ },
+ "x0122": {
+  "prompt": "A cat that pounces up and down in a springy loop.",
+  "kind": "animated",
+  "seconds": 129
+ },
+ "x0128": {
+  "prompt": "A toad that hops in small quick bounces in a loop.",
+  "kind": "animated",
+  "seconds": 57
+ },
+ "x0184": {
+  "prompt": "A bunch of purple grapes on a short stem with one green leaf.",
+  "kind": "static",
+  "seconds": 81
+ },
+ "x0185": {
+  "prompt": "A bunch of three bananas with brown tips.",
+  "kind": "static",
+  "seconds": 37
+ },
+ "x0186": {
+  "prompt": "An orange pumpkin with ribbed sides and a coiled green stalk.",
+  "kind": "static",
+  "seconds": 47
+ },
+ "x0195": {
+  "prompt": "A stack of pancakes on a plate with syrup running down the side.",
+  "kind": "static",
+  "seconds": 162
+ },
+ "x0236": {
+  "prompt": "A three-seat sofa with rounded arms, a back cushion roll and short legs.",
+  "kind": "static",
+  "seconds": 56
+ },
+ "x0139": {
+  "prompt": "A carved wooden throne with a high back and padded armrests.",
+  "kind": "static",
+  "seconds": 51
+ },
+ "x0166": {
+  "prompt": "A small cauldron with bubbles that rise and pop in a loop.",
+  "kind": "animated",
+  "seconds": 63
+ },
+ "x0170": {
+  "prompt": "A glowing spell orb that floats and pulses in a loop.",
+  "kind": "animated",
+  "seconds": 120
+ },
+ "x0316": {
+  "prompt": "A broad tree with a thick trunk, three branch forks and a rounded crown.",
+  "kind": "static",
+  "seconds": 54
+ },
+ "x0336": {
+  "prompt": "A red toadstool with white spots and a pale stalk.",
+  "kind": "static",
+  "seconds": 50
+ },
+ "x0419": {
+  "prompt": "A small reactor unit with glowing rings and a steel housing.",
+  "kind": "static",
+  "seconds": 162
+ },
+ "x0425": {
+  "prompt": "A teleporter pad with a ring of emitters and a glowing floor.",
+  "kind": "static",
+  "seconds": 138
+ },
+ "x0422": {
+  "prompt": "A two-legged mech walker with a cockpit, an arm cannon and heavy feet.",
+  "kind": "static",
+  "seconds": 53
+ },
+ "x0455": {
+  "prompt": "A fire engine with a ladder, a red body and flashing lights.",
+  "kind": "static",
+  "seconds": 62
+ },
+ "x0461": {
+  "prompt": "A sturdy trawler with a wheelhouse, a net drum and a tall mast.",
+  "kind": "static",
+  "seconds": 55
+ },
+ "x0466": {
+  "prompt": "A striped hot air balloon with a wicker basket and two ropes.",
+  "kind": "static",
+  "seconds": 108
+ },
+ "x0468": {
+  "prompt": "A helicopter with a four-blade rotor, a tail rotor and landing skids.",
+  "kind": "static",
+  "seconds": 50
+ },
+ "x0458": {
+  "prompt": "A steam locomotive with a funnel, a round boiler and a cowcatcher.",
+  "kind": "static",
+  "seconds": 55
+ },
+ "x0477": {
+  "prompt": "A farm tractor with big rear wheels, a cab and a front grille.",
+  "kind": "static",
+  "seconds": 52
+ },
+ "x0508": {
+  "prompt": "A steel helm with a plume holder and a riveted visor.",
+  "kind": "static",
+  "seconds": 119
+ },
+ "x0163": {
+  "prompt": "A spinning wheel whose wheel and spindle turn in a steady loop.",
+  "kind": "animated",
+  "seconds": 127
+ },
+ "x0479": {
+  "prompt": "A two-blade propeller that spins steadily in a loop.",
+  "kind": "animated",
+  "seconds": 289
+ },
+ "x0028": {
+  "prompt": "A rooftop weather vane with a cockerel that turns slowly in a loop above a small cupola.",
+  "kind": "animated",
+  "seconds": 67
+ },
+ "x0121": {
+  "prompt": "A dog that wags its tail and tilts its head in a loop.",
+  "kind": "animated",
+  "seconds": 54
+ },
+ "g021": {
+  "prompt": "A small cottage with white walls, a red pitched roof, a door, two windows and a chimney.",
+  "kind": "static",
+  "eval": true
+ },
+ "g023": {
+  "prompt": "A red and white striped lighthouse on a rocky base with a lamp room on top.",
+  "kind": "static",
+  "eval": true
+ },
+ "g029": {
+  "prompt": "A yellow rubber duck with an orange beak.",
+  "kind": "static",
+  "eval": true
+ },
+ "g011": {
+  "prompt": "A two-tier birthday cake with pink icing and five candles with small flames on top.",
+  "kind": "static",
+  "eval": true
+ },
+ "g012": {
+  "prompt": "A market stall with a striped awning and crates of oranges, bananas and watermelons.",
+  "kind": "set",
+  "eval": true
+ },
+ "g030": {
+  "prompt": "A sitting orange fox with a white-tipped tail and pointed ears.",
+  "kind": "static",
+  "eval": true
+ },
+ "g031": {
+  "prompt": "A clownfish whose tail and fins wiggle in a swimming loop.",
+  "kind": "animated",
+  "eval": true
+ },
+ "g026": {
+  "prompt": "A chunky knight character in grey armour holding a sword and a round shield.",
+  "kind": "static",
+  "eval": true
+ },
+ "x0265": {
+  "prompt": "A dining set arranged in place: a long table, six seats, a rug and a hanging lamp.",
+  "kind": "set",
+  "seconds": 54
+ }
+}

@@ -17,6 +17,7 @@ GOOD = "<html>OK_ASSEMBLED</html>"   # valid and assembled -> the loop stops her
 FLAT = "<html>OK_FLAT</html>"        # valid but not assembled
 BIG = "<html>OK_BIG</html>"          # valid, not assembled, too many parts (ranking key 2 = 0)
 HOVER = "<html>OK_HOVER</html>"      # valid, not assembled; its real GLB hovers, so grounding fixes it
+DIRTY = "<html>OK_DIRTY</html>"      # valid and assembled; its GLB has a Blender-unsafe node name
 BIGTRI = "<html>OK_BIGTRI</html>"    # valid and assembled, but over the triangle budget
 FAIL = "<html>FAIL</html>"           # not valid, a repairable js_error
 TRUNC = "<html>TRUNCATED</html>"     # not valid, not repairable (the answer was cut off)
@@ -27,11 +28,13 @@ _JSON_CHUNK = 0x4E4F534A
 _BIN_CHUNK = 0x004E4942
 
 
-def make_glb(boxes):
+def make_glb(boxes, node_names=None):
     """A minimal valid GLB: one mesh node per (min, max) box, each a POSITION box with min/max.
 
     Enough for glb_check.mjs's assembly metric: one primitive per mesh, no indices, one triangle. The
-    HOVER fixture needs a *real* GLB (not the fake's b"glTF") so glb_ground.mjs can actually shift it.
+    HOVER fixture needs a *real* GLB (not the fake's b"glTF") so glb_ground.mjs can actually shift it, and
+    the DIRTY fixture needs real node names for glb_names.mjs to rewrite. ``node_names`` overrides the
+    default ``n<i>`` names.
     """
     bin_data = b""
     buffer_views, accessors, meshes = [], [], []
@@ -43,7 +46,7 @@ def make_glb(boxes):
         accessors.append({"bufferView": len(buffer_views) - 1, "componentType": 5126,
                           "count": len(corners), "type": "VEC3", "min": list(lo), "max": list(hi)})
         meshes.append({"name": f"m{i}", "primitives": [{"attributes": {"POSITION": len(accessors) - 1}}]})
-    nodes = [{"mesh": i, "name": f"n{i}"} for i in range(len(meshes))]
+    nodes = [{"mesh": i, "name": (node_names[i] if node_names else f"n{i}")} for i in range(len(meshes))]
     gltf = {"asset": {"version": "2.0", "generator": "test_glb_generate.py"}, "scene": 0,
             "scenes": [{"nodes": list(range(len(nodes)))}], "nodes": nodes, "meshes": meshes,
             "accessors": accessors, "bufferViews": buffer_views,
@@ -97,6 +100,10 @@ for path in sorted(raw_dir.glob("*.json")):
         # Valid but not assembled; its GLB really hovers, so glb_ground.mjs lifts it to y = 0.
         ok, assembled, parts, reasons = True, False, 10, []
         glb_bytes = Path(os.environ["FAKE_GLB_HOVER"]).read_bytes()
+    elif "OK_DIRTY" in content:
+        # Valid and assembled; its GLB has a Blender-unsafe node name, so glb_names.mjs rewrites it.
+        ok, assembled, parts, reasons = True, True, 10, []
+        glb_bytes = Path(os.environ["FAKE_GLB_DIRTY"]).read_bytes()
     elif "OK_BIGTRI" in content:
         # Valid and assembled, but over the triangle budget, so the stop rule must not stop here.
         ok, assembled, parts, reasons = True, True, 10, []
@@ -184,15 +191,25 @@ def fake_validator(tmp_path, monkeypatch):
     """Install the fake validator via GLB_GENERATE_VALIDATOR and return its path.
 
     It also leaves the HOVER marker's real hovering GLB on disk (FAKE_GLB_HOVER), single box at y 1..2,
-    so glb_ground.mjs shifts it down by 1 to reach the ground.
+    so glb_ground.mjs shifts it down by 1 to reach the ground, and the DIRTY marker's real grounded GLB
+    (FAKE_GLB_DIRTY), a single box at y 0 with a Blender-unsafe node name for glb_names.mjs to rewrite.
     """
     script = tmp_path / "fake_validator.py"
     script.write_text(FAKE_VALIDATOR)
     hover = tmp_path / "hover.glb"
     hover.write_bytes(make_glb([([0, 1, 0], [1, 2, 1])]))
+    dirty = tmp_path / "dirty.glb"
+    dirty.write_bytes(make_glb([([0, 0, 0], [1, 1, 1])], node_names=["sack_0.5_1.0499999999999998"]))
     monkeypatch.setenv("GLB_GENERATE_VALIDATOR", str(script))
     monkeypatch.setenv("FAKE_GLB_HOVER", str(hover))
+    monkeypatch.setenv("FAKE_GLB_DIRTY", str(dirty))
     return script
+
+
+def json_of(glb_bytes):
+    """The glTF JSON of a GLB buffer (for the name assertions)."""
+    json_len = struct.unpack_from("<I", glb_bytes, 12)[0]
+    return json.loads(glb_bytes[20:20 + json_len].decode("utf-8"))
 
 
 def write_models(tmp_path, overrides=None):
@@ -301,6 +318,33 @@ def test_a_hovering_candidate_is_accepted_after_grounding(tmp_path, ollama, fake
     assert (tmp_path / "out" / "asset.glb").read_bytes() == grounded.read_bytes()
 
 
+def test_generator_writes_a_sanitized_glb_and_records_renamed_names(tmp_path, ollama, fake_validator):
+    models = write_models(tmp_path)
+    url, state = ollama([DIRTY])
+
+    code = glb_generate.main(base_argv("Make a sack.", tmp_path / "out", models, url, "--max-samples", "1"))
+
+    assert len(state.requests) == 1
+    assert code == 0
+    result = read_result(tmp_path / "out")
+    assert result["attempts"][0]["renamed_names"] == 1
+    # the attempt's grounded copy and the delivered asset both carry the sanitized name
+    grounded = tmp_path / "out" / "attempts" / "1" / "glb" / "asset.grounded.glb"
+    assert [n["name"] for n in json_of(grounded.read_bytes())["nodes"]] == ["sack_0.5_1.05"]
+    assert (tmp_path / "out" / "asset.glb").read_bytes() == grounded.read_bytes()
+    assert [n["name"] for n in json_of((tmp_path / "out" / "asset.glb").read_bytes())["nodes"]] == ["sack_0.5_1.05"]
+
+
+def test_a_clean_glb_records_zero_renamed_names(tmp_path, ollama, fake_validator):
+    models = write_models(tmp_path)
+    url, _ = ollama([HOVER, GOOD, FAIL])
+
+    glb_generate.main(base_argv("Make a crate.", tmp_path / "out", models, url, "--max-samples", "1"))
+
+    # the HOVER fixture's names (n0, m0) are already safe, so nothing is renamed
+    assert read_result(tmp_path / "out")["attempts"][0]["renamed_names"] == 0
+
+
 def test_an_over_budget_assembled_candidate_does_not_stop_the_loop(tmp_path, ollama, fake_validator):
     models = write_models(tmp_path)
     url, state = ollama([BIGTRI, GOOD, FAIL])
@@ -387,9 +431,10 @@ def test_result_json_has_the_listed_fields(tmp_path, ollama, fake_validator):
     assert len(result["system_sha256"]) == 64
     assert result["assembly_repairs_used"] == 0
     assert len(result["attempts"]) == 1
-    # imp-5: every attempt also records grounded_shift and within_budget.
+    # imp-5: every attempt also records grounded_shift and within_budget; promo-1 US-008 adds renamed_names.
     assert set(result["attempts"][0]) == {"seed", "ok", "reasons", "assembled", "parts",
-                                          "triangles", "seconds", "grounded_shift", "within_budget"}
+                                          "triangles", "seconds", "grounded_shift", "within_budget",
+                                          "renamed_names"}
     attempt = result["attempts"][0]
     assert attempt["seed"] == 1
     assert attempt["ok"] is True and attempt["assembled"] is True
@@ -397,6 +442,7 @@ def test_result_json_has_the_listed_fields(tmp_path, ollama, fake_validator):
     assert attempt["parts"] == 10 and attempt["triangles"] == 100
     assert attempt["grounded_shift"] is None  # the fake's b"glTF" is not a readable GLB, so no grounding
     assert attempt["within_budget"] is True
+    assert attempt["renamed_names"] == 0  # an unreadable GLB has no names to rewrite
 
 
 def test_attempt_files_are_written_under_the_seed(tmp_path, ollama, fake_validator):
