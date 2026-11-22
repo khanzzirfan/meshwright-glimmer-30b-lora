@@ -67,16 +67,15 @@ ground and cleans part names so the GLB imports into Blender.
 
 ## Background: how this repository started
 
-Teach a small open model (Qwen3.5-4B) to write interactive Three.js scenes by using
-**Muse Spark Open (on Baseten)** as the teacher, then filter every teacher answer by
-actually running it in a headless browser. Same idea as ccore's
-[Qwen3.5-4B-3D-Coder](https://huggingface.co/ccore/Qwen3.5-4B-3D-Coder), with Muse as the
-teacher and a real render check as the quality gate.
+This repository started as an experiment in distilling a small model (Qwen3.5-4B) from a larger teacher, with
+every answer checked by rendering it in a headless browser. That browser check became the validator, and the
+project moved to Muse Glimmer 30B as the model itself. The sections below document that pipeline and the
+benchmarks that led to Meshwright v1.
 
-This is plain supervised fine-tuning on teacher outputs ("distillation" in the loose sense).
-It does not use the teacher's logits; an API never gives you those.
+## Pipeline (original plan)
 
-## Pipeline
+The first design, kept for reference. The released v1 uses only the render check (stage 3) and the GLB tooling
+documented further down; no teacher model was used for it.
 
 ```
  briefs  ->  teacher  ->  validate  ->  dataset  ->  train  ->  export  ->  eval
