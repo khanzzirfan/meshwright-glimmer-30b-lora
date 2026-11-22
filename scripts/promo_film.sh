@@ -5,7 +5,7 @@
 # dark studio background (ffmpeg gradient) and the end card (make.mjs, which has the text styling) are made once.
 # Offline, no network, no audio track.
 #
-# usage: bash scripts/promo_film.sh [--dry-run] [--promo DIR] [--out DIR]
+# usage: bash scripts/promo_film.sh [--dry-run] [--promo DIR] [--orbits DIR] [--out DIR]
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -15,10 +15,12 @@ DRY=0
 
 usage() {
   cat <<'EOF'
-usage: bash scripts/promo_film.sh [--dry-run] [--promo DIR] [--out DIR]
+usage: bash scripts/promo_film.sh [--dry-run] [--promo DIR] [--orbits DIR] [--out DIR]
   --dry-run     print the ffmpeg command lines (and the steps they would run) and exit; nothing is written
   --promo DIR   promo asset root (default release/v1/promo); reads out/cover_1280x640.png, out/slides/,
                 out/turntable_1200.mp4, scenes_out/{village,harbour}_orbit/ and writes bg_1920x1080.png here
+  --orbits DIR  where {village,harbour}_orbit/ frames live (default DIR/scenes_out when present, else
+                .cache/promo/orbits; the frames are git-ignored build cache, 58 MB)
   --out DIR     where the two MP4s and the end card go (default DIR/out/film)
 EOF
 }
@@ -28,6 +30,7 @@ while [ $# -gt 0 ]; do
     --dry-run) DRY=1; shift ;;
     --promo) PROMO="${2:?--promo needs a value}"; shift 2 ;;
     --out) OUT="${2:?--out needs a value}"; shift 2 ;;
+    --orbits) ORBITS="${2:?--orbits needs a value}"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -40,8 +43,11 @@ ORBIT_FPS=20
 
 COVER="$PROMO/out/cover_1280x640.png"
 SLIDES_DIR="$PROMO/out/slides"
-VILLAGE_ORBIT="$PROMO/scenes_out/village_orbit"
-HARBOUR_ORBIT="$PROMO/scenes_out/harbour_orbit"
+if [ -z "${ORBITS:-}" ]; then
+  if [ -d "$PROMO/scenes_out/village_orbit" ]; then ORBITS="$PROMO/scenes_out"; else ORBITS=".cache/promo/orbits"; fi
+fi
+VILLAGE_ORBIT="$ORBITS/village_orbit"
+HARBOUR_ORBIT="$ORBITS/harbour_orbit"
 TURNTABLE="$PROMO/out/turntable_1200.mp4"
 BG="$PROMO/bg_1920x1080.png"
 END_CARD="$OUT/end_card.png"
