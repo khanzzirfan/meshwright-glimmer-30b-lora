@@ -90,7 +90,7 @@ is not a Muse model. Suggested order: prove on a small model, then train Glimmer
 |---|---|---|---|
 | Kenney car-kit, city-kit-commercial, city-kit-roads | local copy of the packs | CC0 (LICENSE.txt in each pack) | 186 models |
 | Quaternius downtown, medieval, stylized-nature megakits | local copy of the packs | CC0 | 397 |
-| Prop library | a private prop library | 30 are Quaternius `q-*` (likely CC0); **13 others unconfirmed** | 43 |
+| Prop library | a private prop library | 30 Quaternius `q-*` (CC0); 13 other props (14 meshes) with an unconfirmed licence removed on 22 Nov 2026 | 30 |
 
 565 kept after de-duplication from 1,166 GLB files (the extra files are `clay/` untextured copies, skipped). The filter then keeps
 120 standalone objects (furniture, props, food, vehicles, plants, buildings) and drops 431 modular pieces such as road tiles,

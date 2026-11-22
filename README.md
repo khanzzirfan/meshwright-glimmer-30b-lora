@@ -111,3 +111,5 @@ Apache 2.0 ([LICENSE](LICENSE)). Built on [Muse Glimmer 30B](https://huggingface
 by Meta Superintelligence Lab (Apache 2.0); "Muse" identifies the base model only. This is an independent project,
 not affiliated with or endorsed by Meta. Generated pages load [three.js](https://threejs.org) (MIT). See
 [NOTICE](NOTICE) for third-party data used in the research tracks. Assets you generate are yours to use.
+
+Questions or feedback: open an issue, or email irfan.dev08@gmail.com.

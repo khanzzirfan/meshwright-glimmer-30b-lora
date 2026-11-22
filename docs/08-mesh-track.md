@@ -11,7 +11,7 @@ LLaMA-Mesh recipe with Muse as the model. The Three.js-code track (docs 01-07) s
 |---|---|---|
 | Kenney car-kit, city-kit-commercial, city-kit-roads | local copy of the packs | 168 |
 | Quaternius downtown-city, medieval-village, stylized-nature megakits | local copy of the packs | 354 |
-| Prop library (30 `q-*` Quaternius plus 13 others, **licence of the 13 unconfirmed**) | a private prop library | 43 |
+| Prop library (30 `q-*` Quaternius; 13 other props (14 meshes) with an unconfirmed licence were removed on 22 Nov 2026) | a private prop library | 30 |
 
 Each pack folder also holds `clay/` (untextured copies) and `original/` (the zip); the converter skips both.
 
