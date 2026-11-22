@@ -1,4 +1,4 @@
-# Ralph TUI configuration for muse-threejs. Same agent setup as pixitween-director.
+# Ralph TUI configuration for muse-threejs.
 configVersion = "2.1"
 tracker = "json"
 agent = "command-code-go"   # needs `cmd login`

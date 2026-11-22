@@ -1,5 +1,7 @@
 # 04. Training
 
+> **Archived.** Part of the research history behind Meshwright v1; kept for reference and not current. See [15-release.md](15-release.md) for the release and [README.md](README.md) for all docs.
+
 ## Base model
 `Qwen/Qwen3.5-4B` (Apache 2.0). ccore used this same base, with a full fine-tune followed by a short LoRA stage over about 60 hours; their hyperparameters are not published.
 

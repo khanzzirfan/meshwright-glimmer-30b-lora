@@ -36,3 +36,4 @@ release/*/hf-dataset/*.jsonl
 release/*/promo/renders/
 release/*/promo/turn/
 release/*/promo/scenes_out/*_orbit/
+models/

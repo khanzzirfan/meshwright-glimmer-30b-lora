@@ -1,0 +1,22 @@
+Meshwright
+Copyright 2026 khanzzirfan and Meshwright contributors
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Built on Muse Glimmer 30B (https://huggingface.co/meta-models/Muse-Glimmer-30B), released by Meta under the
+Apache License 2.0. Independent project, not affiliated with or endorsed by Meta. "Muse" is used only to identify
+the base model.
+
+Generated pages and this repository's renderers use three.js (https://threejs.org), MIT License.
+
+Research data (not part of the v1 model release)
+-------------------------------------------------
+corpus/ holds low-poly meshes converted to text for the mesh-as-text research track (docs/08, docs/11, docs/12):
+- Objaverse objects under CC BY 4.0. Per-object author, licence and source URL are listed in
+  corpus/objaverse_attribution.csv.
+- Meshes from the Kenney (city-kit, car-kit) and Quaternius (megakit) asset packs, CC0.
+- 14 prop meshes (ids m00xxx without a "q-" name) from a private prop library; their names match Kenney and
+  Quaternius CC0 assets, but the source is not yet confirmed. They will be removed if that is not confirmed.
+
+The v1 training set on Hugging Face (meshwright-glimmer-30b-lora-distill) contains only Muse Glimmer 30B outputs
+and does not use corpus/.

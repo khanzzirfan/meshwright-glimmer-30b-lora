@@ -173,7 +173,7 @@ outcome into section 10, whatever they are.
    Default here: evaluation only.
 3. Phase 2 generation: Mac (days, free) or a vLLM pod (paid).
 4. Publish target: Hugging Face public, or private.
-5. Is the product an asset generator (this doc) or the PixiTween timeline director (06-budget-and-risks, question 4)?
+5. Is the product an asset generator (this doc) or an animation-timeline director (06-budget-and-risks, question 4)?
 
 ## 10. Results
 

@@ -5,10 +5,16 @@ Map of everything in muse-threejs. Status and the to-do list live in [NEXT-STEPS
 ## Start here
 | File | What it is |
 |---|---|
-| [NEXT-STEPS.md](NEXT-STEPS.md) | Tracker: where we are, what to do next, decisions, results log |
-| [docs/HANDOVER.md](docs/HANDOVER.md) | **Read first if you are taking over:** live paid resources, what is running, next steps in order |
-| [README.md](README.md) | What the project is, the pipeline, quickstart |
-| [ralph/README.md](ralph/README.md) | How to run the Ralph PRDs one after another (the GLB improvement pairs: `imp-1`+`imp-ops`, then `imp-2`+`imp-ops-2`) |
+| [README.md](README.md) | Meshwright v1: what it is, showcase, results, how to run it |
+| [docs/15-release.md](docs/15-release.md) | The release: names and links, known issues, promo kit, plan for the GGUF tag and v2 |
+| [docs/README.md](docs/README.md) | All docs, current and archived |
+| [docs/developer-guide.md](docs/developer-guide.md) | Every script and its flags |
+| [NEXT-STEPS.md](NEXT-STEPS.md) | Tracker: decisions, to-do, results log |
+| [LICENSE](LICENSE), [NOTICE](NOTICE) | Apache 2.0; credits and third-party data |
+| [release/v1/](release/v1/) | Published files: Modelfile, Hugging Face cards, launch kit ([LAUNCH.md](release/v1/promo/LAUNCH.md)) |
+| [docs/media/](docs/media/) | Images used by the README |
+| [ralph/README.md](ralph/README.md) | How to run the Ralph task files |
+| [docs/HANDOVER.md](docs/HANDOVER.md) | Archived working notes (state on 7 Nov 2026) |
 
 ## Docs
 | # | Doc | Read when |
@@ -86,7 +92,7 @@ Planned by Ralph (do not exist yet): `docs/08-train-mlx.md`, `docs/09-train-gpu.
 ## Config
 | File | What |
 |---|---|
-| `.env` | keys (copied from pixitween-director; gitignored) |
+| `.env` | keys (gitignored; template in `.env.example`) |
 | `.env.example` | variable names, Spark model slug |
 | `opencode.json` | Ralph fallback agent: Ollama models + Command Code |
 | `.ralph-tui/config.toml` | Ralph agent `command-code-go`, `autoCommit = false` |

@@ -1,5 +1,7 @@
 # 01. Licensing: do this before you generate anything
 
+> **Archived.** Part of the research history behind Meshwright v1; kept for reference and not current. See [15-release.md](15-release.md) for the release and [README.md](README.md) for all docs.
+
 ## Why it matters
 You are training a student model on a teacher's outputs. Whether you may do that, and what
 terms the student inherits, depends on the teacher's license. The cheap answer now is better

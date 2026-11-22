@@ -1,4 +1,6 @@
-# CURRENT STATE, 7 Nov 2026: next track is the GLB code benchmark (read this first)
+# Working notes (state on 7 Nov 2026)
+
+> **Archived.** Part of the research history behind Meshwright v1; kept for reference and not current. See [15-release.md](15-release.md) for the release and [README.md](README.md) for all docs.
 
 - ccore released Qwen3.5-4B-GLB-3D-Coder (5 Nov, Apache 2.0, Three.js page + Export GLB, no published scores). Mesh-text v3/v4 plateaued at ~15-20 % recognisable.
 - Plan and full spec: [13-glb-code-track.md](13-glb-code-track.md). Phase 1 = free benchmark of untuned Glimmer vs ccore on 48 asset briefs (`bench/glb/briefs.jsonl`), scored by an Export-GLB check and a blind human rating; decision rules A/B/C in section 7 are fixed before the run.
@@ -58,7 +60,7 @@ Traps hit: `HF_HOME=/workspace/hf` is not set in ssh shells (it re-downloaded to
 # Handover to the next agent (written 3 Nov 2026, pod clock about 02:58 UTC)
 
 Read this first, then [00-architecture.md](00-architecture.md) (the whole picture) and [11-mesh-lora-e2e.md](11-mesh-lora-e2e.md) (the run plan).
-The owner is Irfan Khan (khanzzirfan@gmail.com). Working folder: `/Users/irfankhan/Documents/code/trolio/muse-threejs`.
+Working folder: the repository root.
 
 ## 1. The goal in one paragraph
 Fine-tune **Muse Glimmer 30B** with LoRA so it writes low-poly 3D assets as text meshes from a prompt, trained on real CC0 assets, exported as GLB.
@@ -147,13 +149,13 @@ Ralph was stopped by the owner earlier (it was on the older code-track PRD 1, 1 
 - How fast is generation, and is `model.generate` usable for 30 meshes of about 5,000 tokens?
 - Does `mesh_generate.py --backend hf` work end to end? (class and template calls were adapted but never run)
 - GGUF export of a merged Glimmer through llama.cpp (b10353 or later has the architecture) is untested; `scripts/export_gguf.sh` still assumes the old Qwen flow.
-- Licence of the 13 non-`q` PixiTween props that are in the training objects; Spark Open licence; NVIDIA free-endpoint terms.
+- Licence of the 13 non-`q` Prop library that are in the training objects; Spark Open licence; NVIDIA free-endpoint terms.
 - Only 36 training objects, 3 repeated captions; this proves format and stopping, not generalisation.
 
 ## 9. First 10 minutes for you
 
 ```bash
-cd /Users/irfankhan/Documents/code/trolio/muse-threejs
+cd muse-threejs   # the repository root
 runpodctl pod get mxk8dcvdacybo9 | head -20       # is the pod still running, and what does it cost
 bash scripts/check.sh                              # repo is healthy (23 tests)
 # then read the smoke log on the pod (section 3) and continue from section 4

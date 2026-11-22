@@ -1,5 +1,7 @@
 # 05. Export, serve, evaluate
 
+> **Archived.** Part of the research history behind Meshwright v1; kept for reference and not current. See [15-release.md](15-release.md) for the release and [README.md](README.md) for all docs.
+
 ## Merge and convert
 
 ```bash

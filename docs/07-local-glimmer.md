@@ -1,5 +1,7 @@
 # 07. Start locally with Muse Glimmer (no paid calls)
 
+> **Archived.** Part of the research history behind Meshwright v1; kept for reference and not current. See [15-release.md](15-release.md) for the release and [README.md](README.md) for all docs.
+
 Recommended first step. Glimmer is Apache 2.0, so the licence question in
 [01-licensing.md](01-licensing.md) goes away for this phase, and it costs nothing but time.
 
@@ -32,7 +34,7 @@ only if the student is clearly limited by teacher quality, and only after the li
 ## Commands
 
 ```bash
-cd /Users/irfankhan/Documents/code/trolio/muse-threejs
+cd muse-threejs   # the repository root
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 npm install && npx playwright install chromium

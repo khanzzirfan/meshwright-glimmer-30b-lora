@@ -1,5 +1,7 @@
 # 03. Pipeline walkthrough
 
+> **Archived.** Part of the research history behind Meshwright v1; kept for reference and not current. See [15-release.md](15-release.md) for the release and [README.md](README.md) for all docs.
+
 ## Stage 1: briefs (`gen_briefs.py`)
 A brief is one short scene request, e.g. "A lantern-lit Japanese tea house at dusk with drifting petals".
 Diversity here sets the ceiling of the student.
@@ -18,7 +20,7 @@ Diversity here sets the ceiling of the student.
 - Saves `data/raw/<id>.json` with `brief`, `content`, `reasoning` (if the endpoint returns it), `usage`, `model`, timestamp.
 - Resumable: skips ids that already have a file. Retries 429/5xx with backoff.
 - `--concurrency` defaults to 8. Watch Baseten rate limits and your spend as you raise it.
-- Reasoning text: some providers return it in `reasoning_content`, others inline in `<think>` tags, others hide it. The script stores whichever it finds. Spark Open on Baseten returns `reasoning_content` (per pixitween-director's smoke test); run `scripts/baseten_smoke.py` to confirm for scenes before the big run. If there is no reasoning, train on the answer only (see Stage 4 options).
+- Reasoning text: some providers return it in `reasoning_content`, others inline in `<think>` tags, others hide it. The script stores whichever it finds. Spark Open on Baseten returns `reasoning_content` (per an earlier smoke test); run `scripts/baseten_smoke.py` to confirm for scenes before the big run. If there is no reasoning, train on the answer only (see Stage 4 options).
 - Settings to start from: temperature 0.7, top_p 0.95, `max_tokens` 12000. Scenes at level 8-10 can be long; truncated outputs are rejected in Stage 3.
 
 ## Stage 3: validate (`validate_scenes.mjs`)

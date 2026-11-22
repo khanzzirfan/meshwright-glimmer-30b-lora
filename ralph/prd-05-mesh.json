@@ -29,7 +29,7 @@
     {
       "id": "US-002",
       "title": "mesh_to_glb: write a text mesh as a GLB file",
-      "description": "As a user of the trained model, I want its text output saved as a GLB so it opens in Blender, Unity and the PixiTween model3d layer.",
+      "description": "As a user of the trained model, I want its text output saved as a GLB so it opens in Blender, Unity and the animation-timeline model3d layer.",
       "steps": [
         "Create scripts/mesh_to_glb.py using only numpy and the standard library (no new dependency). `text_to_glb(text) -> bytes` builds a binary glTF 2.0 file: one mesh, one primitive per `c` colour group, shared POSITION accessor with float32 positions mapped from 0..63 to a 1-unit cube (x,z centred, y from 0), uint16 or uint32 indices, one PBR material per colour with baseColorFactor in linear space, correct accessor min/max, 4-byte aligned buffer views, JSON and BIN chunks padded per the GLB spec.",
         "Add a CLI: `--in mesh.txt --out model.glb`, and `--jsonl data/mesh/objects.jsonl --out-dir data/mesh/glb --limit N` for batches.",

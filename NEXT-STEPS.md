@@ -1,5 +1,7 @@
 # Next steps
 
+> **22 Nov 2026: Meshwright v1 released** (Hugging Face model and dataset, Ollama `khanzz_irfan/meshwright-glimmer-30b-lora:v1`, GitHub public). Next: the cross-platform GGUF tag (Ralph `rel-1`) and v2, the first trained weights; see [docs/15-release.md](docs/15-release.md).
+
 Tracker for muse-threejs. Tick items as they are done, add a line to the results log for every run, and record
 decisions with a date. Map of files: [INDEX.md](INDEX.md).
 
@@ -41,7 +43,7 @@ decisions with a date. Map of files: [INDEX.md](INDEX.md).
 - [ ] **Teacher for the full dataset**: Spark Open (better scenes, licence unchecked, unpriced) or Glimmer (Apache 2.0, free, slower, simpler scenes), or both mixed.
 - [ ] **Licence**: read the Muse Model License on the [Spark Open model card](https://huggingface.co/meta-models/Muse-Spark-Open-816B-A42B) and fill in [docs/01-licensing.md](docs/01-licensing.md). Blocks any Spark-trained model leaving this Mac.
 - [ ] **Thinking traces**: train with Spark's reasoning (about half of each answer) or answer-only (`--no-reasoning`). Answer-only is shorter and cheaper to train; traces may help hard scenes.
-- [ ] **Goal**: general Three.js coder, or a director that writes the PixiTween timeline JSON (see [docs/06-budget-and-risks.md](docs/06-budget-and-risks.md) question 4).
+- [ ] **Goal**: general Three.js coder, or a director that writes animation-timeline JSON (see [docs/06-budget-and-risks.md](docs/06-budget-and-risks.md) question 4).
 - [ ] **Publish or private**: decides how much the licence matters.
 
 ## Next steps, in order

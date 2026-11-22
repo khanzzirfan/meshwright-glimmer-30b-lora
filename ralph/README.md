@@ -2,7 +2,7 @@
 
 Ralph runs one coding agent per **story** against a PRD, marks it `passes: true` when its criteria hold, and
 moves on. Each iteration is a fresh agent with no memory, so every story names the files and docs it needs.
-Same setup as pixitween-director: Command Code (`command-code-go` agent) first, local Ollama through
+Command Code (`command-code-go` agent) first, local Ollama through
 opencode only when Command Code credit runs out.
 
 ## The four PRDs (run in this order)
@@ -45,9 +45,9 @@ touches `data/`, `out/` or `eval/`, and never commits (`autoCommit = false`).
 ## One-time setup
 
 ```bash
-cd /Users/irfankhan/Documents/code/trolio/muse-threejs
+cd muse-threejs   # the repository root
 python3 ralph/build_prds.py        # builds ralph/prd-*.json from ralph/src and validates them
-ralph-tui --version                # tested with 0.12.0 in pixitween-director
+ralph-tui --version                # tested with 0.12.0
 ls ~/.config/ralph-tui/plugins/agents/command-code-go.js   # the Command Code agent plugin
 export CMDC_KEY=...                # only needed for the opencode fallback
 ```

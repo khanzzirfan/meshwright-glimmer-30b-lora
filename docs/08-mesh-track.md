@@ -1,5 +1,7 @@
 # 08. Mesh track: Muse writes 3D models (not just Three.js code)
 
+> **Archived.** Part of the research history behind Meshwright v1; kept for reference and not current. See [15-release.md](15-release.md) for the release and [README.md](README.md) for all docs.
+
 Goal: fine-tune a Muse model so a prompt like "a wooden chair with a ladder back" returns a
 low-poly mesh as text, which loads as a GLB. Training data is CC0 3D assets. This is the
 LLaMA-Mesh recipe with Muse as the model. The Three.js-code track (docs 01-07) stays as the fallback.
@@ -7,9 +9,9 @@ LLaMA-Mesh recipe with Muse as the model. The Three.js-code track (docs 01-07) s
 ## Source assets (all CC0, licence file ships with each pack)
 | Pack | Where | Kept models |
 |---|---|---|
-| Kenney car-kit, city-kit-commercial, city-kit-roads | `eyecast-api-monorepo/debug/special-kits/kenney` | 168 |
-| Quaternius downtown-city, medieval-village, stylized-nature megakits | `.../special-kits/quaternius` | 354 |
-| PixiTween props (30 `q-*` Quaternius plus 13 others, **licence of the 13 unconfirmed**) | `pixitween-director/web/public/cartoon/props` | 43 |
+| Kenney car-kit, city-kit-commercial, city-kit-roads | local copy of the packs | 168 |
+| Quaternius downtown-city, medieval-village, stylized-nature megakits | local copy of the packs | 354 |
+| Prop library (30 `q-*` Quaternius plus 13 others, **licence of the 13 unconfirmed**) | a private prop library | 43 |
 
 Each pack folder also holds `clay/` (untextured copies) and `original/` (the zip); the converter skips both.
 
@@ -25,9 +27,9 @@ vertices merged; degenerate and repeated faces dropped; models over 2,000 triang
 
 ## Run it
 ```bash
-K=/Users/irfankhan/Documents/code/trolio/eyecast-api-monorepo/debug/special-kits
+K=/path/to/special-kits   # local copy of the Kenney and Quaternius packs
 .venv/bin/python scripts/glb_to_text.py --root $K/kenney --root $K/quaternius \
-  --root /Users/irfankhan/Documents/code/trolio/pixitween-director/web/public/cartoon/props --check
+  --root /path/to/props --check
 node scripts/preview_mesh.mjs --n 30 --out data/mesh/preview.png     # contact sheet to eyeball
 ```
 Output: `data/mesh/assets.jsonl` (`id, name, pack, source, verts, tris, text`).

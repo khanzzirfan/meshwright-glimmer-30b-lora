@@ -1,5 +1,7 @@
 # 11. Mesh LoRA proof, end to end
 
+> **Archived.** Part of the research history behind Meshwright v1; kept for reference and not current. See [15-release.md](15-release.md) for the release and [README.md](README.md) for all docs.
+
 Goal: show that a LoRA on Muse Glimmer measurably improves 3D asset generation, using one repeatable path from
 data to scored output. Baseline to beat (untrained Glimmer, 30 held-out captions, 3 Nov 2026): **9 valid, 0 detailed, 11 runaway
 answers that hit the token cap**. See [08-mesh-track.md](08-mesh-track.md) and [00-architecture.md](00-architecture.md).
@@ -23,12 +25,12 @@ answers that hit the token cap**. See [08-mesh-track.md](08-mesh-track.md) and [
 - The proof therefore trains on objects up to 600 triangles (longest row about 9,500 tokens). Bigger ones need a more compact text encoding, which is the next lever.
 - **`mlx-lm` 0.32.2 has a Glimmer port** (`muse_glimmer.py`, text-only, with the layer hooks LoRA needs), but converting the official checkpoint failed on the vision-weight key prefix, so the free local run is **not working yet**. The RunPod path (Path B, now the main one) trained successfully.
 - The 30 test captions were chosen before training and are excluded, with all their rotated copies, from the training files.
-- Honest limit: only 36 training objects (31 PixiTween props, 7 nature pieces), and 3 captions repeat across objects. This proves format, stopping and detail level can be learned; it does not prove generalisation to categories like traffic lights. More kits and real captions come after.
+- Honest limit: only 36 training objects (31 Prop library, 7 nature pieces), and 3 captions repeat across objects. This proves format, stopping and detail level can be learned; it does not prove generalisation to categories like traffic lights. More kits and real captions come after.
 
 ## Run it
 
 ```bash
-cd /Users/irfankhan/Documents/code/trolio/muse-threejs
+cd muse-threejs   # the repository root
 python scripts/mesh_sft_data.py            # already run; rebuilds data/mesh/sft
 ```
 
@@ -59,7 +61,7 @@ Copy `out/mesh-lora-hf` (the adapter, small) and `eval/mesh_lora_hf` back, then 
 | **RunPod** | fast training on an A100 or H100 for an hour or two; pull the adapter back and stop | hourly billing; **prices not checked**; pods cost money until stopped | fallback; ask before creating a pod |
 | **AWS clippydev profile** | if you want it on an account you already have | single-GPU options such as `g6e` (L40S 48 GB, fits QLoRA) or `p4`/`p5` (80 GB, expensive); new or dev accounts often have **zero GPU quota** until a quota request is approved; bills that account; **not checked, not touched** | possible; needs your go-ahead and the account owner's |
 | **Baseten** | hosting the finished model as an endpoint for a demo (Truss with vLLM, adapter attached) | not needed for the proof; deployment details **unverified**; Spark Open is already there but we are not using it | after the proof |
-| **Ollama on the Mac** | serving the final GGUF for the PixiTween demo | needs the merge and llama.cpp conversion step, **untested** | after the proof |
+| **Ollama on the Mac** | serving the final GGUF for a demo app | needs the merge and llama.cpp conversion step, **untested** | after the proof |
 
 Recommendation: prove it on the Mac, fall back to a rented 48 to 80 GB card if it is too slow, and host on Baseten or locally only once the numbers justify a demo endpoint.
 

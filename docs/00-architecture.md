@@ -1,5 +1,7 @@
 # 00. Architecture
 
+> **Archived.** Part of the research history behind Meshwright v1; kept for reference and not current. See [15-release.md](15-release.md) for the release and [README.md](README.md) for all docs.
+
 One page that says what this project is, how the parts fit, what exists, what is measured and what is not.
 Status and the to-do list live in [../NEXT-STEPS.md](../NEXT-STEPS.md); the file map is [../INDEX.md](../INDEX.md).
 Last reviewed 3 Nov 2026. Anything marked **not measured** or **unverified** has not been checked.
@@ -86,9 +88,9 @@ is not a Muse model. Suggested order: prove on a small model, then train Glimmer
 
 | Source | Location | Licence | Count |
 |---|---|---|---|
-| Kenney car-kit, city-kit-commercial, city-kit-roads | `eyecast-api-monorepo/debug/special-kits/kenney` | CC0 (LICENSE.txt in each pack) | 186 models |
-| Quaternius downtown, medieval, stylized-nature megakits | `.../special-kits/quaternius` | CC0 | 397 |
-| PixiTween props | `pixitween-director/web/public/cartoon/props` | 30 are Quaternius `q-*` (likely CC0); **13 others unconfirmed** | 43 |
+| Kenney car-kit, city-kit-commercial, city-kit-roads | local copy of the packs | CC0 (LICENSE.txt in each pack) | 186 models |
+| Quaternius downtown, medieval, stylized-nature megakits | local copy of the packs | CC0 | 397 |
+| Prop library | a private prop library | 30 are Quaternius `q-*` (likely CC0); **13 others unconfirmed** | 43 |
 
 565 kept after de-duplication from 1,166 GLB files (the extra files are `clay/` untextured copies, skipped). The filter then keeps
 120 standalone objects (furniture, props, food, vehicles, plants, buildings) and drops 431 modular pieces such as road tiles,
@@ -142,7 +144,7 @@ see [baseten-spark-open.md](baseten-spark-open.md)). Training, export and evalua
 | Is the Spark Open licence compatible with training on its outputs? | Only matters if Spark Open writes captions | read the licence |
 | NVIDIA free-endpoint terms for using outputs in training | Same | read the terms before using it at scale |
 | Does Glimmer on NVIDIA accept images, and how fast is it? | Decides if Glimmer can caption from renders | run `scripts/nim_smoke.py` with your key |
-| Licence of the 13 non-`q` PixiTween props | They are in the training data now | confirm the source or drop them |
+| Licence of the 13 non-`q` Prop library | They are in the training data now | confirm the source or drop them |
 | Is 120 objects enough? | Probably not alone | augmentation plus more CC0 kits (furniture, food, props, characters) via `ingest_kit` |
 | Narrow variety (city and nature skew) | A model may produce tiles when asked for a chair | more kits, category balance in the corpus report |
 | Texture-atlas kits export grey | Colour is lost for cars and some nature pieces | accept shape-only, or sample the atlas per face |

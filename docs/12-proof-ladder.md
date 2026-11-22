@@ -1,5 +1,7 @@
 # 12. Proof ladder: keep paying for Glimmer training or stop
 
+> **Archived.** Part of the research history behind Meshwright v1; kept for reference and not current. See [15-release.md](15-release.md) for the release and [README.md](README.md) for all docs.
+
 The ladder answers one question for the owner: does a small open model actually learn the mesh format well
 enough to justify more Glimmer data and GPU spend? Each rung is a separate, scored run. A rung passes or fails
 on the report `scripts/proof_score.py` writes; a rung with no report is **not run** and is never counted as a pass.
@@ -160,7 +162,7 @@ Kenney not scraped (its pages carry a noai / tdm-reservation opt-out; some Kenne
 
 A100 PCIe pod, 648 steps (2 epochs, 2,586 rows, lr 1e-4, BF16 LoRA, about 3.3 h) plus generation. Cost about $7.3 in total (balance $17.01 -> $9.69; the first generation was lost when I killed the deadman timer and the process died, so generation ran twice). Held-out loss 0.514 -> 0.217 (126 held-out objects, mostly Objaverse). Generation on 30 held-out captions (15 hand-captioned originals, 15 Objaverse), 4 samples each, loop guard, temp 0.6: **24/30 valid (80%)**, 3 hit the token cap. Earlier runs: 3/18 (17%), 6/18 (33%), 11/30 (37%). Validity rung passes the 60% placeholder threshold for the first time.
 Shape check (rendered G vs T pairs): about 1 in 3 valid meshes is recognisably the right thing (door slab, stone pedestal, purple sphere, brick wall, rubbish bin, yellow block); the rest have right colour and bounding box but wrong detail (apple -> flat green disc, houseplant -> cone, wireframe prism -> solid box, Celtic ring -> wedge). Better than the earlier ~1 in 6. What changed together: 8x more objects, shorter meshes (<= 250 lines), sorted vertices/faces. Not separated, so which one mattered is unknown.
-Artifacts: artifacts/glimmer-v3 (adapter 419,293,392 bytes, loss.json, gen_v3, samples log). Training data: 126 original/hand-captioned (Kenney and unverified PixiTween props removed) + 1,178 CC-BY Objaverse objects; attribution list corpus/objaverse_attribution.csv.
+Artifacts: artifacts/glimmer-v3 (adapter 419,293,392 bytes, loss.json, gen_v3, samples log). Training data: 126 original/hand-captioned (Kenney and unverified Prop library removed) + 1,178 CC-BY Objaverse objects; attribution list corpus/objaverse_attribution.csv.
 Quaternius Downtown and Medieval MegaKits (CC0, licence files read) converted: 316 meshes, but modular building parts, mostly grey, many near-duplicates; only about 40 worth adding. Bestiary kit uses the Quaternius Asset License v1.0 (no resale or redistribution of assets), so excluded.
 
 ## Glimmer on ~3,500 train objects, sorted (4 Nov 2026) - FINAL RESULT

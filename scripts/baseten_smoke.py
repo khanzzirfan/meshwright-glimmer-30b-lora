@@ -1,6 +1,6 @@
 """Check the Baseten key and Muse Spark Open with two real calls. Paid: needs --yes.
 
-Ported from pixitween-director scripts/live/baseten-smoke.ts, extended with the call this project
+Ported from an earlier project's Baseten smoke test, extended with the call this project
 actually makes (a scene from prompts/system.txt) so you see tokens, reasoning and the html fence
 before any larger run. The key is read from .env / the environment and never printed.
 """

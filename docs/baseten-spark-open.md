@@ -1,6 +1,8 @@
 # Muse Spark Open on Baseten (teacher setup)
 
-Facts below come from pixitween-director's `docs/baseten-spark-open.md` and its smoke test (last run 29 Oct 2026: a plain call took 1.7 s and a tool call 2.7 s). They were **not** re-measured for scene generation yet; `scripts/baseten_smoke.py` does that.
+> **Archived.** Part of the research history behind Meshwright v1; kept for reference and not current. See [15-release.md](15-release.md) for the release and [README.md](README.md) for all docs.
+
+Facts below come from an earlier project's notes and smoke test (last run 29 Oct 2026: a plain call took 1.7 s and a tool call 2.7 s). They were **not** re-measured for scene generation yet; `scripts/baseten_smoke.py` does that.
 
 ## Setup
 1. Copy your `.env` into this folder (it is gitignored). It needs `BASETEN_API_KEY`. Compare with `.env.example`: the other names are `BASETEN_BASE_URL`, `TEACHER_MODEL`, `BRIEF_MODEL`.
@@ -8,7 +10,7 @@ Facts below come from pixitween-director's `docs/baseten-spark-open.md` and its 
 3. Smoke test (dry run by default, spends credit only with `--yes`):
 
 ```bash
-cd /Users/irfankhan/Documents/code/trolio/muse-threejs
+cd muse-threejs   # the repository root
 .venv/bin/python scripts/baseten_smoke.py          # prints the plan and estimate, calls nothing
 .venv/bin/python scripts/baseten_smoke.py --yes    # a tiny call, then one lighthouse scene
 ```
