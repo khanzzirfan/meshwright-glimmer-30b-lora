@@ -37,9 +37,10 @@ while [ $# -gt 0 ]; do
 done
 OUT="${OUT:-$PROMO/out/film}"
 
-W=1920; H=1080; FPS=30; CRF=18; XFADE=0.4
-TITLE_SEC=2.5; ORBIT_SEC=6.0; SLIDE_SEC=2.5; TURN_SEC=3.0; END_SEC=3.0
-ORBIT_FPS=20
+W=1920; H=1080; FPS=30; CRF=18; XFADE="${XFADE:-0.4}"
+# timings can be overridden from the environment (e.g. a 20 s fast cut)
+TITLE_SEC="${TITLE_SEC:-2.5}"; ORBIT_SEC="${ORBIT_SEC:-6.0}"; SLIDE_SEC="${SLIDE_SEC:-2.5}"; TURN_SEC="${TURN_SEC:-3.0}"; END_SEC="${END_SEC:-3.0}"
+ORBIT_FPS="${ORBIT_FPS:-20}"
 
 COVER="$PROMO/out/cover_1280x640.png"
 SLIDES_DIR="$PROMO/out/slides"
